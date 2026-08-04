@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mapa de Empatía — Smart Classroom AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:   #040d1e;
+      --navy2:  #071428;
+      --card:   rgba(7,20,40,0.8);
+      --border: rgba(255,255,255,0.08);
+      --text:   #f1f5f9;
+      --muted:  #94a3b8;
+      --dim:    #475569;
+
+      --blue:   #3b82f6;
+      --purple: #818cf8;
+      --indigo: #6366f1;
+      --cyan:   #06b6d4;
+      --green:  #10b981;
+      --amber:  #f59e0b;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--navy);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--navy); }
+    ::-webkit-scrollbar-thumb { background: #1e3a6e; border-radius: 3px; }
+
+    h1,h2,h3,h4 { font-family: 'Space Grotesk', sans-serif; line-height: 1.15; }
+
+    /* ── NAV ───────────────────────────────────────────────────────────────── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.85rem 2rem;
+      background: rgba(4,13,30,0.88);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-brand {
+      font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 0.95rem;
+      background: linear-gradient(90deg,#818cf8,#06b6d4);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      text-decoration: none;
+    }
+    .nav-links { display: flex; align-items: center; gap: 1.25rem; }
+    .nav-links a {
+      font-size: 0.8rem; color: var(--muted); text-decoration: none;
+      font-weight: 500; transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-back {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      padding: 0.4rem 0.9rem;
+      border: 1px solid rgba(129,140,248,0.3);
+      border-radius: 9999px; font-size: 0.78rem; font-weight: 600;
+      color: var(--purple); transition: all 0.2s;
+    }
+    .nav-back:hover { background: rgba(129,140,248,0.1); border-color: rgba(129,140,248,0.6); color: var(--purple) !important; }
+
+    /* ── HERO ──────────────────────────────────────────────────────────────── */
+    .hero {
+      position: relative; padding: 7rem 1.5rem 3.5rem;
+      text-align: center; overflow: hidden;
+    }
+
+    /* Animated orbs */
+    .orb {
+      position: absolute; border-radius: 50%; filter: blur(80px);
+      pointer-events: none; animation: drift 8s ease-in-out infinite alternate;
+    }
+    .orb-1 { width: 500px; height: 500px; background: rgba(99,102,241,0.12); top: -120px; left: -80px; }
+    .orb-2 { width: 350px; height: 350px; background: rgba(6,182,212,0.09);  top: -60px;  right: -60px; animation-delay: -3s; }
+    .orb-3 { width: 280px; height: 280px; background: rgba(16,185,129,0.07); bottom: 0;   left: 40%;    animation-delay: -5s; }
+    @keyframes drift {
+      from { transform: translate(0,0) scale(1); }
+      to   { transform: translate(30px,20px) scale(1.08); }
+    }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: rgba(129,140,248,0.1); border: 1px solid rgba(129,140,248,0.25);
+      border-radius: 9999px; padding: 0.35rem 1rem;
+      font-size: 0.72rem; font-weight: 600; color: var(--purple);
+      letter-spacing: 0.04em; margin-bottom: 1.25rem;
+    }
+    .hero h1 {
+      font-size: clamp(2rem,5vw,3.5rem); font-weight: 800;
+      letter-spacing: -0.03em; margin-bottom: 0.6rem;
+    }
+    .hero h1 span {
+      background: linear-gradient(135deg, #818cf8, #06b6d4);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero-sub {
+      max-width: 560px; margin: 0 auto 2rem;
+      font-size: 1rem; color: var(--muted); line-height: 1.7;
+    }
+
+    /* Floating stat chips in hero */
+    .hero-chips {
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 0.65rem;
+      margin-bottom: 2.5rem;
+    }
+    .hero-chip {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 9999px; padding: 0.45rem 1.1rem;
+      font-size: 0.76rem; color: var(--muted); font-weight: 500;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .hero-chip strong { color: var(--text); }
+
+    /* ── STEP INDICATOR ────────────────────────────────────────────────────── */
+    .steps-row {
+      display: flex; align-items: center; justify-content: center;
+      gap: 0; max-width: 700px; margin: 0 auto 3.5rem; padding: 0 1.5rem;
+    }
+    .step-item {
+      display: flex; flex-direction: column; align-items: center;
+      cursor: pointer; flex: 1;
+      transition: opacity 0.2s;
+    }
+    .step-item:hover { opacity: 0.85; }
+    .step-dot {
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; font-weight: 700;
+      border: 2px solid; position: relative; z-index: 1;
+      transition: transform 0.25s, box-shadow 0.25s;
+    }
+    .step-item.active .step-dot { transform: scale(1.2); }
+    .step-label {
+      font-size: 0.62rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.06em; margin-top: 0.4rem; color: var(--dim);
+      transition: color 0.25s; text-align: center;
+    }
+    .step-item.active .step-label { color: var(--text); }
+    .step-line {
+      flex: 1; height: 2px; background: rgba(255,255,255,0.07);
+      margin-bottom: 1.4rem; position: relative;
+    }
+    .step-line::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(90deg,var(--indigo),var(--cyan));
+      transform: scaleX(0); transform-origin: left;
+      transition: transform 0.5s ease;
+    }
+    .step-line.filled::after { transform: scaleX(1); }
+
+    /* Step colors */
+    .step-percibir .step-dot { background: rgba(59,130,246,0.12); border-color: #3b82f6; color: #3b82f6; }
+    .step-percibir.active .step-dot { background: #3b82f6; color: #fff; box-shadow: 0 0 20px rgba(59,130,246,0.5); }
+    .step-inferir  .step-dot { background: rgba(129,140,248,0.12); border-color: #818cf8; color: #818cf8; }
+    .step-inferir.active  .step-dot { background: #818cf8; color: #fff; box-shadow: 0 0 20px rgba(129,140,248,0.5); }
+    .step-humanizar .step-dot { background: rgba(6,182,212,0.12); border-color: #06b6d4; color: #06b6d4; }
+    .step-humanizar.active .step-dot { background: #06b6d4; color: #fff; box-shadow: 0 0 20px rgba(6,182,212,0.5); }
+    .step-narrar   .step-dot { background: rgba(16,185,129,0.12); border-color: #10b981; color: #10b981; }
+    .step-narrar.active   .step-dot { background: #10b981; color: #fff; box-shadow: 0 0 20px rgba(16,185,129,0.5); }
+
+    /* ── PANELS ────────────────────────────────────────────────────────────── */
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
+    .section { padding: 1.5rem 1.5rem 5rem; }
+
+    .panel-section { display: none; animation: fadeUp 0.5s ease both; }
+    .panel-section.active { display: block; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── PANEL 1: PERCIBIR ─────────────────────────────────────────────────── */
+    .obs-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr));
+      gap: 1.25rem; margin-top: 2rem;
+    }
+    .obs-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 1rem; padding: 1.5rem;
+      position: relative; overflow: hidden;
+      transition: transform 0.25s, box-shadow 0.25s;
+      cursor: default;
+    }
+    .obs-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    }
+    .obs-card.c-blue::before  { background: #3b82f6; }
+    .obs-card.c-purple::before { background: #818cf8; }
+    .obs-card.c-amber::before { background: #f59e0b; }
+    .obs-card.c-green::before { background: #10b981; }
+    .obs-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.3); }
+    .obs-icon { font-size: 1.75rem; margin-bottom: 0.75rem; }
+    .obs-title { font-family: 'Space Grotesk',sans-serif; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .obs-card.c-blue  .obs-title  { color: #3b82f6; }
+    .obs-card.c-purple .obs-title { color: #818cf8; }
+    .obs-card.c-amber .obs-title  { color: #f59e0b; }
+    .obs-card.c-green .obs-title  { color: #10b981; }
+    .obs-text { font-size: 0.78rem; color: var(--muted); line-height: 1.65; }
+
+    /* Habit counter bar */
+    .habit-bar-wrap { margin-top: 2.5rem; }
+    .habit-bar-label {
+      display: flex; justify-content: space-between; margin-bottom: 0.35rem;
+      font-size: 0.75rem; font-weight: 600;
+    }
+    .habit-bar-track {
+      height: 8px; background: rgba(255,255,255,0.06);
+      border-radius: 9999px; overflow: hidden; margin-bottom: 0.9rem;
+    }
+    .habit-bar-fill {
+      height: 100%; border-radius: 9999px;
+      width: 0; transition: width 1.2s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* ── PANEL 2: INFERIR ──────────────────────────────────────────────────── */
+    .why-split {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
+      margin-top: 2rem;
+    }
+    @media (max-width: 700px) { .why-split { grid-template-columns: 1fr; } }
+    .why-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 1rem; padding: 1.5rem;
+    }
+    .why-card-title {
+      font-family: 'Space Grotesk',sans-serif; font-size: 0.72rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1rem;
+    }
+    .why-row {
+      display: flex; align-items: flex-start; gap: 0.75rem;
+      padding: 0.65rem 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .why-row:last-child { border-bottom: none; }
+    .why-row-icon { font-size: 1rem; flex-shrink: 0; margin-top: 0.1rem; }
+    .why-row-text { font-size: 0.78rem; color: var(--muted); line-height: 1.55; }
+    .why-row-text strong { color: var(--text); display: block; margin-bottom: 0.15rem; }
+
+    .tension-box {
+      margin-top: 1.5rem;
+      padding: 1.25rem;
+      background: rgba(245,158,11,0.07);
+      border: 1px solid rgba(245,158,11,0.2);
+      border-radius: 0.875rem;
+      display: flex; align-items: flex-start; gap: 0.75rem;
+    }
+    .tension-box p { font-size: 0.8rem; color: var(--muted); line-height: 1.65; }
+    .tension-box strong { color: var(--amber); }
+
+    /* ── PANEL 3: HUMANIZAR (mapa de empatía) ─────────────────────────────── */
+    .em-wrapper {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 1.5rem;
+      margin-top: 2rem;
+      align-items: start;
+    }
+    @media (max-width: 820px) { .em-wrapper { grid-template-columns: 1fr; } }
+
+    /* Character card */
+    .char-card {
+      background: rgba(99,102,241,0.07);
+      border: 1px solid rgba(99,102,241,0.22);
+      border-radius: 1.25rem; padding: 1.75rem 1.25rem;
+      text-align: center; position: sticky; top: 5.5rem;
+    }
+    .char-avatar {
+      width: 84px; height: 84px; border-radius: 50%;
+      background: linear-gradient(135deg,#6366f1,#06b6d4);
+      margin: 0 auto 0.85rem;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.4rem;
+      box-shadow: 0 0 36px rgba(99,102,241,0.35);
+      animation: floatAvatar 4s ease-in-out infinite;
+    }
+    @keyframes floatAvatar {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-6px); }
+    }
+    .char-name { font-family:'Space Grotesk',sans-serif; font-size:1.3rem; font-weight:800; }
+    .char-age  { font-size:0.78rem; color:var(--cyan); font-weight:600; margin-bottom:0.75rem; }
+    .char-tag {
+      display: inline-flex; gap: 0.3rem; align-items: center;
+      background: rgba(6,182,212,0.08); border: 1px solid rgba(6,182,212,0.2);
+      border-radius: 9999px; padding: 0.25rem 0.65rem;
+      font-size: 0.68rem; color: var(--cyan); font-weight: 600; margin: 0.18rem;
+    }
+    .char-divider { height:1px; background:rgba(255,255,255,0.06); margin:1rem 0; }
+    .char-label {
+      font-size:0.6rem; color:var(--dim); text-transform:uppercase;
+      letter-spacing:0.07em; font-weight:700; margin-bottom:0.45rem;
+    }
+    .char-bar-row { display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem; }
+    .char-bar-track {
+      flex:1; height:6px; background:rgba(255,255,255,0.06);
+      border-radius:9999px; overflow:hidden;
+    }
+    .char-bar-fill {
+      height:100%; border-radius:9999px;
+      width: 0; transition: width 1.4s 0.3s cubic-bezier(.4,0,.2,1);
+    }
+    .char-bar-val { font-size:0.68rem; color:var(--muted); min-width:2.5rem; text-align:right; }
+
+    /* Quadrants */
+    .em-quad-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr; gap: 1rem;
+    }
+    @media (max-width: 500px) { .em-quad-grid { grid-template-columns: 1fr; } }
+
+    .em-q {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 1rem; padding: 1.25rem 1.25rem 1.4rem;
+      position: relative; overflow: hidden;
+      transition: transform 0.25s, box-shadow 0.25s;
+    }
+    .em-q:hover { transform: translateY(-4px); box-shadow: 0 14px 45px rgba(0,0,0,0.3); }
+    .em-q::after {
+      content: attr(data-emoji);
+      position: absolute; right: -8px; bottom: -12px;
+      font-size: 4rem; opacity: 0.05; pointer-events: none;
+      filter: grayscale(1);
+    }
+    .em-q-top { display:flex; align-items:center; gap:0.6rem; margin-bottom:0.85rem; }
+    .em-q-icon { font-size:1.3rem; }
+    .em-q-title {
+      font-family:'Space Grotesk',sans-serif; font-size:0.7rem; font-weight:800;
+      text-transform:uppercase; letter-spacing:0.08em;
+    }
+    .em-q.qv { border-top:3px solid #3b82f6; } .em-q.qv .em-q-title { color:#3b82f6; }
+    .em-q.qp { border-top:3px solid #818cf8; } .em-q.qp .em-q-title { color:#818cf8; }
+    .em-q.qd { border-top:3px solid #06b6d4; } .em-q.qd .em-q-title { color:#06b6d4; }
+    .em-q.qh { border-top:3px solid #10b981; } .em-q.qh .em-q-title { color:#10b981; }
+
+    .em-q ul { list-style:none; display:flex; flex-direction:column; gap:0.5rem; }
+    .em-q li {
+      font-size:0.76rem; color:var(--muted); line-height:1.55;
+      padding-left:1rem; position:relative;
+    }
+    .em-q li::before { content:'·'; position:absolute; left:0; font-size:1.2rem; line-height:1; opacity:0.5; }
+    .em-q.qv li::before { color:#3b82f6; }
+    .em-q.qp li::before { color:#818cf8; }
+    .em-q.qd li::before { color:#06b6d4; }
+    .em-q.qh li::before { color:#10b981; }
+    .em-q li.hl { color:var(--text); font-weight:500; }
+    .em-q li em { font-style:italic; color:rgba(255,255,255,0.45); font-size:0.7rem; }
+
+    .insight-box {
+      grid-column: 1/-1;
+      display:flex; align-items:flex-start; gap:0.8rem;
+      padding:1.1rem 1.25rem;
+      background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.2);
+      border-radius:0.875rem;
+    }
+    .insight-box p { font-size:0.78rem; color:var(--muted); line-height:1.65; }
+    .insight-box strong { color:#818cf8; }
+
+    /* ── PANEL 4: NARRAR ───────────────────────────────────────────────────── */
+    .story-timeline { margin-top: 2rem; position: relative; }
+    .story-timeline::before {
+      content: ''; position: absolute; left: 22px; top: 0; bottom: 0; width: 2px;
+      background: linear-gradient(180deg,#6366f1,#06b6d4,#10b981);
+      border-radius: 2px;
+    }
+    .story-event {
+      display: flex; gap: 1.25rem; margin-bottom: 2rem;
+      padding-left: 0;
+    }
+    .story-dot {
+      width: 46px; height: 46px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem; border: 2px solid;
+      position: relative; z-index: 1;
+    }
+    .story-dot.sd-indigo { background:rgba(99,102,241,0.15); border-color:#6366f1; }
+    .story-dot.sd-purple { background:rgba(129,140,248,0.15); border-color:#818cf8; }
+    .story-dot.sd-amber  { background:rgba(245,158,11,0.12);  border-color:#f59e0b; }
+    .story-dot.sd-red    { background:rgba(239,68,68,0.12);   border-color:#ef4444; }
+    .story-dot.sd-green  { background:rgba(16,185,129,0.12);  border-color:#10b981; }
+
+    .story-body { flex: 1; }
+    .story-time {
+      font-size:0.64rem; color:var(--dim); font-weight:700;
+      text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.2rem;
+    }
+    .story-heading {
+      font-family:'Space Grotesk',sans-serif; font-size:0.95rem; font-weight:700;
+      margin-bottom:0.5rem;
+    }
+    .story-text { font-size:0.8rem; color:var(--muted); line-height:1.7; }
+    .story-quote {
+      margin-top:0.65rem; padding:0.7rem 1rem;
+      background:rgba(255,255,255,0.03); border-left:2px solid;
+      border-radius:0 0.5rem 0.5rem 0;
+      font-style:italic; font-size:0.77rem; color:rgba(255,255,255,0.55);
+    }
+    .story-dot.sd-indigo ~ .story-body .story-heading { color:#818cf8; }
+    .story-dot.sd-purple ~ .story-body .story-heading { color:#818cf8; }
+    .story-dot.sd-amber  ~ .story-body .story-heading { color:#f59e0b; }
+    .story-dot.sd-red    ~ .story-body .story-heading { color:#ef4444; }
+    .story-dot.sd-green  ~ .story-body .story-heading { color:#10b981; }
+    .story-dot.sd-indigo + .story-body .story-quote { border-color:#6366f1; }
+    .story-dot.sd-purple + .story-body .story-quote { border-color:#818cf8; }
+    .story-dot.sd-amber  + .story-body .story-quote { border-color:#f59e0b; }
+    .story-dot.sd-red    + .story-body .story-quote { border-color:#ef4444; }
+    .story-dot.sd-green  + .story-body .story-quote { border-color:#10b981; }
+
+    .story-opp {
+      display:inline-flex; align-items:center; gap:0.35rem; margin-top:0.6rem;
+      background:rgba(16,185,129,0.09); border:1px solid rgba(16,185,129,0.25);
+      border-radius:9999px; padding:0.25rem 0.75rem;
+      font-size:0.68rem; color:#10b981; font-weight:600;
+    }
+
+    /* ── SECTION HEADER ────────────────────────────────────────────────────── */
+    .sec-header { margin-bottom: 0; }
+    .sec-eyebrow {
+      font-size:0.68rem; font-weight:700; text-transform:uppercase;
+      letter-spacing:0.1em; margin-bottom:0.4rem;
+    }
+    .sec-title {
+      font-size: clamp(1.5rem,3vw,2.1rem); font-weight:800;
+      letter-spacing:-0.02em; margin-bottom:0.6rem;
+    }
+    .sec-sub { font-size:0.88rem; color:var(--muted); line-height:1.7; max-width:580px; }
+    .sec-divider {
+      width:48px; height:3px; border-radius:9999px;
+      margin: 0.75rem 0 1.5rem;
+    }
+
+    /* ── NAV ARROWS ────────────────────────────────────────────────────────── */
+    .nav-arrows {
+      display:flex; justify-content:space-between; align-items:center;
+      margin-top:3rem; padding-top:2rem;
+      border-top:1px solid var(--border);
+    }
+    .arr-btn {
+      display:inline-flex; align-items:center; gap:0.5rem;
+      padding:0.55rem 1.25rem; border-radius:9999px;
+      font-size:0.8rem; font-weight:600; cursor:pointer;
+      border:1px solid rgba(129,140,248,0.25);
+      background:transparent; color:var(--purple);
+      transition:all 0.2s;
+    }
+    .arr-btn:hover { background:rgba(129,140,248,0.1); border-color:rgba(129,140,248,0.5); }
+    .arr-btn:disabled { opacity:0.25; cursor:default; }
+    .arr-btn:disabled:hover { background:transparent; border-color:rgba(129,140,248,0.25); }
+
+    /* ── FOOTER ─────────────────────────────────────────────────────────────── */
+    footer {
+      background:#020810; border-top:1px solid var(--border);
+      padding:2rem 1.5rem; text-align:center;
+    }
+    footer p { font-size:0.75rem; color:var(--dim); }
+    footer a { color:var(--purple); text-decoration:none; font-weight:600; }
+
+    /* ── MOBILE ─────────────────────────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      nav { padding: 0.7rem 1rem; }
+      .nav-links a:not(.nav-back) { display: none; }
+      .hero { padding: 6rem 1rem 2.5rem; }
+      .section { padding: 1rem 1rem 4rem; }
+      .steps-row { gap: 0; padding: 0 0.5rem; }
+      .step-label { font-size: 0.55rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a href="/app/landing.html" class="nav-brand">⚡ Smart Classroom AI</a>
+    <div class="nav-links">
+      <a href="/app/landing.html">Inicio</a>
+      <a href="/app/journey-map.html">Journey Map</a>
+      <a href="/app/" class="nav-back">← Ver Digital Twin</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <div class="hero-badge">TAREA 2 · Diseño centrado en el usuario</div>
+    <h1>Mapa de <span>Empatía</span></h1>
+    <p class="hero-sub">
+      Antes de diseñar una solución, entendimos a la persona que vive el problema. Construimos a <strong style="color:var(--text)">Valentina</strong>, una estudiante real cuya experiencia diaria revela todo lo que falla en el sistema actual.
+    </p>
+
+    <div class="hero-chips">
+      <div class="hero-chip">👧 <strong>Valentina, 13 años</strong></div>
+      <div class="hero-chip">🏫 <strong>Colegio La Enseñanza</strong></div>
+      <div class="hero-chip">🌿 <strong>Consciente ambiental</strong></div>
+      <div class="hero-chip">📱 <strong>Nativa digital</strong></div>
+    </div>
+
+    <!-- Step indicator -->
+    <div class="steps-row" id="stepsRow">
+      <div class="step-item step-percibir active" onclick="goToStep(0)">
+        <div class="step-dot">1</div>
+        <div class="step-label">Percibir</div>
+      </div>
+      <div class="step-line" id="line-0"></div>
+      <div class="step-item step-inferir" onclick="goToStep(1)">
+        <div class="step-dot">2</div>
+        <div class="step-label">Inferir</div>
+      </div>
+      <div class="step-line" id="line-1"></div>
+      <div class="step-item step-humanizar" onclick="goToStep(2)">
+        <div class="step-dot">3</div>
+        <div class="step-label">Humanizar</div>
+      </div>
+      <div class="step-line" id="line-2"></div>
+      <div class="step-item step-narrar" onclick="goToStep(3)">
+        <div class="step-dot">4</div>
+        <div class="step-label">Narrar</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       PANEL 1 — PERCIBIR
+  ════════════════════════════════════════════════════════════════════════ -->
+  <section class="section">
+    <div class="container">
+
+      <div class="panel-section active" id="panel-0">
+        <div class="sec-header">
+          <div class="sec-eyebrow" style="color:#3b82f6">Paso 1</div>
+          <h2 class="sec-title">¿Qué vemos que hacen?</h2>
+          <div class="sec-divider" style="background:linear-gradient(90deg,#3b82f6,#6366f1)"></div>
+          <p class="sec-sub">Observamos hábitos que se repiten todos los días en el aula. Estas son las evidencias reales que documentamos antes de construir el personaje.</p>
+        </div>
+
+        <div class="obs-grid">
+          <div class="obs-card c-blue">
+            <div class="obs-icon">💡</div>
+            <div class="obs-title">Luces siempre encendidas</div>
+            <div class="obs-text">Al entrar al salón en la mañana, las luces se encienden automáticamente por hábito — sin revisar si la luz natural es suficiente. Permanecen así durante toda la jornada.</div>
+          </div>
+          <div class="obs-card c-purple">
+            <div class="obs-icon">🪟</div>
+            <div class="obs-title">Ventanas ignoradas</div>
+            <div class="obs-text">Aunque el salón tiene ventanas que dejan entrar luz solar directa durante horas, los estudiantes y profesores no las consideran al decidir encender las luces artificiales.</div>
+          </div>
+          <div class="obs-card c-amber">
+            <div class="obs-icon">🚪</div>
+            <div class="obs-title">Luces encendidas sin nadie</div>
+            <div class="obs-text">Durante los recesos, el almuerzo y al finalizar la jornada, las luces permanecen encendidas en salones completamente vacíos, a veces por horas seguidas.</div>
+          </div>
+          <div class="obs-card c-green">
+            <div class="obs-icon">🙅</div>
+            <div class="obs-title">Recordatorios sin efecto</div>
+            <div class="obs-text">Algunos estudiantes intentan apagar las luces o recordarle a sus compañeros hacerlo. Sin embargo, el comportamiento del grupo vuelve al estado inicial en minutos.</div>
+          </div>
+        </div>
+
+        <!-- Habit frequency bars -->
+        <div class="habit-bar-wrap" style="margin-top:2.5rem;background:var(--card);border:1px solid var(--border);border-radius:1rem;padding:1.5rem" id="barsContainer">
+          <div style="font-family:'Space Grotesk',sans-serif;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--dim);margin-bottom:1.25rem">Frecuencia de hábitos observados</div>
+          <div>
+            <div class="habit-bar-label"><span style="color:var(--muted)">Luces encendidas todo el día</span><span style="color:#3b82f6">96%</span></div>
+            <div class="habit-bar-track"><div class="habit-bar-fill" style="background:linear-gradient(90deg,#3b82f6,#6366f1)" data-w="96"></div></div>
+          </div>
+          <div>
+            <div class="habit-bar-label"><span style="color:var(--muted)">Salón vacío con luces on (receso)</span><span style="color:#818cf8">88%</span></div>
+            <div class="habit-bar-track"><div class="habit-bar-fill" style="background:linear-gradient(90deg,#6366f1,#818cf8)" data-w="88"></div></div>
+          </div>
+          <div>
+            <div class="habit-bar-label"><span style="color:var(--muted)">Luz natural suficiente pero ignorada</span><span style="color:#f59e0b">72%</span></div>
+            <div class="habit-bar-track"><div class="habit-bar-fill" style="background:linear-gradient(90deg,#f59e0b,#fbbf24)" data-w="72"></div></div>
+          </div>
+          <div>
+            <div class="habit-bar-label"><span style="color:var(--muted)">Recordatorio sin resultado</span><span style="color:#10b981">65%</span></div>
+            <div class="habit-bar-track"><div class="habit-bar-fill" style="background:linear-gradient(90deg,#10b981,#34d399)" data-w="65"></div></div>
+          </div>
+        </div>
+
+        <div class="nav-arrows">
+          <button class="arr-btn" disabled>← Anterior</button>
+          <button class="arr-btn" onclick="goToStep(1)">Siguiente: Inferir →</button>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════════════════
+           PANEL 2 — INFERIR
+      ════════════════════════════════════════════════════════════════════ -->
+      <div class="panel-section" id="panel-1">
+        <div class="sec-header">
+          <div class="sec-eyebrow" style="color:#818cf8">Paso 2</div>
+          <h2 class="sec-title">¿Por qué actúan así?</h2>
+          <div class="sec-divider" style="background:linear-gradient(90deg,#6366f1,#818cf8)"></div>
+          <p class="sec-sub">Detrás de los hábitos visibles hay causas invisibles. Inferimos las razones reales del comportamiento energético observado.</p>
+        </div>
+
+        <div class="why-split">
+          <div class="why-card" style="border-top:3px solid #818cf8">
+            <div class="why-card-title" style="color:#818cf8">¿Por qué actúan así?</div>
+            <div class="why-row">
+              <div class="why-row-icon">🔁</div>
+              <div class="why-row-text">
+                <strong>Hábito inconsciente</strong>
+                Encender todas las luces al entrar es automático. No hay un momento de decisión consciente — es parte de la rutina de inicio de clase.
+              </div>
+            </div>
+            <div class="why-row">
+              <div class="why-row-icon">🎯</div>
+              <div class="why-row-text">
+                <strong>El foco está en otra cosa</strong>
+                El objetivo al entrar al salón es la clase, no el consumo energético. La eficiencia eléctrica no compite con la agenda académica.
+              </div>
+            </div>
+            <div class="why-row">
+              <div class="why-row-icon">👥</div>
+              <div class="why-row-text">
+                <strong>Efecto del grupo</strong>
+                Si nadie apaga las luces, nadie siente la responsabilidad individual. El comportamiento colectivo refuerza el hábito individual.
+              </div>
+            </div>
+          </div>
+
+          <div class="why-card" style="border-top:3px solid #3b82f6">
+            <div class="why-card-title" style="color:#3b82f6">¿Qué no saben?</div>
+            <div class="why-row">
+              <div class="why-row-icon">📊</div>
+              <div class="why-row-text">
+                <strong>El costo real en números</strong>
+                Nadie visualiza que 8 lámparas encendidas 8 horas generan 2.56 kWh/día — ni lo que eso representa en pesos o en CO₂.
+              </div>
+            </div>
+            <div class="why-row">
+              <div class="why-row-icon">☀️</div>
+              <div class="why-row-text">
+                <strong>Cuándo la luz natural basta</strong>
+                No existe ningún indicador que les diga cuándo hay suficiente iluminación natural. La decisión siempre se toma "a ojo".
+              </div>
+            </div>
+            <div class="why-row">
+              <div class="why-row-icon">⚡</div>
+              <div class="why-row-text">
+                <strong>El impacto acumulado</strong>
+                Un día parece insignificante, pero 200 días escolares suman más de 500 kWh/año por salón — sin que nadie lo sepa.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tension-box">
+          <span style="font-size:1.4rem;flex-shrink:0">⚡</span>
+          <p>
+            <strong>La tensión central:</strong> Existe conciencia ambiental en algunos estudiantes, pero no existe un sistema que la respalde. La buena intención individual es insuficiente sin una infraestructura automática que actúe colectivamente.
+          </p>
+        </div>
+
+        <div class="nav-arrows">
+          <button class="arr-btn" onclick="goToStep(0)">← Percibir</button>
+          <button class="arr-btn" onclick="goToStep(2)">Siguiente: Humanizar →</button>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════════════════
+           PANEL 3 — HUMANIZAR
+      ════════════════════════════════════════════════════════════════════ -->
+      <div class="panel-section" id="panel-2">
+        <div class="sec-header">
+          <div class="sec-eyebrow" style="color:#06b6d4">Paso 3</div>
+          <h2 class="sec-title">Mapa de Empatía — Valentina</h2>
+          <div class="sec-divider" style="background:linear-gradient(90deg,#06b6d4,#10b981)"></div>
+          <p class="sec-sub">Le dimos nombre, cara y voz a los datos. Valentina no es inventada — es el reflejo de una situación que se vive todos los días en el aula.</p>
+        </div>
+
+        <div class="em-wrapper">
+          <!-- Character card -->
+          <div class="char-card" id="charCard">
+            <div style="position:absolute;top:-1px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,#6366f1,#06b6d4);color:#fff;font-size:0.6rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:0.18rem 0.8rem;border-radius:0 0 0.5rem 0.5rem">Personaje</div>
+            <div class="char-avatar">👧</div>
+            <div class="char-name">Valentina</div>
+            <div class="char-age">13 años · 8vo grado</div>
+            <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:0.2rem;margin-bottom:0.5rem">
+              <span class="char-tag">🏫 La Enseñanza</span>
+              <span class="char-tag">🌿 Consciente</span>
+              <span class="char-tag">📱 Digital</span>
+            </div>
+            <div style="font-size:0.76rem;color:var(--muted);font-style:italic;text-align:left;border-left:2px solid rgba(99,102,241,0.4);padding-left:0.75rem;line-height:1.6;margin-top:0.75rem">
+              "Yo sé que las luces gastan energía, pero nadie más parece importarle. Me siento sola intentando cambiar algo que debería ser automático."
+            </div>
+            <div class="char-divider"></div>
+            <div class="char-label">Relación con tecnología</div>
+            <div class="char-bar-row">
+              <div class="char-bar-track"><div class="char-bar-fill" style="background:linear-gradient(90deg,#6366f1,#818cf8)" data-w="85"></div></div>
+              <div class="char-bar-val">Alta</div>
+            </div>
+            <div class="char-label" style="margin-top:0.3rem">Conciencia ambiental</div>
+            <div class="char-bar-row">
+              <div class="char-bar-track"><div class="char-bar-fill" style="background:linear-gradient(90deg,#06b6d4,#10b981)" data-w="92"></div></div>
+              <div class="char-bar-val">Muy alta</div>
+            </div>
+          </div>
+
+          <!-- Quadrant grid -->
+          <div>
+            <div class="em-quad-grid">
+              <div class="em-q qv" data-emoji="👀">
+                <div class="em-q-top">
+                  <span class="em-q-icon">👀</span>
+                  <span class="em-q-title">¿Qué ve?</span>
+                </div>
+                <ul>
+                  <li class="hl">Salones con luces <em>siempre</em> encendidas</li>
+                  <li>Compañeros y profes sin prestar atención al consumo</li>
+                  <li>Luz natural suficiente pero ignorada</li>
+                  <li>Falta de control sobre el gasto energético del colegio</li>
+                </ul>
+              </div>
+
+              <div class="em-q qp" data-emoji="💭">
+                <div class="em-q-top">
+                  <span class="em-q-icon">💭</span>
+                  <span class="em-q-title">¿Qué piensa?</span>
+                </div>
+                <ul>
+                  <li>"Esto sí afecta el medio ambiente"</li>
+                  <li class="hl">"No debería depender solo de las personas"</li>
+                  <li>"El consumo genera huella de carbono"</li>
+                  <li class="hl">"Debería existir un sistema automático que lo controle"</li>
+                </ul>
+              </div>
+
+              <div class="em-q qd" data-emoji="🗣️">
+                <div class="em-q-top">
+                  <span class="em-q-icon">🗣️</span>
+                  <span class="em-q-title">¿Qué dice?</span>
+                </div>
+                <ul>
+                  <li class="hl">"Deberíamos apagar las luces cuando no se necesiten"</li>
+                  <li>"Esto gasta demasiada energía"</li>
+                  <li>"El colegio debería ser más consciente y ahorrar energía"</li>
+                </ul>
+              </div>
+
+              <div class="em-q qh" data-emoji="⚡">
+                <div class="em-q-top">
+                  <span class="em-q-icon">⚡</span>
+                  <span class="em-q-title">¿Qué hace?</span>
+                </div>
+                <ul>
+                  <li>Intenta apagar las luces cuando sale del salón</li>
+                  <li>Les recuerda a sus compañeros que lo hagan</li>
+                  <li>Se preocupa activamente por el uso de energía</li>
+                  <li class="hl">No siempre logra cambiar el comportamiento de los demás</li>
+                </ul>
+              </div>
+
+              <div class="insight-box">
+                <span style="font-size:1.4rem;flex-shrink:0">💡</span>
+                <p><strong>Oportunidad clave:</strong> Valentina tiene la conciencia pero no el poder de cambiar el sistema. Nuestro proyecto le da exactamente eso — un sistema inteligente que actúa automáticamente por ella y por toda la comunidad escolar, sin depender de la voluntad individual.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="nav-arrows">
+          <button class="arr-btn" onclick="goToStep(1)">← Inferir</button>
+          <button class="arr-btn" onclick="goToStep(3)">Siguiente: Narrar →</button>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════════════════
+           PANEL 4 — NARRAR
+      ════════════════════════════════════════════════════════════════════ -->
+      <div class="panel-section" id="panel-3">
+        <div class="sec-header">
+          <div class="sec-eyebrow" style="color:#10b981">Paso 4</div>
+          <h2 class="sec-title">Un día en la vida de Valentina</h2>
+          <div class="sec-divider" style="background:linear-gradient(90deg,#06b6d4,#10b981)"></div>
+          <p class="sec-sub">Seguimos a Valentina a lo largo de su jornada escolar. Cada momento revela una decisión energética — o la falta de ella.</p>
+        </div>
+
+        <div class="story-timeline">
+
+          <div class="story-event">
+            <div class="story-dot sd-indigo">🌅</div>
+            <div class="story-body">
+              <div class="story-time">7:00 AM · Llegada al colegio</div>
+              <div class="story-heading" style="color:#6366f1">Las luces se encienden solas</div>
+              <div class="story-text">
+                Valentina entra al salón y, como todos los días, un compañero enciende las ocho lámparas sin mirar por la ventana. Afuera hay sol pleno. Las persianas están cerradas por costumbre.
+              </div>
+              <div class="story-quote" style="border-color:#6366f1">
+                "Ya están encendidas las luces... pero si hay sol ahí afuera. Da un poco de rabia."
+              </div>
+            </div>
+          </div>
+
+          <div class="story-event">
+            <div class="story-dot sd-purple">📚</div>
+            <div class="story-body">
+              <div class="story-time">10:00 AM · Clase en progreso</div>
+              <div class="story-heading" style="color:#818cf8">Valentina recuerda, nadie escucha</div>
+              <div class="story-text">
+                En plena clase, Valentina nota que el lado izquierdo del salón tiene tanta luz natural que proyecta sombras. Le dice en voz baja a su compañera que podrían apagar esas dos lámparas. La profesora no escucha. Nadie actúa.
+              </div>
+              <div class="story-quote" style="border-color:#818cf8">
+                "Dije que podíamos apagar las de la izquierda. Nadie me hizo caso."
+              </div>
+              <div><span class="story-opp">⚠️ Zona con iluminación innecesaria: 80W desperdiciados</span></div>
+            </div>
+          </div>
+
+          <div class="story-event">
+            <div class="story-dot sd-amber">🏃</div>
+            <div class="story-body">
+              <div class="story-time">12:00 PM · Receso escolar</div>
+              <div class="story-heading" style="color:#f59e0b">El salón vacío brilla solo</div>
+              <div class="story-text">
+                Todos salen al descanso. Valentina, al salir, apaga las luces. Cuando vuelve 30 minutos después, están encendidas de nuevo — alguien entró un momento a buscar algo y las dejó prendidas. El salón estuvo iluminado sin nadie durante casi 25 minutos.
+              </div>
+              <div class="story-quote" style="border-color:#f59e0b">
+                "Las apagué yo. Y cuando volví, estaban prendidas otra vez."
+              </div>
+              <div><span class="story-opp">⚠️ 320W consumidos durante 25 min sin ocupación = 0.13 kWh perdidos</span></div>
+            </div>
+          </div>
+
+          <div class="story-event">
+            <div class="story-dot sd-red">🌦️</div>
+            <div class="story-body">
+              <div class="story-time">2:00 PM · Cambio de clima</div>
+              <div class="story-heading" style="color:#ef4444">Nubes, pero nadie ajusta nada</div>
+              <div class="story-text">
+                Una nube cubre el sol. El salón se oscurece levemente. Nadie nota que era el momento perfecto para encender solo algunas lámparas. Siguen todas encendidas igual que en la mañana, aunque la situación cambió.
+              </div>
+              <div class="story-quote" style="border-color:#ef4444">
+                "Es que nunca nadie ajusta nada. O todo encendido, o todo apagado."
+              </div>
+            </div>
+          </div>
+
+          <div class="story-event">
+            <div class="story-dot sd-green">🏠</div>
+            <div class="story-body">
+              <div class="story-time">5:00 PM · Fin de jornada</div>
+              <div class="story-heading" style="color:#10b981">Valentina sale, las luces se quedan</div>
+              <div class="story-text">
+                Al terminar el día, Valentina apaga las luces de su salón antes de irse. Pero al pasar por el corredor, ve tres salones más con las luces encendidas y sin nadie adentro. Suspira y sigue caminando — no es su responsabilidad, y no puede apagar las de todos.
+              </div>
+              <div class="story-quote" style="border-color:#10b981">
+                "No puedo yo sola cambiar esto. Necesitamos algo que lo haga automáticamente."
+              </div>
+              <div><span class="story-opp">✅ Oportunidad: un sistema que actúe donde Valentina no puede llegar</span></div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Final insight -->
+        <div style="margin-top:2.5rem;padding:1.5rem;background:linear-gradient(135deg,rgba(99,102,241,0.08),rgba(6,182,212,0.06));border:1px solid rgba(99,102,241,0.2);border-radius:1rem">
+          <div style="font-family:'Space Grotesk',sans-serif;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--purple);margin-bottom:0.6rem">¿Qué aprendemos de Valentina?</div>
+          <p style="font-size:0.82rem;color:var(--muted);line-height:1.75">
+            La solución no puede depender de que una persona recuerde, insista o convenza a los demás. Valentina ya tiene la mentalidad correcta — lo que le falta es el sistema. Un sistema que perciba quién está en el salón, que mida la luz natural, que tome decisiones en milisegundos y que actúe sin necesitar que nadie lo recuerde. Eso es exactamente lo que construimos.
+          </p>
+          <div style="display:flex;flex-wrap:wrap;gap:0.75rem;margin-top:1.25rem">
+            <a href="/app/" style="display:inline-flex;align-items:center;gap:0.4rem;background:linear-gradient(135deg,#6366f1,#06b6d4);color:#fff;text-decoration:none;font-size:0.8rem;font-weight:700;padding:0.55rem 1.25rem;border-radius:9999px;box-shadow:0 0 20px rgba(99,102,241,0.3)">⚡ Ver el sistema en acción →</a>
+            <a href="/app/journey-map.html" style="display:inline-flex;align-items:center;gap:0.4rem;border:1px solid rgba(129,140,248,0.3);color:var(--purple);text-decoration:none;font-size:0.8rem;font-weight:600;padding:0.55rem 1.25rem;border-radius:9999px">Ver Journey Map →</a>
+          </div>
+        </div>
+
+        <div class="nav-arrows">
+          <button class="arr-btn" onclick="goToStep(2)">← Humanizar</button>
+          <button class="arr-btn" disabled>Fin del recorrido ✓</button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <footer>
+    <p>Smart Classroom AI · Feria STEAM 2026 · <a href="/app/landing.html">Volver al inicio</a></p>
+  </footer>
+
+  <script>
+    let currentStep = 0;
+
+    function goToStep(step) {
+      // Hide all panels
+      document.querySelectorAll('.panel-section').forEach(p => p.classList.remove('active'));
+      // Show target panel
+      document.getElementById('panel-' + step).classList.add('active');
+
+      // Update step indicator
+      const items = document.querySelectorAll('.step-item');
+      items.forEach((item, i) => item.classList.toggle('active', i === step));
+
+      // Update connector lines
+      for (let i = 0; i < 3; i++) {
+        const line = document.getElementById('line-' + i);
+        line.classList.toggle('filled', i < step);
+      }
+
+      currentStep = step;
+
+      // Scroll to top of content
+      window.scrollTo({ top: 200, behavior: 'smooth' });
+
+      // Trigger animations for specific panels
+      if (step === 0) animateBars('barsContainer');
+      if (step === 2) animateCharBars();
+    }
+
+    function animateBars(containerId) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      // Small delay so panel is visible first
+      setTimeout(() => {
+        container.querySelectorAll('.habit-bar-fill').forEach(bar => {
+          bar.style.width = bar.dataset.w + '%';
+        });
+      }, 100);
+    }
+
+    function animateCharBars() {
+      setTimeout(() => {
+        document.querySelectorAll('.char-bar-fill').forEach(bar => {
+          bar.style.width = bar.dataset.w + '%';
+        });
+      }, 200);
+    }
+
+    // Animate bars on first load
+    animateBars('barsContainer');
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' && currentStep < 3) goToStep(currentStep + 1);
+      if (e.key === 'ArrowLeft'  && currentStep > 0) goToStep(currentStep - 1);
+    });
+  </script>
+
+  <!-- Floating Digital Twin CTA -->
+  <style>
+    .dt-float {
+      position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 999;
+      display: flex; align-items: center; gap: 0.6rem;
+      background: linear-gradient(135deg,#2563eb,#06b6d4);
+      color: #fff; text-decoration: none;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.82rem; font-weight: 700;
+      padding: 0.7rem 1.3rem; border-radius: 9999px;
+      box-shadow: 0 8px 32px rgba(37,99,235,0.5), 0 0 0 1px rgba(255,255,255,0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+      animation: floatIn 0.6s 1s both;
+    }
+    .dt-float:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 14px 48px rgba(37,99,235,0.65); }
+    .dt-float-dot {
+      width: 8px; height: 8px; background: #fff; border-radius: 50%;
+      animation: dtBlink 1.4s ease-in-out infinite;
+    }
+    @keyframes dtBlink { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
+    @keyframes floatIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+    @media (max-width: 480px) { .dt-float { font-size:0.74rem; padding:0.6rem 1rem; bottom:1rem; right:1rem; } }
+  </style>
+  <a href="/app/" class="dt-float">
+    <span class="dt-float-dot"></span>
+    ⚡ Ver Digital Twin
+  </a>
+</body>
+</html>

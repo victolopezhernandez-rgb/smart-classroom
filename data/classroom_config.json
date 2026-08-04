@@ -1,0 +1,49 @@
+{
+  "classroom": {
+    "name": "Aula 10mo",
+    "width_m": 10,
+    "depth_m": 8,
+    "height_m": 3
+  },
+  "zones": {
+    "zone_A": {
+      "label": "Front-Left",
+      "fixtures": 2,
+      "watts_per_fixture": 40,
+      "has_window_exposure": true,
+      "position": { "x": -2.5, "z": -2 }
+    },
+    "zone_B": {
+      "label": "Front-Right",
+      "fixtures": 2,
+      "watts_per_fixture": 40,
+      "has_window_exposure": false,
+      "position": { "x": 2.5, "z": -2 }
+    },
+    "zone_C": {
+      "label": "Back-Left",
+      "fixtures": 2,
+      "watts_per_fixture": 40,
+      "has_window_exposure": true,
+      "position": { "x": -2.5, "z": 2 }
+    },
+    "zone_D": {
+      "label": "Back-Right",
+      "fixtures": 2,
+      "watts_per_fixture": 40,
+      "has_window_exposure": false,
+      "position": { "x": 2.5, "z": 2 }
+    }
+  },
+  "features": {
+    "windows": "left wall",
+    "door": "back-right",
+    "whiteboard": "front wall"
+  },
+  "energy": {
+    "baseline_watts": 320,
+    "baseline_daily_kwh": 2.56,
+    "operating_hours": 8,
+    "target_savings_pct": [40, 60]
+  }
+}

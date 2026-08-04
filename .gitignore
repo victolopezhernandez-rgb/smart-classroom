@@ -1,0 +1,14 @@
+# Dependencias — nunca subir, son miles de archivos
+node_modules/
+__pycache__/
+*.pyc
+
+# Builds
+frontend/dist/
+
+# Registros generados en ejecución
+backend/logs/
+data/energy_logs.csv
+
+# macOS
+.DS_Store

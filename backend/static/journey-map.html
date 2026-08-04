@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Journey Map — Smart Classroom AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --teal:    #0d9488;
+      --teal-l:  #14b8a6;
+      --teal-bg: #0f2722;
+      --navy:    #040d1e;
+      --navy2:   #071428;
+      --blue:    #2563eb;
+      --cyan:    #06b6d4;
+      --green:   #10b981;
+      --amber:   #f59e0b;
+      --red:     #ef4444;
+      --purple:  #818cf8;
+      --text:    #f1f5f9;
+      --muted:   #94a3b8;
+      --border:  rgba(255,255,255,0.08);
+
+      /* Stage colors */
+      --c1: #2563eb;   /* Llegada — azul */
+      --c2: #7c3aed;   /* Clase — violeta */
+      --c3: #f59e0b;   /* Receso — ámbar */
+      --c4: #0891b2;   /* Tarde — cian */
+      --c5: #dc2626;   /* Fin — rojo */
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--navy);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── NAV ──────────────────────────────────────────────────────────────── */
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.75rem 1.5rem;
+      background: rgba(4,13,30,0.9);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 50;
+      backdrop-filter: blur(10px);
+    }
+    .nav-brand { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 0.9rem;
+      background: linear-gradient(90deg,#60a5fa,#06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .nav-links { display: flex; gap: 0.75rem; }
+    .nav-btn {
+      padding: 0.35rem 0.9rem; border-radius: 9999px; font-size: 0.75rem;
+      font-weight: 600; text-decoration: none; border: 1px solid;
+      transition: all 0.2s;
+    }
+    .nav-btn-ghost { border-color: rgba(255,255,255,0.12); color: var(--muted); background: transparent; }
+    .nav-btn-ghost:hover { border-color: rgba(255,255,255,0.25); color: var(--text); }
+    .nav-btn-primary { border-color: rgba(37,99,235,0.5); color: #93c5fd; background: rgba(37,99,235,0.12); }
+    .nav-btn-primary:hover { background: rgba(37,99,235,0.22); }
+
+    /* ── HEADER ───────────────────────────────────────────────────────────── */
+    .page-header {
+      padding: 3rem 1.5rem 2rem;
+      background: linear-gradient(180deg, rgba(13,148,136,0.12) 0%, transparent 100%);
+      border-bottom: 1px solid var(--border);
+      text-align: center;
+    }
+    .page-eyebrow {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.25rem 0.85rem; border-radius: 9999px;
+      border: 1px solid rgba(20,184,166,0.35); background: rgba(20,184,166,0.08);
+      font-size: 0.68rem; font-weight: 700; color: var(--teal-l);
+      letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 1rem;
+    }
+    .page-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(1.8rem,4vw,2.8rem); font-weight: 800; letter-spacing: -0.02em;
+      margin-bottom: 0.6rem;
+    }
+    .page-title span { background: linear-gradient(135deg,#5eead4,#38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .page-sub { font-size: 0.92rem; color: var(--muted); max-width: 600px; margin: 0 auto 1.5rem; line-height: 1.6; }
+
+    /* Persona chip */
+    .persona-bar {
+      display: inline-flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; justify-content: center;
+      padding: 0.6rem 1.5rem; border-radius: 0.75rem;
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+    }
+    .persona-item { font-size: 0.75rem; color: var(--muted); }
+    .persona-item strong { color: var(--text); font-weight: 600; }
+    .persona-div { width: 1px; height: 16px; background: var(--border); }
+
+    /* ── JOURNEY MAP TABLE ────────────────────────────────────────────────── */
+    .jm-wrapper { padding: 2rem 1rem 3rem; overflow-x: auto; }
+    .jm-container { max-width: 1300px; margin: 0 auto; min-width: 900px; }
+
+    /* Stage headers */
+    .jm-stages {
+      display: grid;
+      grid-template-columns: 90px repeat(5, 1fr);
+      gap: 8px; margin-bottom: 8px;
+    }
+    .jm-label-spacer { /* empty top-left corner */ }
+    .stage-header {
+      border-radius: 0.75rem; padding: 0.85rem 0.75rem;
+      text-align: center; position: relative; overflow: hidden;
+    }
+    .stage-num {
+      font-size: 0.58rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; opacity: 0.7; margin-bottom: 0.2rem;
+    }
+    .stage-icon { font-size: 1.5rem; display: block; margin-bottom: 0.3rem; }
+    .stage-name { font-family: 'Space Grotesk', sans-serif; font-size: 0.82rem; font-weight: 700; line-height: 1.2; }
+    .stage-time { font-size: 0.65rem; opacity: 0.65; margin-top: 0.2rem; }
+
+    /* Rows */
+    .jm-row {
+      display: grid;
+      grid-template-columns: 90px repeat(5, 1fr);
+      gap: 8px; margin-bottom: 8px;
+    }
+    .row-label {
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 0.625rem; padding: 0.5rem;
+      writing-mode: vertical-rl; text-orientation: mixed;
+      transform: rotate(180deg);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .cell {
+      border-radius: 0.625rem; padding: 0.85rem 0.8rem;
+      position: relative; overflow: hidden;
+      border: 1px solid transparent;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .cell:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+
+    .cell-icon { font-size: 1.1rem; margin-bottom: 0.4rem; display: block; }
+    .cell-text { font-size: 0.76rem; line-height: 1.55; color: var(--text); }
+    .cell-text strong { display: block; font-weight: 600; margin-bottom: 0.2rem; font-size: 0.78rem; }
+    .cell-quote {
+      margin-top: 0.5rem; padding: 0.3rem 0.5rem;
+      border-radius: 0.35rem; font-size: 0.68rem; font-style: italic;
+      background: rgba(0,0,0,0.2); color: var(--muted);
+      border-left: 2px solid currentColor;
+    }
+    .cell-metric {
+      margin-top: 0.5rem; font-size: 0.7rem; font-weight: 700;
+      padding: 0.2rem 0.5rem; border-radius: 0.3rem;
+      display: inline-block;
+    }
+    .critical-badge {
+      position: absolute; top: 0.4rem; right: 0.4rem;
+      font-size: 0.55rem; font-weight: 800; letter-spacing: 0.05em;
+      padding: 0.15rem 0.4rem; border-radius: 9999px;
+      background: rgba(220,38,38,0.25); color: #fca5a5;
+      border: 1px solid rgba(220,38,38,0.4);
+      text-transform: uppercase;
+    }
+
+    /* Emotion emojis */
+    .emotion-emoji { font-size: 2rem; display: block; margin-bottom: 0.3rem; text-align: center; }
+    .emotion-label { text-align: center; font-size: 0.72rem; font-weight: 600; }
+    .emotion-thought { text-align: center; font-size: 0.65rem; color: var(--muted); font-style: italic; margin-top: 0.3rem; line-height: 1.4; }
+
+    /* ROW COLORS */
+    /* Acciones row */
+    .row-acc .row-label { background: rgba(37,99,235,0.15); color: #93c5fd; border: 1px solid rgba(37,99,235,0.25); }
+    .row-acc .cell { background: rgba(37,99,235,0.07); border-color: rgba(37,99,235,0.18); }
+    /* Emociones row */
+    .row-emo .row-label { background: rgba(245,158,11,0.15); color: #fcd34d; border: 1px solid rgba(245,158,11,0.25); }
+    .row-emo .cell { background: rgba(245,158,11,0.06); border-color: rgba(245,158,11,0.15); }
+    /* Problemas row */
+    .row-prob .row-label { background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.25); }
+    .row-prob .cell { background: rgba(239,68,68,0.07); border-color: rgba(239,68,68,0.18); }
+    /* Soluciones row */
+    .row-sol .row-label { background: rgba(16,185,129,0.15); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.25); }
+    .row-sol .cell { background: rgba(16,185,129,0.07); border-color: rgba(16,185,129,0.18); }
+
+    /* STAGE-COLORED HEADERS */
+    .s1 { background: rgba(37,99,235,0.18); border: 1px solid rgba(37,99,235,0.3); color: #93c5fd; }
+    .s2 { background: rgba(124,58,237,0.18); border: 1px solid rgba(124,58,237,0.3); color: #c4b5fd; }
+    .s3 { background: rgba(245,158,11,0.18); border: 1px solid rgba(245,158,11,0.3); color: #fcd34d; }
+    .s4 { background: rgba(8,145,178,0.18); border: 1px solid rgba(8,145,178,0.3); color: #67e8f9; }
+    .s5 { background: rgba(220,38,38,0.18); border: 1px solid rgba(220,38,38,0.3); color: #fca5a5; }
+
+    /* AI solution highlight in soluciones row */
+    .sol-chip {
+      display: inline-flex; align-items: center; gap: 0.25rem;
+      font-size: 0.6rem; font-weight: 700; padding: 0.15rem 0.45rem;
+      border-radius: 9999px; margin-bottom: 0.35rem;
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+
+    /* ── INSIGHTS BAR ─────────────────────────────────────────────────────── */
+    .insights {
+      max-width: 1300px; margin: 0 auto 3rem;
+      padding: 0 1rem;
+    }
+    .insights-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.7rem; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.08em;
+      margin-bottom: 0.75rem;
+    }
+    .insights-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 0.75rem; }
+    @media (max-width: 700px) { .insights-grid { grid-template-columns: 1fr 1fr; } }
+    .insight-card {
+      padding: 1rem; border-radius: 0.625rem;
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+      text-align: center;
+    }
+    .insight-num { font-family: 'Space Grotesk', sans-serif; font-size: 1.6rem; font-weight: 800; line-height: 1; }
+    .insight-label { font-size: 0.68rem; color: var(--muted); margin-top: 0.25rem; line-height: 1.4; }
+
+    /* ── FOOTER ───────────────────────────────────────────────────────────── */
+    footer {
+      background: #020810; border-top: 1px solid var(--border);
+      padding: 1.5rem; text-align: center;
+    }
+    footer p { font-size: 0.72rem; color: var(--muted); }
+    footer a { color: #60a5fa; text-decoration: none; }
+
+    @media (max-width: 640px) {
+      nav { padding: 0.6rem 1rem; }
+      .nav-brand { font-size: 0.78rem; }
+      .page-header { padding: 2rem 1rem 1.5rem; }
+      .persona-bar { gap: 0.75rem; padding: 0.5rem 1rem; }
+      .persona-div { display: none; }
+    }
+
+    @media print {
+      nav, footer { display: none; }
+      body { background: white; color: black; }
+      .page-header { background: none; }
+      .cell, .stage-header, .row-label { border: 1px solid #ccc !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-brand">⚡ Smart Classroom AI</div>
+    <div class="nav-links">
+      <a href="/app/landing.html" class="nav-btn nav-btn-ghost">Inicio</a>
+      <a href="/app/" class="nav-btn nav-btn-primary">Ver Digital Twin</a>
+    </div>
+  </nav>
+
+  <!-- HEADER -->
+  <div class="page-header">
+    <div class="page-eyebrow">🗺 Tarea 3 · Advanced Technologies Lab · Décimo</div>
+    <h1 class="page-title">Journey Map<br><span>Smart Classroom AI</span></h1>
+    <p class="page-sub">
+      Análisis de cómo los usuarios interactúan con la energía eléctrica en el aula
+      y cómo nuestra solución de IA transforma cada decisión hacia la sostenibilidad.
+    </p>
+    <div class="persona-bar">
+      <div class="persona-item"><strong>👤 Usuario</strong> Docente / Estudiante</div>
+      <div class="persona-div"></div>
+      <div class="persona-item"><strong>📍 Contexto</strong> Salón de clase, Medellín</div>
+      <div class="persona-div"></div>
+      <div class="persona-item"><strong>🎯 Problema</strong> Malgasto de energía por iluminación innecesaria</div>
+      <div class="persona-div"></div>
+      <div class="persona-item"><strong>💡 Solución</strong> Sistema multi-agente de IA</div>
+    </div>
+  </div>
+
+  <!-- JOURNEY MAP -->
+  <div class="jm-wrapper">
+    <div class="jm-container">
+
+      <!-- STAGE HEADERS -->
+      <div class="jm-stages">
+        <div class="jm-label-spacer"></div>
+
+        <div class="stage-header s1">
+          <div class="stage-num">Etapa 1</div>
+          <span class="stage-icon">🌅</span>
+          <div class="stage-name">Llegada al Aula</div>
+          <div class="stage-time">7:00 AM</div>
+        </div>
+        <div class="stage-header s2">
+          <div class="stage-num">Etapa 2</div>
+          <span class="stage-icon">📚</span>
+          <div class="stage-name">Clase en Progreso</div>
+          <div class="stage-time">10:00 AM</div>
+        </div>
+        <div class="stage-header s3">
+          <div class="stage-num">Etapa 3</div>
+          <span class="stage-icon">☕</span>
+          <div class="stage-name">Receso Escolar</div>
+          <div class="stage-time">12:00 PM</div>
+        </div>
+        <div class="stage-header s4">
+          <div class="stage-num">Etapa 4</div>
+          <span class="stage-icon">🌧</span>
+          <div class="stage-name">Cambio de Clima</div>
+          <div class="stage-time">2:00 PM</div>
+        </div>
+        <div class="stage-header s5">
+          <div class="stage-num">Etapa 5 ⚠️</div>
+          <span class="stage-icon">🌆</span>
+          <div class="stage-name">Fin de Jornada</div>
+          <div class="stage-time">5:00 PM</div>
+        </div>
+      </div>
+
+      <!-- ROW 1: ACCIONES -->
+      <div class="jm-row row-acc">
+        <div class="row-label">Acciones</div>
+
+        <div class="cell">
+          <span class="cell-icon">💡</span>
+          <div class="cell-text">
+            <strong>Enciende todas las luces</strong>
+            El docente activa los 8 fluorescentes del salón al llegar, por hábito, sin evaluar la luz solar disponible.
+          </div>
+        </div>
+        <div class="cell">
+          <span class="cell-icon">🪑</span>
+          <div class="cell-text">
+            <strong>Ignora zonas vacías</strong>
+            Solo los estudiantes de adelante están presentes, pero las luces del fondo permanecen encendidas sin que nadie lo note.
+          </div>
+        </div>
+        <div class="cell">
+          <span class="cell-icon">🚪</span>
+          <div class="cell-text">
+            <strong>Sale sin apagar</strong>
+            Al sonar el timbre, todos salen apresurados al descanso y dejan las 8 luces encendidas. "Ya volvemos."
+          </div>
+        </div>
+        <div class="cell">
+          <span class="cell-icon">☁️</span>
+          <div class="cell-text">
+            <strong>No ajusta la iluminación</strong>
+            El clima cambia, llueve y el salón se oscurece, pero nadie interrumpe la clase para ir al interruptor.
+          </div>
+        </div>
+        <div class="cell">
+          <span class="cell-icon">🔑</span>
+          <div class="cell-text">
+            <strong>Olvida apagar al salir</strong>
+            El último docente cierra el salón con las luces encendidas. El personal de limpieza llega 2 horas después.
+          </div>
+          <div class="critical-badge">⚠ Crítico</div>
+        </div>
+      </div>
+
+      <!-- ROW 2: EMOCIONES -->
+      <div class="jm-row row-emo">
+        <div class="row-label">Emociones</div>
+
+        <div class="cell" style="text-align:center">
+          <span class="emotion-emoji">😐</span>
+          <div class="emotion-label">Automático</div>
+          <div class="emotion-thought">"Es lo que siempre hago al llegar. No lo pienso."</div>
+        </div>
+        <div class="cell" style="text-align:center">
+          <span class="emotion-emoji">😴</span>
+          <div class="emotion-label">Inconsciente</div>
+          <div class="emotion-thought">"Nadie lo nota. No hay razón para actuar."</div>
+        </div>
+        <div class="cell" style="text-align:center">
+          <span class="emotion-emoji">🏃</span>
+          <div class="emotion-label">Apresurado</div>
+          <div class="emotion-thought">"En 20 minutos volvemos. No vale la pena."</div>
+        </div>
+        <div class="cell" style="text-align:center">
+          <span class="emotion-emoji">😤</span>
+          <div class="emotion-label">Impotente</div>
+          <div class="emotion-thought">"Tengo que interrumpir la clase para ajustar las luces."</div>
+        </div>
+        <div class="cell" style="text-align:center">
+          <span class="emotion-emoji">😅</span>
+          <div class="emotion-label">Olvidadizo</div>
+          <div class="emotion-thought">"Pensé que alguien más las apagaría. Siempre pasa."</div>
+        </div>
+      </div>
+
+      <!-- ROW 3: PROBLEMAS -->
+      <div class="jm-row row-prob">
+        <div class="row-label">Problemas</div>
+
+        <div class="cell">
+          <span class="cell-icon">⚡</span>
+          <div class="cell-text">
+            <strong>Consumo innecesario desde el inicio</strong>
+            320W activos aunque el sol ilumina el 50% del aula. Zonas A y B con luz natural suficiente (>70%).
+          </div>
+          <span class="cell-metric" style="background:rgba(239,68,68,0.15);color:#fca5a5">~0.16 kWh desperdiciados/día</span>
+        </div>
+        <div class="cell">
+          <span class="cell-icon">🗺</span>
+          <div class="cell-text">
+            <strong>Zonas vacías iluminadas</strong>
+            Zonas C y D (50% del salón) sin ocupación. Falta de conciencia espacial del uso de energía.
+          </div>
+          <span class="cell-metric" style="background:rgba(239,68,68,0.15);color:#fca5a5">80W × 6h = 0.48 kWh/día</span>
+        </div>
+        <div class="cell">
+          <span class="cell-icon">🕐</span>
+          <div class="cell-text">
+            <strong>Salón vacío con luz plena</strong>
+            320W consumiendo sin ninguna persona presente. Se repite 200 días al año en cada recreo.
+          </div>
+          <span class="cell-metric" style="background:rgba(239,68,68,0.15);color:#fca5a5">21.3 kWh/año · $17,067 COP</span>
+        </div>
+        <div class="cell">
+          <span class="cell-icon">🌫</span>
+          <div class="cell-text">
+            <strong>Iluminación desadaptada al clima</strong>
+            Sin ajuste dinámico: días nublados con poca luz, días soleados con consumo excesivo. Decisiones lentas e inconsistentes.
+          </div>
+          <span class="cell-metric" style="background:rgba(239,68,68,0.15);color:#fca5a5">Costo pedagógico + energético</span>
+        </div>
+        <div class="cell">
+          <span class="cell-icon">🔥</span>
+          <div class="cell-text">
+            <strong>Mayor punto de desperdicio sostenido</strong>
+            320W × 2 horas × 200 días/año. Representa el 25% del desperdicio anual total del salón.
+          </div>
+          <span class="cell-metric" style="background:rgba(239,68,68,0.2);color:#f87171;font-size:0.72rem">128 kWh/año · 16.1 kg CO₂ evitables</span>
+          <div class="critical-badge" style="position:relative;top:auto;right:auto;display:inline-block;margin-top:0.4rem">⚠ Mayor impacto</div>
+        </div>
+      </div>
+
+      <!-- ROW 4: SOLUCIONES IA -->
+      <div class="jm-row row-sol">
+        <div class="row-label">Soluciones IA</div>
+
+        <div class="cell">
+          <div class="sol-chip" style="background:rgba(6,182,212,0.15);color:#67e8f9;border:1px solid rgba(6,182,212,0.3)">☀️ LightSensorAgent</div>
+          <div class="sol-chip" style="background:rgba(37,99,235,0.15);color:#93c5fd;border:1px solid rgba(37,99,235,0.3)">🧠 OrchestratorAgent</div>
+          <div class="cell-text">
+            Detecta luz natural >70% en zonas A y B → las mantiene apagadas automáticamente. Solo enciende zonas C y D.
+            <div class="cell-quote" style="border-color:#10b981;color:#6ee7b7">Resultado: 80W en lugar de 320W desde el primer minuto</div>
+          </div>
+        </div>
+        <div class="cell">
+          <div class="sol-chip" style="background:rgba(129,140,248,0.15);color:#a5b4fc;border:1px solid rgba(129,140,248,0.3)">👁 VisionAgent</div>
+          <div class="sol-chip" style="background:rgba(37,99,235,0.15);color:#93c5fd;border:1px solid rgba(37,99,235,0.3)">🧠 OrchestratorAgent</div>
+          <div class="cell-text">
+            Detecta ocupación por zona en tiempo real. Apaga automáticamente las zonas sin personas. Solo las zonas activas tienen luz.
+            <div class="cell-quote" style="border-color:#10b981;color:#6ee7b7">Regla: 0 personas en zona → luz OFF inmediata</div>
+          </div>
+        </div>
+        <div class="cell">
+          <div class="sol-chip" style="background:rgba(129,140,248,0.15);color:#a5b4fc;border:1px solid rgba(129,140,248,0.3)">👁 VisionAgent</div>
+          <div class="cell-text">
+            Detecta 0 personas en el salón → apaga TODAS las luces en menos de 5 segundos. Al regresar, las enciende automáticamente.
+            <div class="cell-quote" style="border-color:#10b981;color:#6ee7b7">Sin intervención humana. Sin desperdicio en recreos</div>
+          </div>
+        </div>
+        <div class="cell">
+          <div class="sol-chip" style="background:rgba(6,182,212,0.15);color:#67e8f9;border:1px solid rgba(6,182,212,0.3)">☀️ LightSensorAgent</div>
+          <div class="sol-chip" style="background:rgba(16,185,129,0.15);color:#6ee7b7;border:1px solid rgba(16,185,129,0.3)">🎙 VoiceAgent</div>
+          <div class="cell-text">
+            Monitorea clima en tiempo real y ajusta la intensidad por zona. Si llueve, enciende más; si sale el sol, atenúa. Voz: "encender todo" / "atenuar zona B".
+            <div class="cell-quote" style="border-color:#10b981;color:#6ee7b7">Ajuste dinámico sin interrumpir la clase</div>
+          </div>
+        </div>
+        <div class="cell">
+          <div class="sol-chip" style="background:rgba(129,140,248,0.15);color:#a5b4fc;border:1px solid rgba(129,140,248,0.3)">👁 VisionAgent</div>
+          <div class="sol-chip" style="background:rgba(20,184,166,0.15);color:#5eead4;border:1px solid rgba(20,184,166,0.3)">🪞 DigitalTwinAgent</div>
+          <div class="cell-text">
+            Detecta salón vacío → apaga todas las luces en 30 segundos. El DigitalTwin registra el ahorro acumulado en kWh, COP y kg CO₂.
+            <div class="cell-quote" style="border-color:#10b981;color:#6ee7b7">128 kWh/año ahorrados. Cero dependencia humana</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /jm-container -->
+  </div><!-- /jm-wrapper -->
+
+  <!-- INSIGHTS -->
+  <div class="insights">
+    <div class="insights-title">📊 Impacto cuantificado — 1 salón · 200 días escolares</div>
+    <div class="insights-grid">
+      <div class="insight-card">
+        <div class="insight-num" style="color:#f87171">512 <span style="font-size:1rem">kWh</span></div>
+        <div class="insight-label">Consumo anual sin IA<br><span style="color:#475569">320W × 8h × 200d</span></div>
+      </div>
+      <div class="insight-card">
+        <div class="insight-num" style="color:#4ade80">~205 <span style="font-size:1rem">kWh</span></div>
+        <div class="insight-label">Consumo anual con IA<br><span style="color:#475569">ahorro del ~60%</span></div>
+      </div>
+      <div class="insight-card">
+        <div class="insight-num" style="color:#a78bfa">~38 <span style="font-size:1rem">kg CO₂</span></div>
+        <div class="insight-label">CO₂ evitado al año<br><span style="color:#475569">= 1.8 árboles plantados</span></div>
+      </div>
+      <div class="insight-card">
+        <div class="insight-num" style="color:#fbbf24">$245K <span style="font-size:1rem">COP</span></div>
+        <div class="insight-label">Ahorro económico anual<br><span style="color:#475569">tarifa $800 COP/kWh</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>
+      <strong style="color:var(--text)">Journey Map — Smart Classroom AI</strong> ·
+      Tarea 3: Diseño de Reglas de Alerta · Advanced Technologies Lab · Décimo ·
+      Colegio La Enseñanza, Medellín · 2026 ·
+      <a href="/app/landing.html">Ver landing page</a> ·
+      <a href="/app/">Ver Digital Twin</a>
+    </p>
+  </footer>
+
+  <!-- Floating Digital Twin CTA -->
+  <style>
+    .dt-float {
+      position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 999;
+      display: flex; align-items: center; gap: 0.6rem;
+      background: linear-gradient(135deg,#2563eb,#06b6d4);
+      color: #fff; text-decoration: none;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.82rem; font-weight: 700;
+      padding: 0.7rem 1.3rem; border-radius: 9999px;
+      box-shadow: 0 8px 32px rgba(37,99,235,0.5), 0 0 0 1px rgba(255,255,255,0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+      animation: floatIn 0.6s 1s both;
+    }
+    .dt-float:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 14px 48px rgba(37,99,235,0.65); }
+    .dt-float-dot {
+      width: 8px; height: 8px; background: #fff; border-radius: 50%;
+      animation: dtBlink 1.4s ease-in-out infinite;
+    }
+    @keyframes dtBlink { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
+    @keyframes floatIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+    @media (max-width: 480px) { .dt-float { font-size:0.74rem; padding:0.6rem 1rem; bottom:1rem; right:1rem; } }
+  </style>
+  <a href="/app/" class="dt-float">
+    <span class="dt-float-dot"></span>
+    ⚡ Ver Digital Twin
+  </a>
+
+</body>
+</html>

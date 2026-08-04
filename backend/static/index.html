@@ -1,0 +1,1458 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Classroom AI</title>
+
+  <!-- Scripts served locally — no internet required -->
+  <script src="/vendor/react.min.js"></script>
+  <script src="/vendor/react-dom.min.js"></script>
+  <script src="/vendor/babel.min.js"></script>
+  <script src="/vendor/three.min.js"></script>
+
+  <!-- ── Dónde vive el backend ─────────────────────────────────────────────
+       En local (localhost) usa el mismo servidor: no hace falta configurar nada.
+       Publicado en internet, apunta al backend de Render.
+       ⚠️ Cambia esta URL por la de tu app en Render antes de subir a Netlify. -->
+  <script>
+    window.API_BASE =
+      location.hostname === "localhost" || location.hostname === "127.0.0.1"
+        ? ""
+        : "https://smart-classroom-api.onrender.com";
+
+    // Redirige las llamadas /api/... al backend cuando está en otro dominio
+    if (window.API_BASE) {
+      const _fetch = window.fetch.bind(window);
+      window.fetch = function (url, opts) {
+        if (typeof url === "string" && url.startsWith("/api/")) {
+          url = window.API_BASE + url;
+        }
+        return _fetch(url, opts);
+      };
+    }
+  </script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f1117; }
+    ::-webkit-scrollbar-thumb { background: #2d3148; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3d4268; }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0b0e16;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+
+    /* ── Header ─────────────────────────────────────────────────────────── */
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.75rem 1.5rem;
+      background: linear-gradient(90deg, #13162080 0%, #1a1d2780 100%);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid #ffffff0d;
+      position: sticky; top: 0; z-index: 10;
+    }
+    header h1 {
+      font-size: 1rem; font-weight: 700; letter-spacing: -0.01em;
+      background: linear-gradient(90deg, #e2e8f0, #94a3b8);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .badge {
+      font-size: 0.68rem; padding: 0.25rem 0.7rem;
+      border-radius: 9999px; font-weight: 600; letter-spacing: 0.02em;
+    }
+    .badge.on  { background: #14532d50; color: #4ade80; border: 1px solid #4ade8040; }
+    .badge.off { background: #450a0a50; color: #f87171; border: 1px solid #f8717140; }
+
+    .reset-btn {
+      font-size: 0.68rem; padding: 0.25rem 0.75rem;
+      border-radius: 9999px; border: 1px solid #3d426860;
+      background: #1e223240; color: #94a3b8; cursor: pointer;
+      font-weight: 600; letter-spacing: 0.02em;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+    .reset-btn:hover { background: #2d314860; color: #cbd5e1; border-color: #4a527a; }
+
+    /* ── Layout ─────────────────────────────────────────────────────────── */
+    main {
+      display: grid; grid-template-columns: 1fr 360px;
+      gap: 1rem; padding: 1rem 1.5rem; max-width: 1400px; margin: 0 auto;
+    }
+    @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+
+    /* ── Panels ─────────────────────────────────────────────────────────── */
+    .panel {
+      background: #13162080;
+      border: 1px solid #ffffff0d;
+      border-radius: 0.75rem;
+      padding: 1rem;
+      box-shadow: 0 4px 24px #00000040;
+      backdrop-filter: blur(4px);
+    }
+    .panel h2 {
+      font-size: 0.65rem; font-weight: 700; color: #475569;
+      margin-bottom: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .panel h2::before {
+      content: ""; display: inline-block;
+      width: 2px; height: 0.75rem;
+      background: currentColor; border-radius: 1px; opacity: 0.6;
+    }
+
+    /* ── Zone cards ─────────────────────────────────────────────────────── */
+    .zone-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    .zone-card { border-radius: 0.5rem; padding: 0.75rem; border: 1px solid transparent; transition: box-shadow 0.3s; }
+    .zone-card.ON  { border-color: #eab30860; background: #1c1a0960; box-shadow: 0 0 12px #eab30818; }
+    .zone-card.DIM { border-color: #f9731660; background: #1c110960; box-shadow: 0 0 12px #f9731618; }
+    .zone-card.OFF { border-color: #33415560; background: #10131a; }
+    .zone-name  { font-weight: 600; font-size: 0.78rem; color: #cbd5e1; }
+    .zone-state { font-size: 1.2rem; margin: 0.2rem 0 0.1rem; }
+    .zone-meta  { font-size: 0.63rem; color: #475569; line-height: 1.4; }
+
+    /* ── Chips ──────────────────────────────────────────────────────────── */
+    .chip-group { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-bottom: 0.75rem; }
+    .chip {
+      padding: 0.25rem 0.65rem; border-radius: 0.375rem;
+      border: 1px solid #33415560; background: transparent;
+      color: #64748b; cursor: pointer; font-size: 0.7rem;
+      transition: all 0.15s;
+    }
+    .chip:hover { border-color: #4a527a; color: #94a3b8; }
+    .chip.active-blue   { border-color: #3b82f6; background: #1e3a5f80; color: #93c5fd; font-weight: 600; }
+    .chip.active-orange { border-color: #f97316; background: #43140780; color: #fdba74; font-weight: 600; }
+    .chip.active-purple { border-color: #a855f7; background: #3b076480; color: #d8b4fe; font-weight: 600; }
+
+    /* ── 3D Canvas ──────────────────────────────────────────────────────── */
+    #canvas3d { width: 100%; height: 420px; border-radius: 0.5rem; overflow: hidden; display: block; }
+
+    /* ── Voice button ───────────────────────────────────────────────────── */
+    .voice-btn {
+      width: 3rem; height: 3rem; border-radius: 50%;
+      border: 2px solid #4ade8060; background: transparent;
+      color: #4ade80; font-size: 1.3rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s; box-shadow: 0 0 0 0 #4ade8030;
+    }
+    .voice-btn:hover { border-color: #4ade80; box-shadow: 0 0 12px #4ade8030; }
+    .voice-btn.listening {
+      background: #ef444415; border-color: #ef4444;
+      color: #ef4444; animation: pulse 1.2s infinite;
+    }
+    .voice-btn.processing {
+      background: #7c3aed15; border-color: #7c3aed;
+      color: #a78bfa; cursor: wait; pointer-events: none;
+      animation: processingPulse 1.4s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 #ef444440; }
+      50%       { box-shadow: 0 0 0 8px #ef444400; }
+    }
+    @keyframes processingPulse {
+      0%, 100% { box-shadow: 0 0 0 0 #7c3aed40, 0 0 14px #7c3aed25; }
+      50%       { box-shadow: 0 0 0 8px #7c3aed00, 0 0 20px #7c3aed40; }
+    }
+    @keyframes orbit {
+      to { transform: rotate(360deg); }
+    }
+    .voice-orbit {
+      position: absolute; inset: -6px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      border-top-color: #a78bfa;
+      border-right-color: #7c3aed60;
+      animation: orbit 0.8s linear infinite;
+      pointer-events: none;
+    }
+    .voice-btn-wrap { position: relative; display: inline-flex; flex-shrink: 0; }
+
+    /* ── Mini energy chart ──────────────────────────────────────────────── */
+    .chart-bar-wrap { display: flex; align-items: flex-end; gap: 2px; height: 80px; margin-top: 0.5rem; }
+    .chart-bar { flex: 1; border-radius: 2px 2px 0 0; min-width: 6px; transition: height 0.3s; opacity: 0.85; }
+
+    .history-item { font-size: 0.67rem; color: #475569; padding: 0.25rem 0; border-bottom: 1px solid #1e223260; }
+    .history-item:last-child { border-bottom: none; }
+    .history-item .hw { color: #4ade80; font-weight: 600; }
+
+    /* ── Reference cards ────────────────────────────────────────────────── */
+    .ref-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; margin-bottom: 0.85rem; }
+    .ref-card {
+      background: #0b0e1680; border: 1px solid #facc1520;
+      border-radius: 0.5rem; padding: 0.55rem 0.7rem;
+      transition: border-color 0.2s;
+    }
+    .ref-card:hover { border-color: #facc1545; }
+    .ref-label { font-size: 0.6rem; color: #475569; margin-bottom: 0.1rem; }
+    .ref-value { font-size: 0.88rem; font-weight: 700; color: #fbbf24; }
+    .ref-note  { font-size: 0.58rem; color: #334155; margin-top: 0.1rem; }
+
+    /* ── Comparison table ───────────────────────────────────────────────── */
+    .cmp-table { width: 100%; border-collapse: collapse; font-size: 0.69rem; }
+    .cmp-table thead tr { border-bottom: 1px solid #1e2232; }
+    .cmp-table th {
+      padding: 0.4rem 0.55rem; font-size: 0.62rem; font-weight: 700;
+      color: #475569; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .cmp-table td { padding: 0.34rem 0.55rem; border-bottom: 1px solid #1a1d2760; }
+    .cmp-table tbody tr:hover { background: #ffffff05 !important; }
+    .cmp-table tr:last-child td { border-bottom: none; }
+
+    /* ── Section divider label ──────────────────────────────────────────── */
+    .section-label {
+      font-size: 0.6rem; font-weight: 700; color: #334155;
+      text-transform: uppercase; letter-spacing: 0.07em;
+      margin: 0.85rem 0 0.45rem;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .section-label::after {
+      content: ""; flex: 1; height: 1px; background: #1e2232;
+    }
+
+    /* ── Carbon bars ────────────────────────────────────────────────────── */
+    .carbon-bar-track {
+      background: #0b0e16; border-radius: 0.3rem;
+      height: 16px; overflow: hidden;
+      border: 1px solid #1e223260;
+    }
+    .carbon-bar-fill  { height: 100%; border-radius: 0.3rem; transition: width 0.7s cubic-bezier(.4,0,.2,1); }
+
+    /* ── Carbon equivalence cards ───────────────────────────────────────── */
+    .carbon-eq-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.45rem; }
+    .carbon-eq-card {
+      background: #0b0e1680; border: 1px solid #4ade8020;
+      border-radius: 0.5rem; padding: 0.6rem 0.4rem; text-align: center;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .carbon-eq-card:hover { border-color: #4ade8050; box-shadow: 0 0 10px #4ade8010; }
+
+    /* ── MOBILE ─────────────────────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      /* Header */
+      header { padding: 0.6rem 0.9rem; gap: 0.5rem; }
+      header h1 { font-size: 0.82rem; }
+      .badge { font-size: 0.65rem; padding: 0.2rem 0.55rem; }
+      .reset-btn { font-size: 0.65rem; padding: 0.2rem 0.6rem; }
+
+      /* Layout */
+      main { padding: 0.75rem; gap: 0.75rem; }
+
+      /* Panels */
+      .panel { padding: 0.75rem; }
+      .panel h2 { font-size: 0.68rem; margin-bottom: 0.65rem; }
+
+      /* 3D canvas */
+      #canvas3d { height: 260px; }
+
+      /* Zones */
+      .zone-grid { grid-template-columns: 1fr 1fr; gap: 0.4rem; }
+      .zone-card { padding: 0.6rem; }
+      .zone-name  { font-size: 0.72rem; }
+      .zone-meta  { font-size: 0.62rem; }
+      .zone-state { font-size: 1rem; }
+
+      /* Chips */
+      .chip { padding: 0.3rem 0.55rem; font-size: 0.68rem; min-height: 34px; }
+      .chip-group { gap: 0.25rem; }
+
+      /* Ref cards */
+      .ref-grid { grid-template-columns: 1fr 1fr; }
+      .ref-value { font-size: 0.8rem; }
+
+      /* Tables */
+      .cmp-table { font-size: 0.65rem; }
+      .cmp-table th { padding: 0.3rem 0.4rem; font-size: 0.58rem; }
+      .cmp-table td { padding: 0.28rem 0.4rem; }
+
+      /* Carbon bars */
+      .carbon-bar-track { height: 12px; }
+      .carbon-eq-grid { grid-template-columns: 1fr 1fr 1fr; gap: 0.35rem; }
+      .carbon-eq-card { padding: 0.45rem 0.3rem; }
+
+      /* Section labels */
+      .section-label { font-size: 0.58rem; }
+
+      /* Voice */
+      .voice-btn { width: 2.75rem; height: 2.75rem; font-size: 1.1rem; }
+
+      /* Canvas overlay */
+      .canvas-overlay-label { font-size: 0.62rem; }
+      .canvas-spinner { width: 1.8rem; height: 1.8rem; }
+    }
+
+    @media (max-width: 400px) {
+      .ref-grid { grid-template-columns: 1fr; }
+      .carbon-eq-grid { grid-template-columns: 1fr 1fr; gap: 0.3rem; }
+      header h1 { font-size: 0.75rem; }
+    }
+
+    /* ── Loading spinner (inline) ───────────────────────────────────────── */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      display: inline-block; width: 0.65em; height: 0.65em;
+      border: 1.5px solid currentColor; border-top-color: transparent;
+      border-radius: 50%; animation: spin 0.55s linear infinite;
+      vertical-align: middle; margin-right: 0.3em;
+    }
+    .chip.loading { opacity: 0.55; cursor: wait; pointer-events: none; }
+    .reset-btn:disabled { opacity: 0.6; cursor: wait; }
+
+    /* ── Language toggle ────────────────────────────────────────────────── */
+    .lang-toggle {
+      display: inline-flex; align-items: center;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 9999px; padding: 0.15rem 0.2rem; gap: 0.1rem;
+    }
+    .lang-btn {
+      padding: 0.22rem 0.6rem; border-radius: 9999px; border: none;
+      font-size: 0.72rem; font-weight: 700; cursor: pointer;
+      background: transparent; color: #64748b; transition: all 0.2s;
+    }
+    .lang-btn.active {
+      background: linear-gradient(135deg, #2563eb, #0891b2);
+      color: #fff; box-shadow: 0 0 10px rgba(37,99,235,0.4);
+    }
+
+    /* ── 3D scene loading overlay ───────────────────────────────────────── */
+    .canvas-wrap { position: relative; }
+    .canvas-overlay {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 0.6rem;
+      background: #0b0e1660;
+      backdrop-filter: blur(3px);
+      border-radius: 0.5rem;
+      z-index: 5;
+      pointer-events: none;
+    }
+    .canvas-spinner {
+      width: 2.2rem; height: 2.2rem;
+      border: 3px solid #ffffff12;
+      border-top-color: #4ade80;
+      border-right-color: #4ade8060;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      box-shadow: 0 0 14px #4ade8030;
+    }
+    .canvas-overlay-label {
+      font-size: 0.68rem; color: #4ade80; font-weight: 600;
+      letter-spacing: 0.04em; opacity: 0.85;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useCallback } = React;
+
+    // ── WebSocket hook ────────────────────────────────────────────────────────
+    function useClassroomWS() {
+      const [state, setState]       = useState(null);
+      const [connected, setConn]    = useState(false);
+      const wsRef = useRef(null);
+
+      useEffect(() => {
+        function connect() {
+          // wss:// es obligatorio si la página se sirve por HTTPS
+          const wsUrl = window.API_BASE
+            ? window.API_BASE.replace(/^http/, "ws") + "/ws"
+            : `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`;
+          const ws = new WebSocket(wsUrl);
+          ws.onopen  = () => { setConn(true); };
+          ws.onclose = () => { setConn(false); setTimeout(connect, 3000); };
+          ws.onerror = () => ws.close();
+          ws.onmessage = (e) => {
+            const msg = JSON.parse(e.data);
+            if (msg.type === "STATE_UPDATE") setState(msg.payload);
+          };
+          const ping = setInterval(() => { if (ws.readyState === 1) ws.send("ping"); }, 25000);
+          wsRef.current = { ws, ping };
+        }
+        connect();
+        return () => { wsRef.current?.ws.close(); clearInterval(wsRef.current?.ping); };
+      }, []);
+
+      return { state, connected };
+    }
+
+    // ── helpers ──────────────────────────────────────────────────────────────
+    function box(w, h, d, mat, x, y, z, scene) {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+      m.position.set(x, y, z); scene.add(m); return m;
+    }
+
+    // ── 3D Classroom ─────────────────────────────────────────────────────────
+    function Classroom3D({ classroomState, weather, onLoadingChange }) {
+      const mountRef        = useRef(null);
+      const sceneRef        = useRef(null);
+      const lightsRef       = useRef({});
+      const zoneOverlaysRef = useRef({});
+      const peopleRef       = useRef([]);
+      const windowGlassRef  = useRef([]);
+      const sunBeamsRef     = useRef([]);
+      const rainRef         = useRef({ group: null, drops: [] });
+
+      // ── Scene setup (runs once) ───────────────────────────────────────────
+      useEffect(() => {
+        const mount = mountRef.current;
+        const W = mount.clientWidth, H = mount.clientHeight;
+
+        // Renderer — soft shadows
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(W, H);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        mount.appendChild(renderer.domElement);
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1e2235);
+        scene.fog = new THREE.Fog(0x1e2235, 20, 34);
+        sceneRef.current = scene;
+
+        const camera = new THREE.PerspectiveCamera(52, W/H, 0.1, 100);
+
+        // ── Lighting ──────────────────────────────────────────────────────
+        // Sky/ground hemisphere
+        scene.add(new THREE.HemisphereLight(0xddeeff, 0xc4a46a, 0.55));
+        // Directional (sunlight through windows)
+        const dirLight = new THREE.DirectionalLight(0xfff8e0, 0.8);
+        dirLight.position.set(-5, 9, 3);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.set(1024, 1024);
+        dirLight.shadow.camera.near   = 0.5;
+        dirLight.shadow.camera.far    = 26;
+        dirLight.shadow.camera.left   = -7;
+        dirLight.shadow.camera.right  = 12;
+        dirLight.shadow.camera.top    = 9;
+        dirLight.shadow.camera.bottom = -1;
+        dirLight.shadow.camera.updateProjectionMatrix();
+        dirLight.shadow.bias = -0.0008;
+        scene.add(dirLight);
+
+        // ── Wood-plank floor ──────────────────────────────────────────────
+        const fc = document.createElement('canvas'); fc.width = 512; fc.height = 512;
+        const fctx = fc.getContext('2d');
+        const plankH = 512 / 10;
+        for (let i = 0; i < 10; i++) {
+          const y = i * plankH;
+          const v = 0.88 + Math.random() * 0.18;
+          fctx.fillStyle = `rgb(${Math.round(185*v)},${Math.round(148*v)},${Math.round(96*v)})`;
+          fctx.fillRect(0, y + 1, 512, plankH - 2);
+          // Wood grain lines
+          fctx.strokeStyle = 'rgba(80,50,20,0.10)';
+          fctx.lineWidth = 1;
+          for (let g = 0; g < 5; g++) {
+            fctx.beginPath();
+            fctx.moveTo(0, y + (plankH/5)*g + 3);
+            fctx.bezierCurveTo(170, y+(plankH/5)*g+3+(Math.random()-0.5)*3,
+                               340, y+(plankH/5)*g+3+(Math.random()-0.5)*3,
+                               512, y+(plankH/5)*g+3+(Math.random()-0.5)*2);
+            fctx.stroke();
+          }
+          // Plank gap
+          fctx.fillStyle = 'rgba(0,0,0,0.22)'; fctx.fillRect(0, y, 512, 1.5);
+        }
+        const floorTex = new THREE.CanvasTexture(fc);
+        floorTex.wrapS = floorTex.wrapT = THREE.RepeatWrapping;
+        floorTex.repeat.set(2, 1.6);
+        const floor = new THREE.Mesh(new THREE.PlaneGeometry(10, 8),
+          new THREE.MeshLambertMaterial({ map: floorTex }));
+        floor.rotation.x = -Math.PI/2; floor.position.set(5, 0, 4);
+        floor.receiveShadow = true; scene.add(floor);
+
+        // ── Zone overlays ─────────────────────────────────────────────────
+        const zColors  = { zone_A:0x4a90d9, zone_B:0x5cb85c, zone_C:0xe8a838, zone_D:0x9b59b6 };
+        const zCenters = { zone_A:[2.5,2],  zone_B:[7.5,2],  zone_C:[2.5,6],  zone_D:[7.5,6] };
+        Object.entries(zCenters).forEach(([z,[x,zz]]) => {
+          const m = new THREE.Mesh(new THREE.PlaneGeometry(5, 4),
+            new THREE.MeshBasicMaterial({ color:zColors[z], transparent:true, opacity:0.10, depthWrite:false }));
+          m.rotation.x = -Math.PI/2; m.position.set(x, 0.02, zz);
+          scene.add(m); zoneOverlaysRef.current[z] = m;
+        });
+
+        // ── Ceiling with acoustic-tile texture ────────────────────────────
+        const cc = document.createElement('canvas'); cc.width = 256; cc.height = 256;
+        const cctx = cc.getContext('2d');
+        cctx.fillStyle = '#f0ece4'; cctx.fillRect(0,0,256,256);
+        cctx.strokeStyle = 'rgba(0,0,0,0.13)'; cctx.lineWidth = 1.2;
+        for (let i=0; i<=4; i++) {
+          cctx.beginPath(); cctx.moveTo(i*64,0); cctx.lineTo(i*64,256); cctx.stroke();
+          cctx.beginPath(); cctx.moveTo(0,i*64); cctx.lineTo(256,i*64); cctx.stroke();
+        }
+        // Subtle stippling inside tiles
+        cctx.fillStyle = 'rgba(0,0,0,0.04)';
+        for (let r=0; r<4; r++) for (let c=0; c<4; c++)
+          for (let d=0; d<30; d++)
+            cctx.fillRect(c*64+4+Math.random()*56, r*64+4+Math.random()*56, 1.2, 1.2);
+        const ceilTex = new THREE.CanvasTexture(cc);
+        ceilTex.wrapS = ceilTex.wrapT = THREE.RepeatWrapping;
+        ceilTex.repeat.set(5, 4);
+        const ceil = new THREE.Mesh(new THREE.PlaneGeometry(10, 8),
+          new THREE.MeshLambertMaterial({ map:ceilTex, side: THREE.BackSide }));
+        ceil.rotation.x = Math.PI/2; ceil.position.set(5, 3.2, 4); scene.add(ceil);
+
+        // ── Walls ─────────────────────────────────────────────────────────
+        const wallMat  = new THREE.MeshLambertMaterial({ color: 0xece8df });
+        const baseMat  = new THREE.MeshLambertMaterial({ color: 0xd0c8b8 });
+        [
+          { pos:[5,1.7,0.01],    ry:0,           w:10, h:3.4 },
+          { pos:[5,1.7,7.99],    ry:Math.PI,     w:10, h:3.4 },
+          { pos:[9.99,1.7,4],    ry:-Math.PI/2,  w:8,  h:3.4 },
+          { pos:[0.01,1.7,4],    ry:Math.PI/2,   w:8,  h:3.4 },
+        ].forEach(({pos,ry,w,h}) => {
+          const m = new THREE.Mesh(new THREE.PlaneGeometry(w,h), wallMat);
+          m.position.set(...pos); m.rotation.y=ry; m.receiveShadow=true; scene.add(m);
+        });
+        // Baseboards
+        [
+          { pos:[5,0.09,0.02],   ry:0,          w:10, h:0.17 },
+          { pos:[5,0.09,7.98],   ry:Math.PI,    w:10, h:0.17 },
+          { pos:[9.98,0.09,4],   ry:-Math.PI/2, w:8,  h:0.17 },
+          { pos:[0.02,0.09,4],   ry:Math.PI/2,  w:8,  h:0.17 },
+        ].forEach(({pos,ry,w,h}) => {
+          const m = new THREE.Mesh(new THREE.PlaneGeometry(w,h), baseMat);
+          m.position.set(...pos); m.rotation.y=ry; scene.add(m);
+        });
+
+        // ── Chalkboard (front wall) ───────────────────────────────────────
+        const frameMat = new THREE.MeshLambertMaterial({ color: 0x3d2508 });
+        const boardMesh = new THREE.Mesh(new THREE.BoxGeometry(5.4, 1.55, 0.055),
+          new THREE.MeshLambertMaterial({ color: 0x1c5c3a }));
+        boardMesh.position.set(4.4, 2.12, 0.055); scene.add(boardMesh);
+        // Frame strips
+        [[4.4,2.92,0.07,5.6,0.10,0.07],[4.4,1.32,0.07,5.6,0.10,0.07],
+         [1.64,2.12,0.07,0.10,1.72,0.07],[7.16,2.12,0.07,0.10,1.72,0.07]
+        ].forEach(([x,y,z,fw,fh,fd]) => {
+          const fs = new THREE.Mesh(new THREE.BoxGeometry(fw,fh,fd), frameMat);
+          fs.position.set(x,y,z); scene.add(fs);
+        });
+        // Chalk tray
+        const tray = new THREE.Mesh(new THREE.BoxGeometry(5.4,0.055,0.12), frameMat);
+        tray.position.set(4.4,1.37,0.10); scene.add(tray);
+        // Chalk text lines (white)
+        const chalkMat = new THREE.MeshBasicMaterial({ color: 0xdde8e0 });
+        [[3.0,2.5,0.7],[4.4,2.1,0.9],[5.5,2.6,0.5],[3.6,1.75,0.6],[5.0,1.8,0.4]].forEach(([cx,cy,len]) => {
+          const l = new THREE.Mesh(new THREE.BoxGeometry(len,0.028,0.01),chalkMat);
+          l.position.set(cx,cy,0.10); scene.add(l);
+        });
+
+        // ── Door (back-right wall) ────────────────────────────────────────
+        const doorMat  = new THREE.MeshLambertMaterial({ color: 0x7a5025 });
+        const doorTrim = new THREE.MeshLambertMaterial({ color: 0x58381a });
+        const doorMesh = new THREE.Mesh(new THREE.BoxGeometry(0.96,2.32,0.07),doorMat);
+        doorMesh.rotation.y=Math.PI; doorMesh.position.set(9,1.16,7.965);
+        doorMesh.castShadow=true; scene.add(doorMesh);
+        [[0,0.40],[0,-0.38]].forEach(([px,pz]) => {
+          const p = new THREE.Mesh(new THREE.BoxGeometry(0.66,0.78,0.04),doorTrim);
+          p.position.set(9+px,1.16+pz*1.25,7.925); p.rotation.y=Math.PI; scene.add(p);
+        });
+        const knob = new THREE.Mesh(new THREE.SphereGeometry(0.055,10,10),
+          new THREE.MeshLambertMaterial({color:0xd4af37}));
+        knob.position.set(8.60,1.16,7.91); scene.add(knob);
+
+        // ── Windows (left wall, x=0) ──────────────────────────────────────
+        const winFrameMat = new THREE.MeshLambertMaterial({ color: 0x3d2508 });
+        const sillMat = new THREE.MeshLambertMaterial({ color: 0xcfc3a5 });
+        [1.5, 4.0, 6.5].forEach(wz => {
+          // Outer frame
+          const outerFr = new THREE.Mesh(new THREE.BoxGeometry(0.10,1.55,1.35),winFrameMat);
+          outerFr.position.set(0.04,2.05,wz); scene.add(outerFr);
+          // Glass
+          const glass = new THREE.Mesh(new THREE.PlaneGeometry(1.15,1.35),
+            new THREE.MeshBasicMaterial({color:0x87ceeb,transparent:true,opacity:0.52,side:THREE.DoubleSide}));
+          glass.rotation.y=Math.PI/2; glass.position.set(0.09,2.05,wz);
+          scene.add(glass); windowGlassRef.current.push(glass);
+          // Cross dividers
+          const hb = new THREE.Mesh(new THREE.BoxGeometry(0.065,0.055,1.15),winFrameMat);
+          hb.position.set(0.07,2.05,wz); scene.add(hb);
+          const vb = new THREE.Mesh(new THREE.BoxGeometry(0.065,1.35,0.055),winFrameMat);
+          vb.position.set(0.07,2.05,wz); scene.add(vb);
+          // Sill + ledge
+          const sill = new THREE.Mesh(new THREE.BoxGeometry(0.20,0.06,1.35),sillMat);
+          sill.position.set(0.09,1.27,wz); scene.add(sill);
+          const ledge = new THREE.Mesh(new THREE.BoxGeometry(0.32,0.04,1.20),sillMat);
+          ledge.position.set(0.15,1.32,wz); scene.add(ledge);
+        });
+
+        // ── Sun beams (cone volumes, visible when clear) ───────────────────
+        const beamMat = new THREE.MeshBasicMaterial({
+          color:0xfff8d0, transparent:true, opacity:0.07,
+          side:THREE.DoubleSide, depthWrite:false
+        });
+        [1.5, 4.0, 6.5].forEach((wz,i) => {
+          const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.01,0.55,2.8,8,1,true),
+            beamMat.clone());
+          beam.rotation.z = -Math.PI/2.8;
+          beam.position.set(1.8, 1.4, wz);
+          beam.visible = false;
+          scene.add(beam); sunBeamsRef.current.push(beam);
+        });
+
+        // ── Teacher's desk + monitor ──────────────────────────────────────
+        const tDeskMat = new THREE.MeshLambertMaterial({ color: 0x7c5228 });
+        const tLegMat  = new THREE.MeshLambertMaterial({ color: 0x5a3c1a });
+        const tTop = new THREE.Mesh(new THREE.BoxGeometry(1.7,0.06,0.75),tDeskMat);
+        tTop.position.set(8.1,0.80,1.0); tTop.castShadow=true; scene.add(tTop);
+        [[-0.70,-0.30],[0.70,-0.30],[-0.70,0.30],[0.70,0.30]].forEach(([lx,lz]) => {
+          const l = new THREE.Mesh(new THREE.BoxGeometry(0.055,0.80,0.055),tLegMat);
+          l.position.set(8.1+lx,0.40,1.0+lz); scene.add(l);
+        });
+        // Monitor
+        const monBase = new THREE.Mesh(new THREE.BoxGeometry(0.28,0.02,0.18),
+          new THREE.MeshLambertMaterial({color:0x222222}));
+        monBase.position.set(8.0,0.84,1.0); scene.add(monBase);
+        const monStand = new THREE.Mesh(new THREE.BoxGeometry(0.025,0.15,0.025),
+          new THREE.MeshLambertMaterial({color:0x333333}));
+        monStand.position.set(8.0,0.915,0.95); scene.add(monStand);
+        const monScreen = new THREE.Mesh(new THREE.BoxGeometry(0.36,0.24,0.022),
+          new THREE.MeshLambertMaterial({color:0x1a2540,emissive:0x101830}));
+        monScreen.position.set(8.0,1.03,0.90); scene.add(monScreen);
+
+        // ── Potted plant (back-left corner) ───────────────────────────────
+        const potMat = new THREE.MeshLambertMaterial({ color: 0xc0430e });
+        const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.13,0.10,0.24,12),potMat);
+        pot.position.set(0.4,0.12,7.55); scene.add(pot);
+        const soil = new THREE.Mesh(new THREE.CircleGeometry(0.13,12),
+          new THREE.MeshLambertMaterial({color:0x2e1c08}));
+        soil.rotation.x=-Math.PI/2; soil.position.set(0.4,0.245,7.55); scene.add(soil);
+        const leafMat = new THREE.MeshLambertMaterial({ color: 0x2a8040 });
+        const darkLeafMat = new THREE.MeshLambertMaterial({ color: 0x1d6030 });
+        [[0,0.62,0,leafMat],[0.15,0.45,-0.10,darkLeafMat],[-0.14,0.48,0.10,leafMat],
+         [0.08,0.52,0.15,darkLeafMat],[-0.06,0.40,-0.14,leafMat]].forEach(([lx,ly,lz,mat]) => {
+          const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.145,7,5),mat);
+          leaf.scale.set(1,0.72,1);
+          leaf.position.set(0.4+lx,0.24+ly,7.55+lz); scene.add(leaf);
+        });
+
+        // ── Student desks + chairs (30 positions) ─────────────────────────
+        const dTopMat  = new THREE.MeshLambertMaterial({ color: 0xb8915a });
+        const dLegMat  = new THREE.MeshLambertMaterial({ color: 0x888888 });
+        const cSeatMat = new THREE.MeshLambertMaterial({ color: 0x1e4d8c });
+        const cLegMat  = new THREE.MeshLambertMaterial({ color: 0x777777 });
+        [1.2,2.8,4.4,5.6,7.2,8.8].forEach(dx => [1.0,2.5,4.0,5.5,7.0].forEach(dz => {
+          const top = new THREE.Mesh(new THREE.BoxGeometry(0.72,0.052,0.52),dTopMat);
+          top.position.set(dx,0.76,dz); top.castShadow=true; top.receiveShadow=true; scene.add(top);
+          [[-0.30,-0.21],[0.30,-0.21],[-0.30,0.21],[0.30,0.21]].forEach(([lx,lz]) => {
+            const l = new THREE.Mesh(new THREE.CylinderGeometry(0.020,0.020,0.76,6),dLegMat);
+            l.position.set(dx+lx,0.38,dz+lz); scene.add(l);
+          });
+          const seat = new THREE.Mesh(new THREE.BoxGeometry(0.40,0.04,0.36),cSeatMat);
+          seat.position.set(dx,0.44,dz+0.54); seat.castShadow=true; scene.add(seat);
+          const back = new THREE.Mesh(new THREE.BoxGeometry(0.40,0.33,0.040),cSeatMat);
+          back.position.set(dx,0.63,dz+0.72); scene.add(back);
+          [[-0.16,-0.16],[0.16,-0.16],[-0.16,0.16],[0.16,0.16]].forEach(([lx,lz]) => {
+            const cl = new THREE.Mesh(new THREE.CylinderGeometry(0.016,0.016,0.44,5),cLegMat);
+            cl.position.set(dx+lx,0.22,dz+0.54+lz); scene.add(cl);
+          });
+        }));
+
+        // ── Ceiling light fixtures ────────────────────────────────────────
+        // Build radial glow sprite texture
+        const glowCv = document.createElement('canvas'); glowCv.width=64; glowCv.height=64;
+        const gctx = glowCv.getContext('2d');
+        const grd = gctx.createRadialGradient(32,32,1,32,32,32);
+        grd.addColorStop(0,'rgba(255,252,200,1)');
+        grd.addColorStop(0.25,'rgba(255,242,160,0.6)');
+        grd.addColorStop(1,'rgba(255,242,100,0)');
+        gctx.fillStyle=grd; gctx.fillRect(0,0,64,64);
+        const glowTex = new THREE.CanvasTexture(glowCv);
+
+        const fixPos = {
+          zone_A:[[2.0,1.3],[3.8,2.6]],
+          zone_B:[[6.2,1.3],[8.0,2.6]],
+          zone_C:[[2.0,5.4],[3.8,6.7]],
+          zone_D:[[6.2,5.4],[8.0,6.7]],
+        };
+        Object.entries(fixPos).forEach(([zone, positions]) => {
+          lightsRef.current[zone] = positions.map(([x,z]) => {
+            // Suspension rod
+            const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.018,0.018,0.22,6),
+              new THREE.MeshLambertMaterial({color:0x666666}));
+            rod.position.set(x,3.09,z); scene.add(rod);
+            // Housing
+            const housing = new THREE.Mesh(new THREE.BoxGeometry(0.68,0.08,0.30),
+              new THREE.MeshLambertMaterial({color:0x999999}));
+            housing.position.set(x,2.98,z); scene.add(housing);
+            // Emissive panel (the tube)
+            const panel = new THREE.Mesh(new THREE.BoxGeometry(0.58,0.016,0.20),
+              new THREE.MeshBasicMaterial({color:0x1c1c1c}));
+            panel.position.set(x,2.935,z); scene.add(panel);
+            // Point light
+            const pl = new THREE.PointLight(0xfff8e0,0,7.5);
+            pl.position.set(x,2.8,z);
+            scene.add(pl);
+            // Glow sprite (additive, halo effect)
+            const spriteMat = new THREE.SpriteMaterial({
+              map:glowTex, transparent:true, opacity:0,
+              blending:THREE.AdditiveBlending, depthWrite:false
+            });
+            const sprite = new THREE.Sprite(spriteMat);
+            sprite.scale.set(1.6,1.6,1);
+            sprite.position.set(x,2.85,z);
+            scene.add(sprite);
+            return { panel, pl, sprite };
+          });
+        });
+
+        // ── Rain particles ────────────────────────────────────────────────
+        const rainGroup = new THREE.Group();
+        rainGroup.visible = false;
+        scene.add(rainGroup);
+        const drops = [];
+        const dropGeo = new THREE.BoxGeometry(0.014,0.26,0.014);
+        const dropMat = new THREE.MeshBasicMaterial({color:0x8bcde8,transparent:true,opacity:0.52});
+        for (let i=0;i<200;i++) {
+          const d = new THREE.Mesh(dropGeo,dropMat);
+          d.position.set(Math.random()*13-1.5,Math.random()*5+0.3,Math.random()*11-1.5);
+          d.userData.speed = 0.055 + Math.random()*0.05;
+          rainGroup.add(d); drops.push(d);
+        }
+        rainRef.current = { group:rainGroup, drops };
+
+        // ── Orbit controls ────────────────────────────────────────────────
+        let dragging=false, lastX=0, lastY=0, theta=0.38, phi=0.60, radius=15.5;
+        const el = renderer.domElement;
+        el.addEventListener("mousedown", e=>{dragging=true;lastX=e.clientX;lastY=e.clientY;});
+        window.addEventListener("mouseup", ()=>dragging=false);
+        window.addEventListener("mousemove", e=>{
+          if (!dragging) return;
+          theta -= (e.clientX-lastX)*0.010;
+          phi    = Math.max(0.12,Math.min(1.30,phi-(e.clientY-lastY)*0.010));
+          lastX=e.clientX; lastY=e.clientY;
+        });
+        el.addEventListener("wheel", e=>{
+          e.preventDefault();
+          radius = Math.max(7,Math.min(24,radius+e.deltaY*0.018));
+        },{passive:false});
+
+        // ── Animation loop ────────────────────────────────────────────────
+        let id;
+        const animate = () => {
+          id = requestAnimationFrame(animate);
+          camera.position.set(
+            5 + radius*Math.sin(theta)*Math.cos(phi),
+            radius*Math.sin(phi),
+            4 + radius*Math.cos(theta)*Math.cos(phi)
+          );
+          camera.lookAt(5, 0.5, 4);
+          if (rainRef.current.group?.visible) {
+            rainRef.current.drops.forEach(d => {
+              d.position.y -= d.userData.speed;
+              if (d.position.y < 0) d.position.y = 5.5 + Math.random();
+            });
+          }
+          renderer.render(scene, camera);
+        };
+        animate();
+
+        const onResize = () => {
+          camera.aspect = mount.clientWidth/mount.clientHeight;
+          camera.updateProjectionMatrix();
+          renderer.setSize(mount.clientWidth,mount.clientHeight);
+        };
+        window.addEventListener("resize",onResize);
+
+        return () => {
+          cancelAnimationFrame(id);
+          window.removeEventListener("resize",onResize);
+          renderer.dispose();
+          if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
+        };
+      }, []);
+
+      // ── Lights + people (updates on every state change) ───────────────────
+      useEffect(() => {
+        if (!classroomState?.zones || !sceneRef.current) return;
+        const intens   = { ON:2.0, DIM:0.75, OFF:0.0 };
+        const panelCol = { ON:0xfffac0, DIM:0xffe060, OFF:0x141414 };
+        const opaMap   = { ON:0.20, DIM:0.11, OFF:0.04 };
+        const glowOpa  = { ON:0.90, DIM:0.45, OFF:0.0 };
+        Object.entries(classroomState.zones).forEach(([zone,data]) => {
+          const s = data.light ?? "OFF";
+          lightsRef.current[zone]?.forEach(({panel,pl,sprite}) => {
+            pl.intensity = intens[s] ?? 0;
+            panel.material.color.setHex(panelCol[s] ?? 0x141414);
+            sprite.material.opacity = glowOpa[s] ?? 0;
+          });
+          if (zoneOverlaysRef.current[zone])
+            zoneOverlaysRef.current[zone].material.opacity = opaMap[s] ?? 0.04;
+        });
+
+        // Rebuild humanoid figures
+        peopleRef.current.forEach(m => sceneRef.current.remove(m));
+        peopleRef.current = [];
+        const shirtColors  = { zone_A:0x3a7fc1, zone_B:0x27a85a, zone_C:0xd4890a, zone_D:0x8e44ad };
+        const skinTones    = [0xfcd5a0, 0xf0a070, 0xc68642, 0x8d5524, 0xfde0b8];
+        const hairColors   = [0x120800, 0x2e1a0a, 0x6b4520, 0x080808, 0xb8843a];
+        const pantsColors  = [0x1c2d4a, 0x2d3a1c, 0x3a2010, 0x1a1a2e, 0x2e2418];
+
+        (classroomState.people ?? []).forEach((p,idx) => {
+          const shirt = shirtColors[p.zone] ?? 0x555588;
+          const skin  = skinTones[idx % skinTones.length];
+          const hair  = hairColors[idx % hairColors.length];
+          const pants = pantsColors[idx % pantsColors.length];
+          const x = p.x ?? 5, z = p.y ?? 4;
+          const add = m => { m.castShadow=true; sceneRef.current.add(m); peopleRef.current.push(m); };
+
+          // Legs / pants
+          const legsM = new THREE.MeshLambertMaterial({color:pants});
+          [-0.055,0.055].forEach(lx => {
+            const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.055,0.050,0.42,7),legsM);
+            leg.position.set(x+lx,0.59,z); add(leg);
+          });
+          // Torso (shirt)
+          const body = new THREE.Mesh(new THREE.CylinderGeometry(0.115,0.120,0.48,9),
+            new THREE.MeshLambertMaterial({color:shirt}));
+          body.position.set(x,1.05,z); add(body);
+          // Arms
+          [-1,1].forEach(side => {
+            const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.038,0.032,0.36,6),
+              new THREE.MeshLambertMaterial({color:shirt}));
+            arm.position.set(x+side*0.17,0.97,z);
+            arm.rotation.z = side*0.32; add(arm);
+            // Hands
+            const hand = new THREE.Mesh(new THREE.SphereGeometry(0.036,6,5),
+              new THREE.MeshLambertMaterial({color:skin}));
+            hand.position.set(x+side*0.22,0.79,z); add(hand);
+          });
+          // Neck
+          const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.046,0.046,0.09,7),
+            new THREE.MeshLambertMaterial({color:skin}));
+          neck.position.set(x,1.33,z); add(neck);
+          // Head
+          const head = new THREE.Mesh(new THREE.SphereGeometry(0.115,10,8),
+            new THREE.MeshLambertMaterial({color:skin}));
+          head.position.set(x,1.50,z); add(head);
+          // Hair (upper hemisphere)
+          const hairM = new THREE.Mesh(
+            new THREE.SphereGeometry(0.120,10,6,0,Math.PI*2,0,Math.PI*0.52),
+            new THREE.MeshLambertMaterial({color:hair}));
+          hairM.position.set(x,1.515,z); add(hairM);
+        });
+      }, [classroomState]);
+
+      // ── Weather → windows + sun beams + rain ──────────────────────────────
+      const prevWeatherRef = useRef(weather);
+      useEffect(() => {
+        if (!sceneRef.current) return;
+
+        const prev = prevWeatherRef.current;
+        const rainChanging = (prev === "rainy") !== (weather === "rainy");
+        prevWeatherRef.current = weather;
+
+        if (rainChanging) onLoadingChange?.(true);
+
+        const cfg = {
+          clear:    { color:0x87ceeb, opacity:0.50 },
+          cloudy:   { color:0xaabbcc, opacity:0.44 },
+          overcast: { color:0x7a8f96, opacity:0.54 },
+          rainy:    { color:0x4a6070, opacity:0.64 },
+        }[weather] ?? { color:0x87ceeb, opacity:0.50 };
+        windowGlassRef.current.forEach(g => {
+          g.material.color.setHex(cfg.color);
+          g.material.opacity = cfg.opacity;
+        });
+        sunBeamsRef.current.forEach(b => { b.visible = (weather === "clear"); });
+        if (rainRef.current.group)
+          rainRef.current.group.visible = (weather === "rainy");
+
+        if (rainChanging) {
+          const t = setTimeout(() => onLoadingChange?.(false), 900);
+          return () => clearTimeout(t);
+        }
+      }, [weather]);
+
+      return <div ref={mountRef} id="canvas3d" />;
+    }
+
+    // ── Mini energy bar chart ─────────────────────────────────────────────────
+    function EnergyBars({ history }) {
+      if (!history?.length) return <div style={{color:"#334155",fontSize:"0.75rem",padding:"1rem 0"}}>{t('waiting')}</div>;
+      const max = 320;
+      return (
+        <div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:"0.65rem",color:"#64748b",marginBottom:"0.25rem"}}>
+            <span>{t('last')} {history.length} {t('reads')}</span>
+            <span>máx 320W</span>
+          </div>
+          <div className="chart-bar-wrap">
+            {history.slice(-40).map((d, i) => (
+              <div key={i} className="chart-bar" style={{ height: `${(d.watts/max)*100}%`, background: d.watts < 160 ? "#4ade80" : d.watts < 240 ? "#f97316" : "#ef4444" }} title={`${d.watts}W @ ${d.time}`} />
+            ))}
+          </div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:"0.65rem",color:"#64748b",marginTop:"0.25rem"}}>
+            <span style={{color:"#4ade80"}}>AI actual: {history[history.length-1]?.watts ?? 0}W</span>
+            <span style={{color:"#ef4444"}}>Baseline: 320W</span>
+          </div>
+        </div>
+      );
+    }
+
+    // ── Translations ──────────────────────────────────────────────────────────
+    const TR = {
+      es: {
+        'home':'← Inicio','connected':'● Conectado','connecting':'● Conectando…','reset':'↺ Reiniciar','resetting':'Reiniciando…',
+        'view3d':'Vista 3D del Aula','updating':'Actualizando escena…','hint':'Arrastra para rotar · Scroll para zoom',
+        'voice':'Control por Voz (Chrome)','voice.examples':'Comandos de ejemplo',
+        'voice.listening':'Escuchando…','voice.idle':'Presiona para hablar','voice.processing':'Procesando comando…','voice.applying':'Aplicando comando…',
+        'demo':'Controles Demo','occ':'OCUPACIÓN','weather':'CLIMA','time':'HORA DEL DÍA',
+        'sc.empty':'Vacío','sc.few':'Pocos','sc.half':'Mitad','sc.full':'Lleno','sc.back':'Atrás','sc.real':'Real',
+        'zones':'Zonas de Iluminación','people':'personas','natural':'luz natural',
+        'zl.A':'A — Frente Izq','zl.B':'B — Frente Der','zl.C':'C — Atrás Izq','zl.D':'D — Atrás Der',
+        'energy':'Consumo Energético — Comparativo',
+        'ref.rate':'Tarifa eléctrica','ref.rate.note':'Colombia 2024',
+        'ref.base':'Potencia base','ref.base.note':'8 lámparas × 40W',
+        'ref.hrs':'Horas de clase','ref.hrs.note':'jornada escolar',
+        'ref.days':'Días escolares','ref.days.note':'10 meses × 20 días',
+        'col.metric':'Métrica','col.noai':'Sin IA','col.ai':'Con IA','col.savings':'Ahorro',
+        'row.power':'Potencia activa','row.kwh_h':'Consumo por hora','row.cop_h':'Costo por hora',
+        'row.kwh_d':'Consumo diario','row.cop_d':'Costo diario',
+        'row.kwh_y':'Consumo anual','row.cop_y':'Ahorro anual',
+        'row.hrs_d':'Horas luz innecesaria evitadas/día','row.hrs_y':'Horas luz innecesaria evitadas/año',
+        'last':'Últimas','reads':'lecturas',
+        'carbon':'🌱 Huella de Carbono',
+        'ref.factor':'Factor emisión','ref.factor.note':'Colombia SIN 2023',
+        'ref.tree':'Absorción árbol','ref.tree.note':'árbol joven promedio',
+        'ref.car':'Emisión auto','ref.car.note':'auto a gasolina',
+        'co2.annual':'Emisiones CO₂ anuales',
+        'co2.noai':'Sin IA','co2.ai':'Con IA','co2.saved':'Ahorro',
+        'co2.breakdown':'Desglose de emisiones',
+        'col.period':'Período','col.avoided':'CO₂ evitado',
+        'p.hour':'Por hora','p.day':'Por día (8h)','p.month':'Por mes (20d)','p.year':'Por año (200d)',
+        'co2.impact':'Impacto equivalente al ahorro anual',
+        'eq.trees':'árboles plantados','eq.trees.note':'absorción CO₂/año',
+        'eq.car':'en auto evitados','eq.car.note':'auto a gasolina',
+        'eq.phone':'cargas de celular','eq.phone.note':'equivalente energía',
+        'waiting':'Esperando datos…','ref.hrs.unit':'h/día','ref.days.unit':'días/año',
+      },
+      en: {
+        'home':'← Home','connected':'● Connected','connecting':'● Connecting…','reset':'↺ Reset','resetting':'Resetting…',
+        'view3d':'3D Classroom View','updating':'Updating scene…','hint':'Drag to rotate · Scroll to zoom',
+        'voice':'Voice Control (Chrome)','voice.examples':'Example commands',
+        'voice.listening':'Listening…','voice.idle':'Press to speak','voice.processing':'Processing command…','voice.applying':'Applying command…',
+        'demo':'Demo Controls','occ':'OCCUPANCY','weather':'WEATHER','time':'TIME OF DAY',
+        'sc.empty':'Empty','sc.few':'Few','sc.half':'Half','sc.full':'Full','sc.back':'Back','sc.real':'Live',
+        'zones':'Lighting Zones','people':'people','natural':'natural light',
+        'zl.A':'A — Front Left','zl.B':'B — Front Right','zl.C':'C — Back Left','zl.D':'D — Back Right',
+        'energy':'Energy Consumption — Comparison',
+        'ref.rate':'Electricity rate','ref.rate.note':'Colombia 2024',
+        'ref.base':'Base power','ref.base.note':'8 bulbs × 40W',
+        'ref.hrs':'Class hours','ref.hrs.note':'school day',
+        'ref.days':'School days','ref.days.note':'10 months × 20 days',
+        'col.metric':'Metric','col.noai':'Without AI','col.ai':'With AI','col.savings':'Savings',
+        'row.power':'Active power','row.kwh_h':'Consumption/hour','row.cop_h':'Cost/hour',
+        'row.kwh_d':'Daily consumption','row.cop_d':'Daily cost',
+        'row.kwh_y':'Annual consumption','row.cop_y':'Annual savings',
+        'row.hrs_d':'Unnecessary light hours avoided/day','row.hrs_y':'Unnecessary light hours avoided/year',
+        'last':'Last','reads':'readings',
+        'carbon':'🌱 Carbon Footprint',
+        'ref.factor':'Emission factor','ref.factor.note':'Colombia SIN 2023',
+        'ref.tree':'Tree absorption','ref.tree.note':'average young tree',
+        'ref.car':'Car emission','ref.car.note':'gasoline car',
+        'co2.annual':'Annual CO₂ emissions',
+        'co2.noai':'Without AI','co2.ai':'With AI','co2.saved':'Savings',
+        'co2.breakdown':'Emissions breakdown',
+        'col.period':'Period','col.avoided':'CO₂ avoided',
+        'p.hour':'Per hour','p.day':'Per day (8h)','p.month':'Per month (20d)','p.year':'Per year (200d)',
+        'co2.impact':'Environmental impact of annual savings',
+        'eq.trees':'trees planted','eq.trees.note':'CO₂ absorption/year',
+        'eq.car':'km avoided by car','eq.car.note':'gasoline car',
+        'eq.phone':'phone charges','eq.phone.note':'energy equivalent',
+        'waiting':'Waiting for data…','ref.hrs.unit':'h/day','ref.days.unit':'days/year',
+      }
+    };
+    const t = (key) => TR[window._lang || 'es'][key] || key;
+
+    // ── Voice controller ──────────────────────────────────────────────────────
+    function VoiceBtn({ lang, onProcessing }) {
+      const [listening,   setListening]   = useState(false);
+      const [processing,  setProcessing]  = useState(false);
+      const [last,        setLast]        = useState(null);
+      const [cmdOk,       setCmdOk]       = useState(null); // true=✓ false=✗
+      const recRef          = useRef(null);
+      const onProcessingRef = useRef(onProcessing);
+      // Keep ref always current so the closure inside useEffect never goes stale
+      onProcessingRef.current = onProcessing;
+
+      useEffect(() => {
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) return;
+        if (recRef.current) { try { recRef.current.stop(); } catch {} }
+        const r = new SR();
+        r.continuous = false; r.interimResults = false;
+        r.lang = (lang === 'en') ? "en-US" : "es-ES";
+        r.onresult = async (e) => {
+          const text = e.results[0][0].transcript.toLowerCase();
+          setLast(text);
+          setCmdOk(null);
+          setProcessing(true);
+          onProcessingRef.current?.(true);
+          // yield one macrotask so React renders the loading state
+          // before the (potentially instant) fetch response arrives
+          await new Promise(res => setTimeout(res, 0));
+          const MIN_MS = 700; // keep the canvas spinner visible at least this long
+          const t0 = Date.now();
+          try {
+            const res = await fetch("/api/voice/command", {
+              method:"POST",
+              headers:{"Content-Type":"application/json"},
+              body: JSON.stringify({ command: text })
+            });
+            setCmdOk(res.ok);
+          } catch {
+            setCmdOk(false);
+          } finally {
+            setProcessing(false);
+            // Ensure the canvas overlay is visible for at least MIN_MS
+            const elapsed = Date.now() - t0;
+            const wait = Math.max(0, MIN_MS - elapsed);
+            setTimeout(() => onProcessingRef.current?.(false), wait);
+          }
+        };
+        r.onend = () => setListening(false);
+        recRef.current = r;
+        return () => { try { r.stop(); } catch {} };
+      }, [lang]);
+
+      const toggle = () => {
+        if (!recRef.current || processing) return;
+        if (listening) { recRef.current.stop(); setListening(false); }
+        else { setCmdOk(null); recRef.current.start(); setListening(true); }
+      };
+
+      const btnClass = `voice-btn${listening?" listening":""}${processing?" processing":""}`;
+
+      return (
+        <div style={{display:"flex",alignItems:"center",gap:"0.75rem"}}>
+          <div className="voice-btn-wrap">
+            <button className={btnClass} onMouseDown={toggle} onTouchStart={toggle} title="Hablar">
+              {processing ? "⚙️" : "🎤"}
+            </button>
+            {processing && <div className="voice-orbit" />}
+          </div>
+          <div style={{fontSize:"0.75rem"}}>
+            {processing
+              ? <span style={{color:"#a78bfa",fontWeight:600,display:"flex",alignItems:"center",gap:"0.35rem"}}>
+                  <span className="spinner" style={{borderColor:"#a78bfa",borderTopColor:"transparent"}}/>
+                  {t('voice.processing')}
+                </span>
+              : listening
+                ? <span style={{color:"#ef4444",fontWeight:600}}>{t('voice.listening')}</span>
+                : <span style={{color:"#64748b"}}>{t('voice.idle')}</span>
+            }
+            {last && !processing && (
+              <div style={{color:"#94a3b8",marginTop:"0.15rem",display:"flex",alignItems:"center",gap:"0.3rem"}}>
+                {cmdOk === true  && <span style={{color:"#4ade80",fontWeight:700}}>✓</span>}
+                {cmdOk === false && <span style={{color:"#f87171",fontWeight:700}}>✗</span>}
+                "{last}"
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // ── Demo controls ─────────────────────────────────────────────────────────
+    function DemoControls({ onSceneLoading }) {
+      const [scenario, setScenario] = useState("full_class");
+      const [weather, setWeather]   = useState("clear");
+      const [simTime, setSimTime]   = useState(null);
+      const [loading, setLoading]   = useState(null);
+      const startLoad = (key) => { setLoading(key); };
+      const endLoad   = ()    => { setLoading(null); };
+
+      const cycle = () => fetch("/api/orchestrator/cycle", {method:"POST"});
+      const clearOverride = () => fetch("/api/orchestrator/clear-override", {method:"POST"});
+
+      const setS = async (s) => {
+        setScenario(s); startLoad(`s-${s}`);
+        try {
+          await fetch("/api/vision/scenario",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({scenario:s})});
+          await clearOverride(); await cycle();
+        } catch {} finally { endLoad(); }
+      };
+      const setW = async (w) => {
+        const rainChanging = (weather === "rainy") !== (w === "rainy");
+        if (rainChanging) onSceneLoading?.(true);
+        setWeather(w); startLoad(`w-${w}`);
+        try {
+          await fetch("/api/light/weather",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({weather:w})});
+          await clearOverride(); await cycle();
+        } catch {} finally { endLoad(); }
+      };
+      const setT = async (h) => {
+        setSimTime(h); startLoad(`t-${h}`);
+        try {
+          await fetch("/api/light/time",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({hour:h})});
+          await clearOverride(); await cycle();
+        } catch {} finally { endLoad(); }
+      };
+
+      const scenarios = [{id:"empty",k:"sc.empty"},{id:"few",k:"sc.few"},{id:"half_class",k:"sc.half"},{id:"full_class",k:"sc.full"},{id:"back_only",k:"sc.back"}];
+      const weathers  = [{id:"clear",l:"☀️"},{id:"cloudy",l:"⛅"},{id:"overcast",l:"☁️"},{id:"rainy",l:"🌧️"}];
+      const times     = [{h:6,l:"6h"},{h:8,l:"8h"},{h:10,l:"10h"},{h:12,l:"12h"},{h:15,l:"15h"},{h:17,l:"17h"},{h:18,l:"18h"},{h:null,k:"sc.real"}];
+
+      return (
+        <div className="panel">
+          <h2>{t('demo')}</h2>
+          <div style={{fontSize:"0.65rem",color:"#64748b",marginBottom:"0.3rem"}}>{t('occ')}</div>
+          <div className="chip-group">{scenarios.map(({id,k})=>{const isLoading=loading===`s-${id}`; return <button key={id} className={`chip${scenario===id?" active-blue":""}${isLoading?" loading":""}`} onClick={()=>setS(id)}>{isLoading&&<span className="spinner"/>}{t(k)}</button>;})}</div>
+          <div style={{fontSize:"0.65rem",color:"#64748b",marginBottom:"0.3rem"}}>{t('weather')}</div>
+          <div className="chip-group">{weathers.map(({id,l})=>{const isLoading=loading===`w-${id}`; return <button key={id} className={`chip${weather===id?" active-orange":""}${isLoading?" loading":""}`} onClick={()=>setW(id)}>{isLoading&&<span className="spinner"/>}{l}</button>;})}</div>
+          <div style={{fontSize:"0.65rem",color:"#64748b",marginBottom:"0.3rem"}}>{t('time')}</div>
+          <div className="chip-group">{times.map(({h,l,k})=>{const isLoading=loading===`t-${h}`; return <button key={l||k} className={`chip${simTime===h?" active-purple":""}${isLoading?" loading":""}`} onClick={()=>setT(h)}>{isLoading&&<span className="spinner"/>}{k ? t(k) : l}</button>;})}</div>
+        </div>
+      );
+    }
+
+    // ── Comparison Panel ──────────────────────────────────────────────────────
+    function ComparisonPanel({ stats, watts, history }) {
+      const COP_KWH = 800, BASE_W = 320, HRS = 8, DAYS = 200;
+      const calc = (w) => ({
+        kwh_h: w / 1000,
+        cop_h: w / 1000 * COP_KWH,
+        kwh_d: w / 1000 * HRS,
+        cop_d: w / 1000 * HRS * COP_KWH,
+        kwh_y: w / 1000 * HRS * DAYS,
+        cop_y: w / 1000 * HRS * DAYS * COP_KWH,
+      });
+      const base  = calc(BASE_W);
+      const ai_w  = stats?.avg_ai_watts ?? watts;
+      const ai    = calc(ai_w);
+      const fmt   = (n, d = 2) => Number(n).toFixed(d);
+      const cop   = (n) => `$${Math.round(n).toLocaleString()} COP`;
+      const sv_pct = Math.max(0, Math.round((BASE_W - ai_w) / BASE_W * 100));
+
+      const refs = [
+        { label: t('ref.rate'),  value: `$${COP_KWH.toLocaleString()} COP/kWh`, note: t('ref.rate.note') },
+        { label: t('ref.base'),  value: `${BASE_W} W`,                           note: t('ref.base.note') },
+        { label: t('ref.hrs'),   value: `${HRS} ${t('ref.hrs.unit')}`,           note: t('ref.hrs.note') },
+        { label: t('ref.days'),  value: `${DAYS} ${t('ref.days.unit')}`,         note: t('ref.days.note') },
+      ];
+
+      const rows = [
+        { label: t('row.power'),  b: `${BASE_W} W`,             a: `${ai_w} W`,               s: `${BASE_W - ai_w} W (${sv_pct}%)`, big: false },
+        { label: t('row.kwh_h'), b: `${fmt(base.kwh_h,3)} kWh`, a: `${fmt(ai.kwh_h,3)} kWh`,  s: `${fmt(base.kwh_h - ai.kwh_h, 3)} kWh`, big: false },
+        { label: t('row.cop_h'), b: cop(base.cop_h),             a: cop(ai.cop_h),              s: cop(base.cop_h - ai.cop_h),        big: false },
+        { label: `${t('row.kwh_d')} (${HRS}h)`, b: `${fmt(base.kwh_d)} kWh`, a: `${fmt(ai.kwh_d)} kWh`, s: `${fmt(base.kwh_d - ai.kwh_d)} kWh`, big: false },
+        { label: t('row.cop_d'), b: cop(base.cop_d),             a: cop(ai.cop_d),              s: cop(base.cop_d - ai.cop_d),        big: false },
+        { label: `${t('row.kwh_y')} (${DAYS}d)`, b: `${fmt(base.kwh_y,0)} kWh`, a: `${fmt(ai.kwh_y,0)} kWh`, s: `${fmt(base.kwh_y - ai.kwh_y, 0)} kWh`, big: true },
+        { label: t('row.cop_y'), b: cop(base.cop_y),             a: cop(ai.cop_y),              s: cop(base.cop_y - ai.cop_y),        big: true },
+        { label: t('row.hrs_d'), b: `${HRS} h`,                  a: `${fmt((ai_w/BASE_W)*HRS,1)} h`, s: `${fmt(((BASE_W-ai_w)/BASE_W)*HRS,1)} h`, big: false },
+        { label: t('row.hrs_y'), b: `${HRS*DAYS} h`,             a: `${fmt((ai_w/BASE_W)*HRS*DAYS,0)} h`, s: `${fmt(((BASE_W-ai_w)/BASE_W)*HRS*DAYS,0)} h`, big: false },
+      ];
+
+      return (
+        <div className="panel">
+          <h2>{t('energy')}</h2>
+
+          {/* Datos de referencia — siempre visibles */}
+          <div className="ref-grid">
+            {refs.map(({ label, value, note }) => (
+              <div key={label} className="ref-card">
+                <div className="ref-label">{label}</div>
+                <div className="ref-value">{value}</div>
+                <div className="ref-note">{note}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Tabla comparativa */}
+          <div style={{ overflowX: "auto" }}>
+            <table className="cmp-table">
+              <thead>
+                <tr>
+                  <th style={{ textAlign: "left" }}>{t('col.metric')}</th>
+                  <th style={{ color: "#f87171" }}>{t('col.noai')}</th>
+                  <th style={{ color: "#4ade80" }}>{t('col.ai')}</th>
+                  <th style={{ color: "#a78bfa" }}>{t('col.savings')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map(({ label, b, a, s, big }) => (
+                  <tr key={label} style={{ background: big ? "#a78bfa0a" : "transparent" }}>
+                    <td style={{ color: "#94a3b8", fontWeight: big ? 700 : 400, whiteSpace: "nowrap" }}>{label}</td>
+                    <td style={{ color: "#f87171", textAlign: "center" }}>{b}</td>
+                    <td style={{ color: "#4ade80", textAlign: "center" }}>{a}</td>
+                    <td style={{ color: "#a78bfa", textAlign: "center", fontWeight: big ? 700 : 600 }}>{s}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Gráfica de barras */}
+          <div style={{ marginTop: "0.75rem" }}>
+            <EnergyBars history={history} />
+          </div>
+        </div>
+      );
+    }
+
+    // ── Carbon Panel ─────────────────────────────────────────────────────────
+    function CarbonPanel({ stats, watts }) {
+      const CO2_KWH   = 0.126;  // kg CO₂/kWh — factor emisión Colombia SIN 2023
+      const TREE_KG   = 21;     // kg CO₂ absorbidos por árbol joven/año
+      const CAR_KM    = 4.76;   // km en auto a gasolina por kg CO₂
+      const PHONE_CHG = 800;    // cargas de smartphone por kg CO₂
+      const BASE_W = 320, HRS = 8, DAYS = 200;
+
+      const base_kwh_y = BASE_W / 1000 * HRS * DAYS;
+      const ai_w       = stats?.avg_ai_watts ?? watts ?? BASE_W;
+      const ai_kwh_y   = ai_w / 1000 * HRS * DAYS;
+      const base_co2   = +(base_kwh_y * CO2_KWH).toFixed(1);
+      const ai_co2     = +(ai_kwh_y   * CO2_KWH).toFixed(1);
+      const saved_co2  = +(base_co2   - ai_co2).toFixed(1);
+      const pct        = base_co2 > 0 ? Math.round(saved_co2 / base_co2 * 100) : 0;
+      const trees      = Math.max(0, Math.round(saved_co2 / TREE_KG));
+      const km_car     = Math.round(saved_co2 * CAR_KM);
+      const phones     = Math.round(saved_co2 * PHONE_CHG);
+      const barW       = (v) => `${Math.min(100, Math.round(v / base_co2 * 100))}%`;
+
+      return (
+        <div className="panel">
+          <h2>{t('carbon')}</h2>
+
+          {/* Datos de referencia */}
+          <div className="ref-grid" style={{gridTemplateColumns:"1fr 1fr 1fr"}}>
+            {[
+              { label:t('ref.factor'), value:`${CO2_KWH} kg CO₂/kWh`,              note:t('ref.factor.note') },
+              { label:t('ref.tree'),   value:`${TREE_KG} kg CO₂/año`,              note:t('ref.tree.note') },
+              { label:t('ref.car'),    value:`${(1/CAR_KM).toFixed(2)} kg CO₂/km`, note:t('ref.car.note') },
+            ].map(({ label, value, note }) => (
+              <div key={label} className="ref-card" style={{borderColor:"#4ade8030"}}>
+                <div className="ref-label">{label}</div>
+                <div className="ref-value" style={{color:"#4ade80",fontSize:"0.8rem"}}>{value}</div>
+                <div className="ref-note">{note}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Barras comparativas CO₂ */}
+          <div className="section-label">{t('co2.annual')}</div>
+          <div style={{display:"flex",flexDirection:"column",gap:"0.55rem"}}>
+            {[
+              { label:`${t('co2.noai')} — ${base_co2} kg CO₂/año`,            w:"100%",          color:"#ef4444" },
+              { label:`${t('co2.ai')} — ${ai_co2} kg CO₂/año`,                w:barW(ai_co2),    color:"#4ade80" },
+              { label:`${t('co2.saved')} — ${saved_co2} kg CO₂/año (${pct}%)`, w:barW(saved_co2), color:"#a78bfa" },
+            ].map(({ label, w, color }) => (
+              <div key={label}>
+                <div style={{fontSize:"0.68rem",color,marginBottom:"0.2rem"}}>{label}</div>
+                <div className="carbon-bar-track">
+                  <div className="carbon-bar-fill" style={{width:w,background:color}} />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Tabla CO₂ por período */}
+          <div className="section-label">{t('co2.breakdown')}</div>
+          <div style={{overflowX:"auto"}}>
+            <table className="cmp-table">
+              <thead>
+                <tr>
+                  <th style={{textAlign:"left"}}>{t('col.period')}</th>
+                  <th style={{color:"#f87171"}}>{t('col.noai')}</th>
+                  <th style={{color:"#4ade80"}}>{t('col.ai')}</th>
+                  <th style={{color:"#a78bfa"}}>{t('col.avoided')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  { p:t('p.hour'),  bv: BASE_W/1000*CO2_KWH,        av: ai_w/1000*CO2_KWH,        dec:4 },
+                  { p:t('p.day'),   bv: BASE_W/1000*HRS*CO2_KWH,    av: ai_w/1000*HRS*CO2_KWH,    dec:3 },
+                  { p:t('p.month'), bv: BASE_W/1000*HRS*20*CO2_KWH, av: ai_w/1000*HRS*20*CO2_KWH, dec:2 },
+                  { p:t('p.year'),  bv: base_co2,                    av: ai_co2,                   dec:1 },
+                ].map(({ p, bv, av, dec }) => (
+                  <tr key={p}>
+                    <td style={{color:"#94a3b8",whiteSpace:"nowrap"}}>{p}</td>
+                    <td style={{color:"#f87171",textAlign:"center"}}>{bv.toFixed(dec)} kg</td>
+                    <td style={{color:"#4ade80",textAlign:"center"}}>{av.toFixed(dec)} kg</td>
+                    <td style={{color:"#a78bfa",textAlign:"center",fontWeight:600}}>{(bv-av).toFixed(dec)} kg</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Equivalencias ambientales */}
+          <div className="section-label">{t('co2.impact')}</div>
+          <div className="carbon-eq-grid">
+            {[
+              { icon:"🌳", value:trees,          labelKey:"eq.trees", noteKey:"eq.trees.note" },
+              { icon:"🚗", value:`${km_car} km`, labelKey:"eq.car",   noteKey:"eq.car.note" },
+              { icon:"📱", value:phones,          labelKey:"eq.phone", noteKey:"eq.phone.note" },
+            ].map(({ icon, value, labelKey, noteKey }) => (
+              <div key={labelKey} className="carbon-eq-card">
+                <div style={{fontSize:"1.4rem"}}>{icon}</div>
+                <div style={{fontSize:"0.95rem",fontWeight:700,color:"#4ade80"}}>{value}</div>
+                <div style={{fontSize:"0.62rem",color:"#64748b"}}>{t(labelKey)}</div>
+                <div style={{fontSize:"0.57rem",color:"#334155",marginTop:"0.1rem"}}>{t(noteKey)}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // ── Main App ──────────────────────────────────────────────────────────────
+    function App() {
+      const { state, connected } = useClassroomWS();
+      const [history, setHistory] = useState([]);
+      const [stats, setStats]     = useState(null);
+      const [weather, setWeather] = useState("clear");
+      const [lang, setLangState]  = useState(localStorage.getItem('sc-lang') || 'es');
+
+      // Keep global in sync so t() calls in child components pick up the right lang
+      useEffect(() => {
+        window._lang = lang;
+        localStorage.setItem('sc-lang', lang);
+        document.documentElement.lang = lang;
+      }, [lang]);
+
+      // Sync global before every render so t() in children is correct
+      window._lang = lang;
+
+      const switchLang = (l) => setLangState(l);
+
+      useEffect(() => {
+        const load = async () => {
+          try {
+            const [h, s, lv] = await Promise.all([
+              fetch("/api/twin/energy/history"),
+              fetch("/api/twin/energy/stats"),
+              fetch("/api/light/levels"),
+            ]);
+            if (h.ok) setHistory(await h.json());
+            if (s.ok) setStats(await s.json());
+            if (lv.ok) { const lvData = await lv.json(); if (lvData.weather) setWeather(lvData.weather); }
+          } catch {}
+        };
+        load();
+        const timer = setInterval(load, 5000);
+        return () => clearInterval(timer);
+      }, []);
+
+      const [resetting, setResetting]       = useState(false);
+      const [sceneLoading, setSceneLoading] = useState(false);
+      const [voiceLoading, setVoiceLoading] = useState(false);
+      const handleReset = async () => {
+        setResetting(true);
+        try { await fetch("/api/twin/reset", { method: "POST" }); } catch {}
+        setHistory([]);
+        setStats(null);
+        setResetting(false);
+      };
+
+      const baseline = 320;
+      const watts    = state?.total_watts ?? 0;
+
+      const ZONE_LABELS = {
+        zone_A: t('zl.A'), zone_B: t('zl.B'),
+        zone_C: t('zl.C'), zone_D: t('zl.D'),
+      };
+      const ICON = { ON:"💡", DIM:"🔅", OFF:"⬛" };
+
+      return (
+        <>
+          <header>
+            <div style={{display:"flex",alignItems:"center",gap:"1rem"}}>
+              <h1>🏫 Smart Classroom AI — Digital Twin</h1>
+              <a href="/app/landing.html" style={{fontSize:"0.75rem",fontWeight:600,color:"#94a3b8",textDecoration:"none",padding:"0.25rem 0.8rem",borderRadius:"9999px",border:"1px solid #ffffff20",whiteSpace:"nowrap",transition:"all 0.2s"}}
+                onMouseOver={e=>{ e.target.style.color="#f1f5f9"; e.target.style.background="rgba(255,255,255,0.06)"; }}
+                onMouseOut={e=>{ e.target.style.color="#94a3b8"; e.target.style.background="transparent"; }}>
+                {t('home')}
+              </a>
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:"0.5rem"}}>
+              <div className="lang-toggle">
+                <button className={`lang-btn${lang==='es'?' active':''}`} onClick={()=>switchLang('es')}>ES</button>
+                <button className={`lang-btn${lang==='en'?' active':''}`} onClick={()=>switchLang('en')}>EN</button>
+              </div>
+              <span className={`badge ${connected?"on":"off"}`}>{connected?t('connected'):t('connecting')}</span>
+              <button onClick={handleReset} className="reset-btn" disabled={resetting}>
+                {resetting ? <><span className="spinner"/>{t('resetting')}</> : t('reset')}
+              </button>
+            </div>
+          </header>
+
+          <main>
+            {/* Left column */}
+            <div style={{display:"flex",flexDirection:"column",gap:"1rem"}}>
+              <div className="panel">
+                <h2>{t('view3d')}</h2>
+                <div className="canvas-wrap">
+                  <Classroom3D classroomState={state} weather={weather} onLoadingChange={setSceneLoading} />
+                  {(sceneLoading || voiceLoading) && (
+                    <div className="canvas-overlay" style={voiceLoading ? {background:"#0b0e1670",backdropFilter:"blur(2px)"} : {}}>
+                      <div className="canvas-spinner" style={voiceLoading ? {borderTopColor:"#a78bfa",borderRightColor:"#7c3aed60",boxShadow:"0 0 14px #7c3aed30"} : {}} />
+                      <span className="canvas-overlay-label" style={voiceLoading ? {color:"#a78bfa"} : {}}>
+                        {voiceLoading ? t('voice.applying') : t('updating')}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div style={{fontSize:"0.65rem",color:"#334155",marginTop:"0.4rem",textAlign:"center"}}>{t('hint')}</div>
+              </div>
+
+              <ComparisonPanel stats={stats} watts={watts} history={history} lang={lang} />
+              <CarbonPanel stats={stats} watts={watts} lang={lang} />
+            </div>
+
+            {/* Right column */}
+            <div style={{display:"flex",flexDirection:"column",gap:"1rem"}}>
+
+              {/* Voice */}
+              <div className="panel">
+                <h2>{t('voice')}</h2>
+                <VoiceBtn lang={lang} onProcessing={setVoiceLoading} />
+                <details style={{marginTop:"0.6rem",fontSize:"0.68rem"}}>
+                  <summary style={{color:"#475569",cursor:"pointer"}}>{t('voice.examples')}</summary>
+                  <div style={{marginTop:"0.4rem",display:"flex",flexDirection:"column",gap:"0.2rem"}}>
+                    {(lang === 'en'
+                      ? ["turn off all","turn on all","dim all","turn on zone a","turn off zone b","dim zone c","auto mode"]
+                      : ["apagar todo","encender todo","atenuar todo","encender zona a","apagar zona b","atenuar zona c","modo auto"]
+                    ).map(c => (
+                      <code key={c} style={{background:"#141820",padding:"0.15rem 0.4rem",borderRadius:"0.2rem",color:"#94a3b8"}}>"{c}"</code>
+                    ))}
+                  </div>
+                </details>
+              </div>
+
+              <DemoControls onSceneLoading={setSceneLoading} lang={lang} />
+
+              <div className="panel">
+                <h2>{t('zones')}</h2>
+                <div className="zone-grid">
+                  {["zone_A","zone_B","zone_C","zone_D"].map(z => {
+                    const d = state?.zones?.[z];
+                    const s = d?.light ?? "OFF";
+                    return (
+                      <div key={z} className={`zone-card ${s}`}>
+                        <div className="zone-name">{ZONE_LABELS[z]}</div>
+                        <div className="zone-state">{ICON[s]} {s}</div>
+                        <div className="zone-meta">{d?.occupancy??0} {t('people')} · {Math.round((d?.natural_light??0)*100)}% {t('natural')}</div>
+                        {d?.reason && <div className="zone-meta" style={{color:"#475569",marginTop:"0.2rem"}}>{d.reason}</div>}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+            </div>
+          </main>
+        </>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>

@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Classroom AI — Feria STEAM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── Reset & Base ─────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:    #040d1e;
+      --navy2:   #071428;
+      --blue:    #2563eb;
+      --blue-l:  #3b82f6;
+      --cyan:    #06b6d4;
+      --purple:  #818cf8;
+      --green:   #10b981;
+      --text:    #f1f5f9;
+      --muted:   #94a3b8;
+      --dim:     #475569;
+      --card:    rgba(7, 20, 40, 0.75);
+      --border:  rgba(255,255,255,0.07);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--navy);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--navy); }
+    ::-webkit-scrollbar-thumb { background: #1e3a6e; border-radius: 3px; }
+
+    h1, h2, h3, h4 { font-family: 'Space Grotesk', sans-serif; line-height: 1.15; }
+
+    /* ── Scroll reveal ────────────────────────────────────────────────────── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(32px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+
+    /* ── NAV ──────────────────────────────────────────────────────────────── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.9rem 2rem;
+      background: rgba(4, 13, 30, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-brand {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700; font-size: 1rem;
+      letter-spacing: -0.02em;
+      background: linear-gradient(90deg, #60a5fa, #06b6d4);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .nav-links { display: flex; align-items: center; gap: 1.5rem; }
+    .nav-links a {
+      font-size: 0.82rem; color: var(--muted); text-decoration: none;
+      font-weight: 500; transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    /* Dropdown "Proceso" */
+    .nav-dropdown { position: relative; }
+    .nav-dropdown-trigger {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      font-size: 0.82rem; color: var(--dim); font-weight: 500;
+      cursor: pointer; user-select: none;
+      transition: color 0.2s;
+    }
+    .nav-dropdown-trigger::after { content: '▾'; font-size: 0.65rem; }
+    .nav-dropdown:hover .nav-dropdown-trigger { color: var(--muted); }
+    .nav-dropdown-menu {
+      display: none; position: absolute; top: 100%; right: 0;
+      padding-top: 0.75rem; /* invisible bridge so hover doesn't break */
+    }
+    .nav-dropdown-menu-inner {
+      background: rgba(4,13,30,0.97); border: 1px solid var(--border);
+      border-radius: 0.75rem; padding: 0.4rem 0;
+      min-width: 180px; backdrop-filter: blur(16px);
+      box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+    }
+    .nav-dropdown:hover .nav-dropdown-menu,
+    .nav-dropdown-menu.open { display: block; }
+    .nav-dropdown-menu a {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.55rem 1rem; font-size: 0.78rem;
+      color: var(--muted); white-space: nowrap; transition: all 0.15s;
+    }
+    .nav-dropdown-menu a:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+    .nav-dropdown-label {
+      padding: 0.35rem 1rem 0.1rem;
+      font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--dim);
+    }
+
+    .nav-cta {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.45rem 1.1rem;
+      background: linear-gradient(135deg, var(--blue), var(--cyan));
+      border-radius: 9999px; font-size: 0.8rem; font-weight: 600;
+      color: #fff !important; text-decoration: none;
+      box-shadow: 0 0 18px rgba(37,99,235,0.35);
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .nav-cta:hover { box-shadow: 0 0 28px rgba(37,99,235,0.55); transform: translateY(-1px); }
+
+    /* ── LANG TOGGLE ──────────────────────────────────────────────────────── */
+    .lang-toggle {
+      display: inline-flex; align-items: center;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 9999px; padding: 0.15rem 0.2rem; gap: 0.1rem;
+    }
+    .lang-btn {
+      padding: 0.22rem 0.6rem; border-radius: 9999px; border: none;
+      font-size: 0.72rem; font-weight: 700; cursor: pointer;
+      background: transparent; color: var(--dim);
+      transition: all 0.2s; letter-spacing: 0.02em;
+    }
+    .lang-btn.active {
+      background: linear-gradient(135deg, var(--blue), var(--cyan));
+      color: #fff; box-shadow: 0 0 10px rgba(37,99,235,0.4);
+    }
+    .lang-btn:not(.active):hover { color: var(--muted); }
+
+    /* ── HERO ─────────────────────────────────────────────────────────────── */
+    #hero {
+      position: relative; min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 7rem 1.5rem 4rem;
+      overflow: hidden;
+    }
+
+    /* Animated gradient background */
+    .hero-bg {
+      position: absolute; inset: 0; z-index: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 40%, rgba(37,99,235,0.18) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 80% 60%, rgba(6,182,212,0.14) 0%, transparent 60%),
+        radial-gradient(ellipse 70% 70% at 50% 100%, rgba(129,140,248,0.10) 0%, transparent 60%),
+        var(--navy2);
+      animation: heroShift 10s ease-in-out infinite alternate;
+    }
+    @keyframes heroShift {
+      0%   { filter: hue-rotate(0deg); }
+      100% { filter: hue-rotate(15deg); }
+    }
+
+    /* Grid lines */
+    .hero-grid {
+      position: absolute; inset: 0; z-index: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
+    }
+
+    /* Floating orbs */
+    .orb {
+      position: absolute; border-radius: 50%; filter: blur(70px); z-index: 0;
+      animation: float 8s ease-in-out infinite alternate;
+    }
+    .orb-1 { width: 420px; height: 420px; background: rgba(37,99,235,0.15); top: -10%; left: -8%; animation-duration: 9s; }
+    .orb-2 { width: 320px; height: 320px; background: rgba(6,182,212,0.12); bottom: 5%; right: -5%; animation-duration: 11s; animation-delay: -3s; }
+    .orb-3 { width: 250px; height: 250px; background: rgba(129,140,248,0.12); top: 30%; right: 15%; animation-duration: 7s; animation-delay: -1s; }
+    @keyframes float {
+      0%   { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(20px, -30px) scale(1.05); }
+    }
+
+    .hero-content { position: relative; z-index: 1; max-width: 860px; }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.3rem 0.9rem; border-radius: 9999px;
+      border: 1px solid rgba(6,182,212,0.35);
+      background: rgba(6,182,212,0.08);
+      font-size: 0.72rem; font-weight: 600; color: var(--cyan);
+      letter-spacing: 0.06em; text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-title {
+      font-size: clamp(2.8rem, 7vw, 5.5rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      margin-bottom: 1.25rem;
+    }
+    .hero-title .grad {
+      background: linear-gradient(135deg, #60a5fa 0%, #06b6d4 40%, #818cf8 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .hero-sub {
+      font-size: clamp(1rem, 2.5vw, 1.25rem);
+      color: var(--muted); font-weight: 400; line-height: 1.65;
+      max-width: 600px; margin: 0 auto 2.5rem;
+    }
+
+    .hero-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-bottom: 4rem; }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.8rem 1.8rem; border-radius: 9999px;
+      background: linear-gradient(135deg, var(--blue), var(--cyan));
+      font-weight: 700; font-size: 0.95rem; color: #fff; text-decoration: none;
+      box-shadow: 0 0 30px rgba(37,99,235,0.4);
+      transition: transform 0.2s, box-shadow 0.2s;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 45px rgba(37,99,235,0.6); }
+
+    .btn-ghost {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.8rem 1.8rem; border-radius: 9999px;
+      border: 1px solid var(--border); background: rgba(255,255,255,0.04);
+      font-weight: 600; font-size: 0.95rem; color: var(--text); text-decoration: none;
+      transition: border-color 0.2s, background 0.2s;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+    .btn-ghost:hover { border-color: rgba(96,165,250,0.4); background: rgba(96,165,250,0.06); }
+
+    /* Hero stats */
+    .hero-stats {
+      display: flex; justify-content: center; flex-wrap: wrap; gap: 2rem;
+      padding: 1.5rem 2rem; border-radius: 1rem;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(8px);
+    }
+    .hero-stat { text-align: center; }
+    .hero-stat-num { font-family: 'Space Grotesk', sans-serif; font-size: 1.9rem; font-weight: 800; color: var(--text); line-height: 1; }
+    .hero-stat-num span { font-size: 1.1rem; font-weight: 600; color: var(--cyan); }
+    .hero-stat-label { font-size: 0.7rem; color: var(--muted); margin-top: 0.25rem; text-transform: uppercase; letter-spacing: 0.06em; }
+    .stat-div { width: 1px; background: var(--border); }
+
+    /* ── SECTION COMMONS ──────────────────────────────────────────────────── */
+    section { padding: 6rem 1.5rem; }
+    .container { max-width: 1080px; margin: 0 auto; }
+
+    .section-eyebrow {
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; margin-bottom: 0.75rem;
+    }
+    .section-title {
+      font-size: clamp(1.9rem, 4vw, 2.8rem);
+      font-weight: 800; letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+    }
+    .section-sub {
+      font-size: 1.05rem; color: var(--muted); line-height: 1.7;
+      max-width: 640px;
+    }
+    .divider {
+      width: 48px; height: 3px; border-radius: 2px;
+      margin: 1.25rem 0;
+    }
+
+    /* ── BLOCK 2 — PROJECT ────────────────────────────────────────────────── */
+    #proyecto { background: var(--navy2); }
+
+    .project-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 4rem;
+      align-items: center; margin-top: 3.5rem;
+    }
+    @media (max-width: 768px) { .project-grid { grid-template-columns: 1fr; gap: 2.5rem; } }
+
+    .project-text p {
+      color: var(--muted); line-height: 1.8; font-size: 0.97rem; margin-bottom: 1rem;
+    }
+    .project-text p strong { color: var(--text); }
+
+    .project-cards { display: flex; flex-direction: column; gap: 0.75rem; }
+    .project-card {
+      display: flex; align-items: flex-start; gap: 1rem;
+      padding: 1.1rem 1.25rem; border-radius: 0.75rem;
+      background: var(--card); border: 1px solid var(--border);
+      transition: border-color 0.2s;
+    }
+    .project-card:hover { border-color: rgba(96,165,250,0.25); }
+    .project-card-icon {
+      width: 2.5rem; height: 2.5rem; border-radius: 0.5rem; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 1.15rem;
+    }
+    .project-card h4 { font-size: 0.88rem; font-weight: 600; margin-bottom: 0.2rem; }
+    .project-card p { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
+
+    /* ── AREA SECTIONS (3-4-5) ────────────────────────────────────────────── */
+    .area-section { position: relative; overflow: hidden; }
+    .area-section:nth-child(even) { background: var(--navy2); }
+
+    .area-header { margin-bottom: 3rem; }
+
+    .area-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem;
+      margin-top: 2rem;
+    }
+    @media (max-width: 900px) { .area-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 560px) { .area-grid { grid-template-columns: 1fr; } }
+
+    .area-card {
+      padding: 1.5rem; border-radius: 0.875rem;
+      background: var(--card); border: 1px solid var(--border);
+      transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
+    }
+    .area-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+    }
+    .area-card-icon { font-size: 1.7rem; margin-bottom: 0.85rem; }
+    .area-card h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .area-card p { font-size: 0.79rem; color: var(--muted); line-height: 1.6; }
+
+    /* Connection pill */
+    .connect-row {
+      display: flex; flex-wrap: wrap; gap: 0.5rem;
+      margin-top: 2.5rem; align-items: center;
+    }
+    .connect-label { font-size: 0.7rem; color: var(--dim); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-right: 0.25rem; }
+    .connect-pill {
+      padding: 0.25rem 0.75rem; border-radius: 9999px;
+      font-size: 0.72rem; font-weight: 600; border: 1px solid;
+    }
+
+    /* Split layout for areas */
+    .area-split {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;
+    }
+    @media (max-width: 768px) { .area-split { grid-template-columns: 1fr; gap: 2.5rem; } }
+
+    /* Diagram/visual */
+    .area-visual {
+      border-radius: 1rem; overflow: hidden;
+      background: var(--card); border: 1px solid var(--border);
+      padding: 2rem; display: flex; align-items: center; justify-content: center;
+      min-height: 260px; position: relative;
+    }
+
+    /* Agent diagram */
+    .agent-diagram { width: 100%; max-width: 340px; }
+    .agent-center {
+      display: flex; align-items: center; justify-content: center;
+      width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 1rem;
+      background: linear-gradient(135deg, var(--blue), var(--purple));
+      font-size: 1.5rem; box-shadow: 0 0 30px rgba(37,99,235,0.4);
+    }
+    .agent-center-label { text-align: center; font-size: 0.72rem; font-weight: 700; color: var(--text); margin-bottom: 1.25rem; }
+    .agent-nodes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.4rem; }
+    .agent-node {
+      padding: 0.4rem 0.3rem; border-radius: 0.5rem; text-align: center;
+      background: rgba(37,99,235,0.12); border: 1px solid rgba(37,99,235,0.25);
+      font-size: 0.6rem; font-weight: 600; color: #93c5fd;
+    }
+    .agent-node span { display: block; font-size: 1rem; margin-bottom: 0.15rem; }
+
+    /* CO2 visual */
+    .co2-visual { width: 100%; }
+    .co2-bar-group { margin-bottom: 1rem; }
+    .co2-bar-label { display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--muted); margin-bottom: 0.35rem; }
+    .co2-bar-label strong { color: var(--text); }
+    .co2-track { height: 14px; border-radius: 7px; background: rgba(255,255,255,0.06); overflow: hidden; }
+    .co2-fill { height: 100%; border-radius: 7px; }
+
+    .co2-eq { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+    .co2-eq-item { flex: 1; text-align: center; padding: 0.75rem 0.5rem; border-radius: 0.625rem; background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); }
+    .co2-eq-item .big { font-size: 1.2rem; font-weight: 800; color: var(--green); }
+    .co2-eq-item .small { font-size: 0.6rem; color: var(--muted); margin-top: 0.2rem; }
+
+    /* IoT visual */
+    .iot-visual { text-align: center; }
+    .iot-layers { display: flex; flex-direction: column; gap: 0.6rem; }
+    .iot-layer {
+      padding: 0.7rem 1rem; border-radius: 0.5rem; border: 1px solid;
+      font-size: 0.78rem; font-weight: 600; display: flex; align-items: center; gap: 0.6rem;
+    }
+
+    /* ── EMPATHY MAP ─────────────────────────────────────────────────────── */
+    #empatia {
+      background: linear-gradient(160deg, #040d1e 0%, #071428 60%, #050d20 100%);
+      position: relative; overflow: hidden;
+    }
+    #empatia::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse 60% 50% at 80% 20%, rgba(99,102,241,0.08) 0%, transparent 70%),
+                  radial-gradient(ellipse 40% 40% at 20% 80%, rgba(6,182,212,0.06) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .em-layout {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 3rem;
+      align-items: start;
+    }
+    @media (max-width: 860px) { .em-layout { grid-template-columns: 1fr; } }
+
+    /* Character card */
+    .em-character {
+      background: rgba(99,102,241,0.06);
+      border: 1px solid rgba(99,102,241,0.2);
+      border-radius: 1.25rem;
+      padding: 2rem 1.5rem;
+      text-align: center;
+      position: relative;
+    }
+    .em-avatar {
+      width: 90px; height: 90px; border-radius: 50%;
+      background: linear-gradient(135deg, #6366f1, #06b6d4);
+      margin: 0 auto 0.75rem;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.6rem;
+      box-shadow: 0 0 32px rgba(99,102,241,0.4);
+    }
+    .em-name { font-family: 'Space Grotesk', sans-serif; font-size: 1.4rem; font-weight: 800; color: #fff; }
+    .em-age { font-size: 0.8rem; color: var(--cyan); font-weight: 600; margin-bottom: 1rem; }
+    .em-tag {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.25);
+      border-radius: 9999px; padding: 0.3rem 0.75rem;
+      font-size: 0.72rem; color: var(--cyan); font-weight: 600; margin: 0.2rem;
+    }
+    .em-quote {
+      margin-top: 1.25rem;
+      font-size: 0.82rem; color: var(--muted); line-height: 1.65;
+      font-style: italic;
+      border-left: 2px solid rgba(99,102,241,0.4);
+      padding-left: 0.85rem; text-align: left;
+    }
+
+    /* Quadrant grid */
+    .em-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    @media (max-width: 500px) { .em-grid { grid-template-columns: 1fr; } }
+
+    .em-quad {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      padding: 1.25rem;
+      transition: border-color 0.25s, transform 0.25s;
+    }
+    .em-quad:hover { transform: translateY(-3px); }
+    .em-quad.q-ve  { border-top: 2px solid #3b82f6; }
+    .em-quad.q-pie { border-top: 2px solid #818cf8; }
+    .em-quad.q-dic { border-top: 2px solid #06b6d4; }
+    .em-quad.q-hac { border-top: 2px solid #10b981; }
+
+    .em-quad-icon { font-size: 1.4rem; margin-bottom: 0.4rem; }
+    .em-quad-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.72rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      margin-bottom: 0.65rem;
+    }
+    .em-quad.q-ve  .em-quad-title { color: #3b82f6; }
+    .em-quad.q-pie .em-quad-title { color: #818cf8; }
+    .em-quad.q-dic .em-quad-title { color: #06b6d4; }
+    .em-quad.q-hac .em-quad-title { color: #10b981; }
+
+    .em-quad ul { list-style: none; display: flex; flex-direction: column; gap: 0.45rem; }
+    .em-quad ul li {
+      font-size: 0.76rem; color: var(--muted); line-height: 1.5;
+      padding-left: 1rem; position: relative;
+    }
+    .em-quad ul li::before {
+      content: '·'; position: absolute; left: 0;
+      font-size: 1.1rem; line-height: 1; color: inherit; opacity: 0.5;
+    }
+    .em-quad.q-ve  ul li::before { color: #3b82f6; }
+    .em-quad.q-pie ul li::before { color: #818cf8; }
+    .em-quad.q-dic ul li::before { color: #06b6d4; }
+    .em-quad.q-hac ul li::before { color: #10b981; }
+
+    .em-quad li.highlight {
+      color: var(--text); font-weight: 500;
+    }
+    .em-quad li em {
+      font-style: italic; color: rgba(255,255,255,0.5); font-size: 0.72rem;
+    }
+
+    /* ── TEAM ─────────────────────────────────────────────────────────────── */
+    #equipo { background: var(--navy); }
+
+    .team-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem;
+      margin-top: 3rem;
+    }
+    @media (max-width: 900px) { .team-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 500px) { .team-grid { grid-template-columns: 1fr; max-width: 280px; margin-left: auto; margin-right: auto; } }
+
+    .team-card {
+      text-align: center; padding: 2rem 1.25rem 1.5rem;
+      border-radius: 1rem; background: var(--card); border: 1px solid var(--border);
+      transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+    }
+    .team-card:hover { transform: translateY(-6px); box-shadow: 0 16px 50px rgba(0,0,0,0.35); border-color: rgba(96,165,250,0.2); }
+
+    .team-avatar {
+      width: 88px; height: 88px; border-radius: 50%; margin: 0 auto 1.1rem;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.6rem; font-weight: 800; color: #fff;
+      position: relative;
+    }
+    .team-avatar::after {
+      content: ''; position: absolute; inset: -3px;
+      border-radius: 50%; padding: 3px;
+      background: linear-gradient(135deg, var(--blue), var(--cyan));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor; mask-composite: exclude;
+    }
+
+    .team-name { font-family: 'Space Grotesk', sans-serif; font-size: 1rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .team-role { font-size: 0.75rem; color: var(--cyan); font-weight: 600; margin-bottom: 0.6rem; }
+    .team-bio { font-size: 0.74rem; color: var(--muted); line-height: 1.55; }
+
+    /* ── FOOTER ───────────────────────────────────────────────────────────── */
+    footer {
+      background: #020810; border-top: 1px solid var(--border);
+      padding: 2.5rem 1.5rem;
+    }
+    .footer-inner {
+      max-width: 1080px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+    }
+    .footer-brand { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 0.9rem; }
+    .footer-brand span { background: linear-gradient(90deg, #60a5fa, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .footer-meta { font-size: 0.75rem; color: var(--dim); }
+    .footer-cta {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.4rem 1rem; border-radius: 9999px;
+      border: 1px solid rgba(96,165,250,0.3); background: rgba(96,165,250,0.06);
+      font-size: 0.76rem; font-weight: 600; color: #93c5fd; text-decoration: none;
+      transition: all 0.2s;
+    }
+    .footer-cta:hover { background: rgba(96,165,250,0.12); border-color: rgba(96,165,250,0.5); }
+
+    /* ── MOBILE ─────────────────────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      /* Nav */
+      nav { padding: 0.7rem 1rem; }
+      .nav-links a:not(.nav-cta) { display: none; }
+      .nav-cta { font-size: 0.74rem; padding: 0.4rem 0.85rem; }
+
+      /* Sections */
+      section { padding: 3.5rem 1.1rem; }
+      #hero   { padding: 5.5rem 1.1rem 3rem; }
+
+      /* Hero */
+      .hero-badge { font-size: 0.63rem; padding: 0.22rem 0.65rem; }
+      .hero-sub   { font-size: 0.92rem; }
+      .hero-btns  { flex-direction: column; align-items: stretch; gap: 0.75rem; }
+      .btn-primary, .btn-ghost { justify-content: center; padding: 0.9rem 1.2rem; font-size: 0.88rem; }
+
+      /* Stats */
+      .hero-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem 0.5rem; padding: 1rem; }
+      .stat-div   { display: none; }
+      .hero-stat-num { font-size: 1.5rem; }
+
+      /* Layout */
+      .project-grid { gap: 2rem; }
+      .area-split   { gap: 2rem; }
+      .area-visual  { padding: 1.1rem; min-height: auto; }
+
+      /* Agent diagram */
+      .agent-nodes { grid-template-columns: 1fr 1fr; gap: 0.45rem; }
+      .agent-node  { font-size: 0.63rem; padding: 0.45rem 0.25rem; }
+
+      /* CO₂ */
+      .co2-eq { flex-direction: column; gap: 0.5rem; }
+      .co2-eq-item { flex: none; }
+
+      /* Cards */
+      .area-grid { gap: 0.85rem; }
+      .area-card { padding: 1.1rem; }
+      .carbon-eq-grid { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+
+      /* Team */
+      .team-grid { grid-template-columns: 1fr 1fr; max-width: 100%; }
+      .team-card { padding: 1.4rem 1rem 1.2rem; }
+      .team-avatar { width: 72px; height: 72px; font-size: 1.3rem; }
+
+      /* Footer */
+      .footer-inner { flex-direction: column; text-align: center; align-items: center; }
+    }
+
+    @media (max-width: 400px) {
+      .team-grid { grid-template-columns: 1fr; max-width: 280px; }
+      .hero-stats { grid-template-columns: 1fr 1fr; }
+      .carbon-eq-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── NAV ──────────────────────────────────────────────────────────────── -->
+  <nav>
+    <div class="nav-brand">⚡ Smart Classroom AI</div>
+    <div class="nav-links">
+      <a href="/app/landing.html" data-i18n="nav.home">Inicio</a>
+      <a href="#proyecto"         data-i18n="nav.project">Proyecto</a>
+      <a href="#areas"            data-i18n="nav.areas">Áreas</a>
+      <a href="#equipo"           data-i18n="nav.team">Equipo</a>
+      <div class="nav-dropdown">
+        <span class="nav-dropdown-trigger" data-i18n="nav.process">Proceso</span>
+        <div class="nav-dropdown-menu">
+          <div class="nav-dropdown-menu-inner">
+            <div class="nav-dropdown-label" data-i18n="nav.tasks">Tareas STEAM</div>
+            <a href="/app/empathy-map.html" data-i18n="nav.empathy">🧠 Mapa de Empatía</a>
+            <a href="/app/journey-map.html" data-i18n="nav.journey">🗺️ Journey Map</a>
+          </div>
+        </div>
+      </div>
+      <div class="lang-toggle">
+        <button class="lang-btn active" id="btn-es" onclick="setLang('es')">ES</button>
+        <button class="lang-btn"        id="btn-en" onclick="setLang('en')">EN</button>
+      </div>
+      <a href="/app/" class="nav-cta" data-i18n="nav.twin">⚡ Ver Digital Twin</a>
+    </div>
+  </nav>
+
+  <!-- ── BLOQUE 1 — HERO ──────────────────────────────────────────────────── -->
+  <section id="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-grid"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <div class="hero-content">
+      <div class="hero-badge reveal" data-i18n="hero.badge">🏫 Feria STEAM · 10mo Grado · 2026</div>
+
+      <h1 class="hero-title reveal reveal-delay-1" data-i18n-html="hero.title">
+        El Aula del Futuro,<br>
+        <span class="grad">controlada por IA.</span>
+      </h1>
+
+      <p class="hero-sub reveal reveal-delay-2" data-i18n-html="hero.sub">
+        Un sistema multi-agente de iluminación inteligente que reduce el consumo
+        energético hasta un <strong style="color:var(--cyan)">60%</strong> usando
+        Inteligencia Artificial, Gemelos Digitales e IoT — todo simulado, sin hardware.
+      </p>
+
+      <div class="hero-btns reveal reveal-delay-3">
+        <a href="/app/" class="btn-primary">
+          <span>🖥</span> <span data-i18n="hero.btn1">Explorar el Gemelo Digital</span>
+        </a>
+        <a href="#proyecto" class="btn-ghost">
+          <span>↓</span> <span data-i18n="hero.btn2">Conoce el Proyecto</span>
+        </a>
+      </div>
+
+      <div class="hero-stats reveal reveal-delay-4">
+        <div class="hero-stat">
+          <div class="hero-stat-num">60<span>%</span></div>
+          <div class="hero-stat-label" data-i18n="hero.stat1">Ahorro energético</div>
+        </div>
+        <div class="stat-div"></div>
+        <div class="hero-stat">
+          <div class="hero-stat-num">5</div>
+          <div class="hero-stat-label" data-i18n="hero.stat2">Agentes IA</div>
+        </div>
+        <div class="stat-div"></div>
+        <div class="hero-stat">
+          <div class="hero-stat-num">4</div>
+          <div class="hero-stat-label" data-i18n="hero.stat3">Zonas inteligentes</div>
+        </div>
+        <div class="stat-div"></div>
+        <div class="hero-stat">
+          <div class="hero-stat-num">0</div>
+          <div class="hero-stat-label" data-i18n="hero.stat4">Hardware requerido</div>
+        </div>
+        <div class="stat-div"></div>
+        <div class="hero-stat">
+          <div class="hero-stat-num">64<span>kg</span></div>
+          <div class="hero-stat-label" data-i18n="hero.stat5">CO₂ evitado/año</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── BLOQUE DT — DIGITAL TWIN SHOWCASE ────────────────────────────────── -->
+  <section id="twin" style="background:var(--navy2);padding:5rem 1.5rem">
+    <div style="max-width:1100px;margin:0 auto">
+
+      <div style="text-align:center;margin-bottom:3rem">
+        <div class="section-eyebrow reveal" style="color:var(--cyan)" data-i18n="twin.eyebrow">El producto central</div>
+        <h2 class="section-title reveal" style="font-size:clamp(1.8rem,4vw,2.8rem)" data-i18n-html="twin.title">El Gemelo Digital<br><span style="background:linear-gradient(135deg,var(--blue),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent">en tiempo real</span></h2>
+        <div class="divider reveal" style="background:linear-gradient(90deg,var(--blue),var(--cyan));margin:1rem auto 1.25rem"></div>
+        <p class="section-sub reveal" style="max-width:600px;margin:0 auto" data-i18n="twin.sub">Una réplica 3D interactiva del aula que muestra en vivo cómo la IA controla cada zona de iluminación — y cuánta energía ahorra en el proceso.</p>
+      </div>
+
+      <!-- Mockup UI -->
+      <div class="reveal" style="position:relative;max-width:900px;margin:0 auto 3rem">
+        <!-- Browser chrome -->
+        <div style="background:#0a1628;border:1px solid rgba(99,102,241,0.25);border-radius:1rem;overflow:hidden;box-shadow:0 30px 100px rgba(0,0,0,0.6),0 0 0 1px rgba(255,255,255,0.04)">
+          <!-- Title bar -->
+          <div style="background:#070f1e;padding:0.7rem 1rem;display:flex;align-items:center;gap:0.75rem;border-bottom:1px solid rgba(255,255,255,0.06)">
+            <div style="display:flex;gap:0.4rem">
+              <div style="width:11px;height:11px;border-radius:50%;background:#ef4444;opacity:0.8"></div>
+              <div style="width:11px;height:11px;border-radius:50%;background:#f59e0b;opacity:0.8"></div>
+              <div style="width:11px;height:11px;border-radius:50%;background:#10b981;opacity:0.8"></div>
+            </div>
+            <div style="flex:1;background:rgba(255,255,255,0.05);border-radius:0.375rem;padding:0.25rem 0.75rem;font-size:0.68rem;color:var(--dim);font-family:monospace">127.0.0.1:8000/app/</div>
+            <div style="font-size:0.65rem;color:var(--dim);display:flex;align-items:center;gap:0.3rem"><span style="width:6px;height:6px;background:#10b981;border-radius:50%;display:inline-block;box-shadow:0 0 6px #10b981"></span>Conectado</div>
+          </div>
+          <!-- App layout -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;min-height:340px">
+            <!-- Left: 3D view -->
+            <div style="background:linear-gradient(160deg,#060e1e,#0d1a30);padding:1rem;border-right:1px solid rgba(255,255,255,0.05);position:relative;overflow:hidden">
+              <div style="font-size:0.6rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--dim);margin-bottom:0.75rem" data-i18n="twin.view3d">Vista 3D — Gemelo Digital</div>
+              <!-- Classroom grid visual -->
+              <div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:6px;height:200px">
+                <div style="background:rgba(74,222,128,0.12);border:1px solid rgba(74,222,128,0.35);border-radius:0.4rem;display:flex;flex-direction:column;justify-content:space-between;padding:0.5rem;position:relative;overflow:hidden">
+                  <div style="font-size:0.55rem;color:#4ade80;font-weight:700">Zona A</div>
+                  <div style="display:flex;gap:3px">
+                    <div style="flex:1;height:4px;background:#4ade80;border-radius:2px;box-shadow:0 0 6px #4ade80;opacity:0.9"></div>
+                    <div style="flex:1;height:4px;background:#4ade80;border-radius:2px;box-shadow:0 0 6px #4ade80;opacity:0.9"></div>
+                  </div>
+                  <div style="font-size:0.5rem;color:rgba(74,222,128,0.6)">💡 ON · 80W</div>
+                  <div style="position:absolute;inset:0;background:rgba(74,222,128,0.04);animation:zonePulse 2.5s ease-in-out infinite"></div>
+                </div>
+                <div style="background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.25);border-radius:0.4rem;display:flex;flex-direction:column;justify-content:space-between;padding:0.5rem">
+                  <div style="font-size:0.55rem;color:#4ade80;font-weight:700">Zona B</div>
+                  <div style="display:flex;gap:3px">
+                    <div style="flex:1;height:4px;background:#4ade80;border-radius:2px;box-shadow:0 0 4px #4ade80;opacity:0.6"></div>
+                    <div style="flex:1;height:4px;background:#4ade80;border-radius:2px;box-shadow:0 0 4px #4ade80;opacity:0.6"></div>
+                  </div>
+                  <div style="font-size:0.5rem;color:rgba(74,222,128,0.6)">🔅 DIM · 40W</div>
+                </div>
+                <div style="background:rgba(71,85,105,0.15);border:1px solid rgba(71,85,105,0.3);border-radius:0.4rem;display:flex;flex-direction:column;justify-content:space-between;padding:0.5rem">
+                  <div style="font-size:0.55rem;color:#64748b;font-weight:700">Zona C</div>
+                  <div style="display:flex;gap:3px">
+                    <div style="flex:1;height:4px;background:#334155;border-radius:2px"></div>
+                    <div style="flex:1;height:4px;background:#334155;border-radius:2px"></div>
+                  </div>
+                  <div style="font-size:0.5rem;color:#475569">⬛ OFF · 0W</div>
+                </div>
+                <div style="background:rgba(71,85,105,0.15);border:1px solid rgba(71,85,105,0.3);border-radius:0.4rem;display:flex;flex-direction:column;justify-content:space-between;padding:0.5rem">
+                  <div style="font-size:0.55rem;color:#64748b;font-weight:700">Zona D</div>
+                  <div style="display:flex;gap:3px">
+                    <div style="flex:1;height:4px;background:#334155;border-radius:2px"></div>
+                    <div style="flex:1;height:4px;background:#334155;border-radius:2px"></div>
+                  </div>
+                  <div style="font-size:0.5rem;color:#475569">⬛ OFF · 0W</div>
+                </div>
+              </div>
+              <!-- Live badge -->
+              <div style="position:absolute;top:0.75rem;right:0.75rem;display:flex;align-items:center;gap:0.3rem;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);border-radius:9999px;padding:0.2rem 0.55rem;font-size:0.58rem;font-weight:700;color:#10b981">
+                <span style="width:5px;height:5px;background:#10b981;border-radius:50%;display:inline-block;animation:liveBlink 1s ease-in-out infinite"></span><span data-i18n="twin.live">EN VIVO</span>
+              </div>
+              <!-- Saving indicator -->
+              <div style="margin-top:0.75rem;display:flex;align-items:center;justify-content:space-between">
+                <div style="font-size:0.58rem;color:var(--dim)" data-i18n="twin.consumption">Consumo actual</div>
+                <div style="font-size:0.9rem;font-weight:800;color:#4ade80;font-family:'Space Grotesk',sans-serif">120W <span style="font-size:0.58rem;color:#64748b;font-weight:400">/ 320W baseline</span></div>
+              </div>
+              <div style="height:5px;background:rgba(255,255,255,0.05);border-radius:9999px;margin-top:0.4rem;overflow:hidden">
+                <div style="width:62.5%;height:100%;background:linear-gradient(90deg,#4ade80,#22d3ee);border-radius:9999px;box-shadow:0 0 8px rgba(74,222,128,0.5)"></div>
+              </div>
+            </div>
+            <!-- Right: dashboard panels -->
+            <div style="padding:1rem;display:flex;flex-direction:column;gap:0.6rem;background:#060e1e">
+              <div style="font-size:0.6rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--dim)" data-i18n="twin.dashboard">Dashboard energético</div>
+              <!-- Mini chart bars -->
+              <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:0.5rem;padding:0.6rem">
+                <div style="font-size:0.58rem;color:var(--dim);margin-bottom:0.5rem" data-i18n="twin.chart">Consumo en tiempo real (W)</div>
+                <div style="display:flex;align-items:flex-end;gap:3px;height:50px">
+                  <div style="flex:1;background:#ef4444;border-radius:2px 2px 0 0;height:100%;opacity:0.4"></div>
+                  <div style="flex:1;background:#ef4444;border-radius:2px 2px 0 0;height:95%;opacity:0.4"></div>
+                  <div style="flex:1;background:#ef4444;border-radius:2px 2px 0 0;height:98%;opacity:0.4"></div>
+                  <div style="flex:1;background:linear-gradient(180deg,#4ade80,#22c55e);border-radius:2px 2px 0 0;height:45%"></div>
+                  <div style="flex:1;background:linear-gradient(180deg,#4ade80,#22c55e);border-radius:2px 2px 0 0;height:38%"></div>
+                  <div style="flex:1;background:linear-gradient(180deg,#4ade80,#22c55e);border-radius:2px 2px 0 0;height:40%"></div>
+                  <div style="flex:1;background:linear-gradient(180deg,#4ade80,#22c55e);border-radius:2px 2px 0 0;height:42%;box-shadow:0 0 6px rgba(74,222,128,0.4)"></div>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-top:0.3rem;font-size:0.5rem;color:var(--dim)"><span data-i18n="twin.noai">Sin IA</span><span style="color:#4ade80" data-i18n="twin.withai">Con IA →</span></div>
+              </div>
+              <!-- Stats mini -->
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+                <div style="background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.18);border-radius:0.5rem;padding:0.5rem">
+                  <div style="font-size:0.55rem;color:var(--dim)" data-i18n="twin.savings">Ahorro hoy</div>
+                  <div style="font-size:1rem;font-weight:800;color:#4ade80;font-family:'Space Grotesk',sans-serif">62.5%</div>
+                </div>
+                <div style="background:rgba(6,182,212,0.07);border:1px solid rgba(6,182,212,0.18);border-radius:0.5rem;padding:0.5rem">
+                  <div style="font-size:0.55rem;color:var(--dim)" data-i18n="twin.co2avoided">CO₂ evitado</div>
+                  <div style="font-size:1rem;font-weight:800;color:var(--cyan);font-family:'Space Grotesk',sans-serif">64kg</div>
+                </div>
+              </div>
+              <!-- Agent log -->
+              <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:0.5rem;padding:0.6rem;flex:1">
+                <div style="font-size:0.55rem;color:var(--dim);margin-bottom:0.4rem" data-i18n="twin.decisions">Decisiones IA recientes</div>
+                <div style="font-size:0.58rem;color:#4ade80;margin-bottom:0.25rem" data-i18n="twin.dec1">✓ Zona C apagada — sin ocupantes</div>
+                <div style="font-size:0.58rem;color:#f59e0b;margin-bottom:0.25rem" data-i18n="twin.dec2">✓ Zona B en DIM — luz natural 68%</div>
+                <div style="font-size:0.58rem;color:var(--dim)" data-i18n="twin.dec3">✓ Zona A ON — 3 personas detectadas</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Glow under mockup -->
+        <div style="position:absolute;bottom:-40px;left:50%;transform:translateX(-50%);width:60%;height:40px;background:radial-gradient(ellipse,rgba(37,99,235,0.3) 0%,transparent 70%);filter:blur(12px);pointer-events:none"></div>
+      </div>
+
+      <!-- Feature pills -->
+      <div class="reveal" style="display:flex;flex-wrap:wrap;justify-content:center;gap:0.65rem;margin-bottom:2.5rem">
+        <div style="display:flex;align-items:center;gap:0.5rem;background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.2);border-radius:9999px;padding:0.4rem 1rem;font-size:0.75rem;color:#4ade80;font-weight:600" data-i18n="twin.pill1">✓ Actualización en tiempo real</div>
+        <div style="display:flex;align-items:center;gap:0.5rem;background:rgba(6,182,212,0.07);border:1px solid rgba(6,182,212,0.2);border-radius:9999px;padding:0.4rem 1rem;font-size:0.75rem;color:var(--cyan);font-weight:600" data-i18n="twin.pill2">✓ 5 agentes IA coordinados</div>
+        <div style="display:flex;align-items:center;gap:0.5rem;background:rgba(99,102,241,0.07);border:1px solid rgba(99,102,241,0.2);border-radius:9999px;padding:0.4rem 1rem;font-size:0.75rem;color:var(--purple);font-weight:600" data-i18n="twin.pill3">✓ 4 zonas de iluminación</div>
+        <div style="display:flex;align-items:center;gap:0.5rem;background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.2);border-radius:9999px;padding:0.4rem 1rem;font-size:0.75rem;color:var(--amber,#f59e0b);font-weight:600" data-i18n="twin.pill4">✓ Comparativo Con vs Sin IA</div>
+      </div>
+
+      <!-- CTA -->
+      <div class="reveal" style="text-align:center">
+        <a href="/app/" style="display:inline-flex;align-items:center;gap:0.6rem;background:linear-gradient(135deg,var(--blue),var(--cyan));color:#fff;text-decoration:none;font-family:'Space Grotesk',sans-serif;font-size:1rem;font-weight:700;padding:0.85rem 2.2rem;border-radius:9999px;box-shadow:0 0 40px rgba(37,99,235,0.4),0 0 0 1px rgba(255,255,255,0.08);transition:all 0.25s;letter-spacing:-0.01em">
+          <span style="font-size:1.2rem">⚡</span> <span data-i18n="twin.cta">Abrir el Digital Twin en vivo</span>
+        </a>
+        <p style="margin-top:0.85rem;font-size:0.75rem;color:var(--dim)" data-i18n="twin.ctasub">No requiere instalación — corre directo en el navegador</p>
+      </div>
+
+    </div>
+  </section>
+
+  <style>
+    @keyframes zonePulse { 0%,100%{opacity:0.04} 50%{opacity:0.12} }
+    @keyframes liveBlink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  </style>
+
+  <!-- ── BLOQUE 2 — PROYECTO ──────────────────────────────────────────────── -->
+  <section id="proyecto">
+    <div class="container">
+      <div class="section-eyebrow reveal" style="color:var(--blue-l)" data-i18n="proj.eyebrow">¿Qué construimos?</div>
+      <h2 class="section-title reveal" data-i18n-html="proj.title">Iluminación inteligente<br>sin desperdiciar un vatio</h2>
+      <div class="divider reveal" style="background: linear-gradient(90deg, var(--blue), var(--cyan))"></div>
+      <p class="section-sub reveal" data-i18n="proj.sub">
+        En un salón de clases convencional las luces permanecen encendidas sin importar
+        si hay personas, si entra luz natural o qué zona del aula está siendo utilizada.
+        Nosotros diseñamos un sistema que lo soluciona.
+      </p>
+
+      <div class="project-grid">
+        <div class="project-text reveal reveal-delay-1">
+          <p>
+            <strong>Smart Classroom AI</strong> es un sistema multi-agente que observa el aula
+            en tiempo real —personas presentes, luz natural disponible, hora del día y clima—
+            y decide de forma autónoma qué luces encender, atenuar o apagar en cada zona.
+          </p>
+          <p>
+            Para validar el impacto sin necesidad de hardware físico, construimos un
+            <strong>Gemelo Digital</strong>: una réplica virtual 3D del aula que ejecuta
+            el sistema de IA y registra el consumo energético antes y después de la optimización.
+          </p>
+          <p>
+            El resultado: una propuesta replicable en cualquier institución educativa, con
+            evidencia cuantificable de ahorro económico y reducción de huella de carbono.
+          </p>
+          <div class="connect-row">
+            <span class="connect-label">Tecnologías</span>
+            <span class="connect-pill" style="color:#93c5fd;border-color:#3b82f640;background:rgba(59,130,246,0.08)">Python · FastAPI</span>
+            <span class="connect-pill" style="color:#67e8f9;border-color:#06b6d440;background:rgba(6,182,212,0.08)">Three.js</span>
+            <span class="connect-pill" style="color:#a5b4fc;border-color:#818cf840;background:rgba(129,140,248,0.08)">WebSocket</span>
+            <span class="connect-pill" style="color:#6ee7b7;border-color:#10b98140;background:rgba(16,185,129,0.08)">React</span>
+          </div>
+        </div>
+
+        <div class="project-cards reveal reveal-delay-2">
+          <div class="project-card">
+            <div class="project-card-icon" style="background:rgba(37,99,235,0.15)">🎯</div>
+            <div>
+              <h4 data-i18n="proj.c1title">El problema</h4>
+              <p data-i18n="proj.c1body">Los salones de clase de Colombia desperdician energía eléctrica con iluminación innecesaria durante miles de horas al año.</p>
+            </div>
+          </div>
+          <div class="project-card">
+            <div class="project-card-icon" style="background:rgba(6,182,212,0.15)">💡</div>
+            <div>
+              <h4 data-i18n="proj.c2title">Nuestra solución</h4>
+              <p data-i18n="proj.c2body">5 agentes de IA coordinados toman decisiones de iluminación en tiempo real según ocupación, luz natural y comandos de voz.</p>
+            </div>
+          </div>
+          <div class="project-card">
+            <div class="project-card-icon" style="background:rgba(16,185,129,0.15)">📊</div>
+            <div>
+              <h4 data-i18n="proj.c3title">La evidencia</h4>
+              <p data-i18n="proj.c3body">El Gemelo Digital mide, compara y reporta el consumo en kWh, COP y kg CO₂ — con datos reales de la tarifa colombiana.</p>
+            </div>
+          </div>
+          <div class="project-card">
+            <div class="project-card-icon" style="background:rgba(129,140,248,0.15)">🌍</div>
+            <div>
+              <h4 data-i18n="proj.c4title">El impacto</h4>
+              <p data-i18n="proj.c4body">Si se implementa en 100 salones, se evitarían más de 6,400 kg de CO₂ por año — equivalente a plantar 300 árboles.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── BLOQUE 3 — HUELLA DE CARBONO ─────────────────────────────────────── -->
+  <section id="areas" class="area-section" style="background:var(--navy2)">
+    <div class="container">
+      <div class="area-split">
+        <div class="reveal">
+          <div class="section-eyebrow" style="color:var(--green)" data-i18n="carbon.eyebrow">Área 1 · Sostenibilidad</div>
+          <h2 class="section-title" data-i18n-html="carbon.title">Huella de<br>Carbono</h2>
+          <div class="divider" style="background:linear-gradient(90deg,var(--green),#34d399)"></div>
+          <p class="section-sub" style="font-size:0.95rem">
+            Cada kilovatio-hora de electricidad consumida en Colombia genera
+            <strong style="color:var(--green)">0.126 kg de CO₂</strong> (UPME, 2023).
+            Nuestro sistema reduce el consumo energético del aula en un 40–60%, lo que
+            se traduce directamente en menos emisiones, medidas con precisión en el Gemelo Digital.
+          </p>
+          <div style="margin-top:1.5rem">
+            <div class="area-card" style="margin-bottom:0.75rem">
+              <p style="font-size:0.82rem;color:var(--muted)">
+                El sistema compara en tiempo real las emisiones con y sin IA, calcula el
+                CO₂ evitado por hora, día y año, y lo convierte en equivalencias comprensibles:
+                <strong style="color:var(--text)">árboles plantados</strong>,
+                <strong style="color:var(--text)">kilómetros en auto evitados</strong>
+                y <strong style="color:var(--text)">cargas de celular equivalentes</strong>.
+              </p>
+            </div>
+          </div>
+          <div class="connect-row" style="margin-top:1rem">
+            <span class="connect-label">Vincula con</span>
+            <span class="connect-pill" style="color:#6ee7b7;border-color:#10b98135;background:rgba(16,185,129,0.08)">ODS 13 Acción Climática</span>
+            <span class="connect-pill" style="color:#6ee7b7;border-color:#10b98135;background:rgba(16,185,129,0.08)">ODS 7 Energía Limpia</span>
+          </div>
+        </div>
+
+        <div class="area-visual reveal reveal-delay-1">
+          <div class="co2-visual">
+            <div style="font-size:0.68rem;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:1.25rem">Emisiones CO₂ anuales — 1 salón</div>
+            <div class="co2-bar-group">
+              <div class="co2-bar-label"><span>Sin IA</span><strong>64.5 kg CO₂/año</strong></div>
+              <div class="co2-track"><div class="co2-fill" style="width:100%;background:linear-gradient(90deg,#ef4444,#f87171)"></div></div>
+            </div>
+            <div class="co2-bar-group" style="margin-top:0.85rem">
+              <div class="co2-bar-label"><span>Con IA</span><strong>~26 kg CO₂/año</strong></div>
+              <div class="co2-track"><div class="co2-fill" style="width:40%;background:linear-gradient(90deg,#10b981,#34d399)"></div></div>
+            </div>
+            <div class="co2-bar-group" style="margin-top:0.85rem">
+              <div class="co2-bar-label"><span style="color:var(--green)">Ahorro</span><strong style="color:var(--green)">~38 kg CO₂/año</strong></div>
+              <div class="co2-track"><div class="co2-fill" style="width:60%;background:linear-gradient(90deg,var(--blue),var(--cyan))"></div></div>
+            </div>
+            <div class="co2-eq">
+              <div class="co2-eq-item">
+                <div class="big">🌳 1.8</div>
+                <div class="small" data-i18n="carbon.trees">árboles/año</div>
+              </div>
+              <div class="co2-eq-item">
+                <div class="big">🚗 181</div>
+                <div class="small" data-i18n="carbon.km">km evitados</div>
+              </div>
+              <div class="co2-eq-item">
+                <div class="big">📱 30k</div>
+                <div class="small" data-i18n="carbon.phones">cargas celular</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── BLOQUE 4 — IA + GEMELO DIGITAL ───────────────────────────────────── -->
+  <section class="area-section" style="background:var(--navy)">
+    <div class="container">
+      <div class="area-split" style="direction:rtl">
+        <div class="reveal" style="direction:ltr">
+          <div class="section-eyebrow" style="color:var(--purple)" data-i18n="ai.eyebrow">Área 2 · Computación e IA</div>
+          <h2 class="section-title" data-i18n-html="ai.title">Inteligencia Artificial<br>& Gemelos Digitales</h2>
+          <div class="divider" style="background:linear-gradient(90deg,var(--blue),var(--purple))"></div>
+          <p class="section-sub" style="font-size:0.95rem">
+            El sistema está construido sobre una arquitectura <strong style="color:var(--text)">multi-agente</strong>:
+            cinco módulos especializados que se comunican entre sí para tomar decisiones de iluminación
+            en tiempo real. El <strong style="color:var(--text)">Gemelo Digital</strong> replica el
+            comportamiento físico del aula en un entorno virtual 3D, permitiendo medir el impacto
+            sin necesidad de instalar hardware.
+          </p>
+          <div class="area-grid" style="grid-template-columns:1fr 1fr;margin-top:1.5rem">
+            <div class="area-card" style="border-color:rgba(129,140,248,0.2)">
+              <div class="area-card-icon">🧠</div>
+              <h4 data-i18n="ai.c1title">Sistema Multi-Agente</h4>
+              <p data-i18n="ai.c1body">5 agentes autónomos coordinados por un orquestador central que procesa sensores y toma decisiones cada 5 segundos.</p>
+            </div>
+            <div class="area-card" style="border-color:rgba(129,140,248,0.2)">
+              <div class="area-card-icon">🪞</div>
+              <h4 data-i18n="ai.c2title">Gemelo Digital</h4>
+              <p data-i18n="ai.c2body">Réplica virtual 3D del aula con Three.js que simula condiciones reales de iluminación, clima y ocupación.</p>
+            </div>
+            <div class="area-card" style="border-color:rgba(129,140,248,0.2)">
+              <div class="area-card-icon">⚡</div>
+              <h4 data-i18n="ai.c3title">Decisiones en tiempo real</h4>
+              <p data-i18n="ai.c3body">Reglas inteligentes que combinan datos de ocupación, luz solar y comandos de voz para optimizar el consumo.</p>
+            </div>
+            <div class="area-card" style="border-color:rgba(129,140,248,0.2)">
+              <div class="area-card-icon">📡</div>
+              <h4 data-i18n="ai.c4title">WebSocket en vivo</h4>
+              <p data-i18n="ai.c4body">La interfaz se actualiza instantáneamente mediante WebSockets — sin recargar la página, sin latencia.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="area-visual reveal reveal-delay-1" style="direction:ltr">
+          <div class="agent-diagram">
+            <div class="agent-center">🧠</div>
+            <div class="agent-center-label" style="font-family:'Space Grotesk',sans-serif;font-size:0.78rem;font-weight:700">OrchestratorAgent</div>
+            <div style="font-size:0.62rem;color:var(--dim);text-align:center;margin-bottom:1rem;letter-spacing:0.04em">COORDINA · DECIDE · TRANSMITE</div>
+            <div class="agent-nodes">
+              <div class="agent-node"><span>👁</span>Vision Agent</div>
+              <div class="agent-node"><span>☀️</span>Light Sensor</div>
+              <div class="agent-node"><span>🎙</span>Voice Agent</div>
+              <div class="agent-node"><span>🪞</span>Digital Twin</div>
+            </div>
+            <div style="margin-top:1.25rem;padding:0.75rem;border-radius:0.5rem;background:rgba(129,140,248,0.08);border:1px solid rgba(129,140,248,0.2);text-align:center">
+              <div style="font-size:0.65rem;color:var(--purple);font-weight:700;text-transform:uppercase;letter-spacing:0.06em">Backend · FastAPI + Python</div>
+              <div style="font-size:0.6rem;color:var(--dim);margin-top:0.2rem">WebSocket · REST API · asyncio</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── BLOQUE 5 — IoT + STEAM ────────────────────────────────────────────── -->
+  <section class="area-section" style="background:var(--navy2)">
+    <div class="container">
+      <div class="area-split">
+        <div class="reveal">
+          <div class="section-eyebrow" style="color:var(--cyan)" data-i18n="iot.eyebrow">Área 3 · Tecnología & STEAM</div>
+          <h2 class="section-title" data-i18n-html="iot.title">IoT, Automatización<br>& Metodología STEAM</h2>
+          <div class="divider" style="background:linear-gradient(90deg,var(--cyan),#67e8f9)"></div>
+          <p class="section-sub" style="font-size:0.95rem">
+            El proyecto integra conceptos de <strong style="color:var(--text)">Internet de las Cosas</strong>
+            —sensores virtuales de luz, movimiento y voz— con principios de automatización industrial
+            y el método científico propio del enfoque <strong style="color:var(--text)">STEAM</strong>.
+            Todo sin hardware: los sensores son módulos de software que simulan el mundo real.
+          </p>
+          <div class="connect-row" style="margin-top:1.5rem">
+            <span class="connect-label">Áreas STEAM</span>
+            <span class="connect-pill" style="color:#67e8f9;border-color:#06b6d435;background:rgba(6,182,212,0.08)">🔬 Ciencia</span>
+            <span class="connect-pill" style="color:#67e8f9;border-color:#06b6d435;background:rgba(6,182,212,0.08)">⚙️ Tecnología</span>
+            <span class="connect-pill" style="color:#67e8f9;border-color:#06b6d435;background:rgba(6,182,212,0.08)">🔧 Ingeniería</span>
+            <span class="connect-pill" style="color:#67e8f9;border-color:#06b6d435;background:rgba(6,182,212,0.08)">🎨 Arte</span>
+            <span class="connect-pill" style="color:#67e8f9;border-color:#06b6d435;background:rgba(6,182,212,0.08)">📐 Matemáticas</span>
+          </div>
+        </div>
+
+        <div class="area-visual reveal reveal-delay-1">
+          <div class="iot-layers" style="width:100%">
+            <div style="font-size:0.65rem;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:0.5rem" data-i18n="iot.stack">Stack tecnológico</div>
+            <div class="iot-layer" style="border-color:rgba(6,182,212,0.3);background:rgba(6,182,212,0.07);color:#67e8f9">
+              <span>🖥</span> Capa de presentación — React + Three.js
+            </div>
+            <div style="text-align:center;color:var(--dim);font-size:0.85rem">↕</div>
+            <div class="iot-layer" style="border-color:rgba(129,140,248,0.3);background:rgba(129,140,248,0.07);color:#a5b4fc">
+              <span>🧠</span> Capa de decisión — Agentes IA (Python)
+            </div>
+            <div style="text-align:center;color:var(--dim);font-size:0.85rem">↕</div>
+            <div class="iot-layer" style="border-color:rgba(37,99,235,0.3);background:rgba(37,99,235,0.07);color:#93c5fd">
+              <span>📡</span> Capa de comunicación — FastAPI + WebSocket
+            </div>
+            <div style="text-align:center;color:var(--dim);font-size:0.85rem">↕</div>
+            <div class="iot-layer" style="border-color:rgba(16,185,129,0.3);background:rgba(16,185,129,0.07);color:#6ee7b7">
+              <span>📟</span> Capa de sensores — IoT Virtual (simulado)
+            </div>
+            <div style="text-align:center;color:var(--dim);font-size:0.85rem">↕</div>
+            <div class="iot-layer" style="border-color:rgba(251,191,36,0.3);background:rgba(251,191,36,0.07);color:#fde68a">
+              <span>🌍</span> Capa de impacto — Huella CO₂ + Energía
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── BLOQUE 6 — EQUIPO ─────────────────────────────────────────────────── -->
+  <section id="equipo">
+    <div class="container">
+      <div style="text-align:center;max-width:520px;margin:0 auto">
+        <div class="section-eyebrow reveal" style="color:var(--blue-l)" data-i18n="team.eyebrow">Las personas detrás</div>
+        <h2 class="section-title reveal" data-i18n="team.title">El Equipo</h2>
+        <div class="divider reveal" style="background:linear-gradient(90deg,var(--blue),var(--cyan));margin:1rem auto 1.25rem"></div>
+        <p class="section-sub reveal" style="margin:0 auto;font-size:0.92rem" data-i18n="team.sub">
+          Estudiantes de 10mo grado apasionados por la tecnología, el diseño y el impacto ambiental.
+        </p>
+      </div>
+
+      <div class="team-grid">
+        <div class="team-card reveal reveal-delay-1">
+          <div class="team-avatar" style="background:linear-gradient(135deg,#1d4ed8,#0e7490)">VL</div>
+          <div class="team-name">Victoria López</div>
+          <div class="team-role" data-i18n="team.vl.role">Líder de Proyecto & Dev</div>
+          <div class="team-bio" data-i18n="team.vl.bio">Coordinación general, desarrollo del Gemelo Digital y arquitectura del sistema de agentes.</div>
+        </div>
+        <div class="team-card reveal reveal-delay-2">
+          <div class="team-avatar" style="background:linear-gradient(135deg,#0e7490,#059669)">MG</div>
+          <div class="team-name">Manuela Granada</div>
+          <div class="team-role" data-i18n="team.mg.role">Contexto Social & Problemática</div>
+          <div class="team-bio" data-i18n="team.mg.bio">Conecta la propuesta con la realidad educativa colombiana, analizando el impacto social y ambiental del desperdicio energético en las aulas.</div>
+        </div>
+        <div class="team-card reveal reveal-delay-3">
+          <div class="team-avatar" style="background:linear-gradient(135deg,#b45309,#b91c1c)">MFV</div>
+          <div class="team-name">Maria Fernanda Valencia</div>
+          <div class="team-role" data-i18n="team.mfv.role">Solución & Articulación del Proyecto</div>
+          <div class="team-bio" data-i18n="team.mfv.bio">Relaciona la solución tecnológica con los objetivos del proyecto, asegurando que cada componente responda a la problemática planteada.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ──────────────────────────────────────────────────────────────── -->
+  <footer>
+    <div class="footer-inner">
+      <div>
+        <div class="footer-brand"><span>⚡ Smart Classroom AI</span></div>
+        <div class="footer-meta" style="margin-top:0.3rem" data-i18n="footer.fair">Feria STEAM · 10mo Grado · 2026</div>
+      </div>
+      <div class="footer-meta" style="text-align:center" data-i18n-html="footer.desc">
+        Proyecto de Innovación Tecnológica<br>
+        Iluminación inteligente con IA y Gemelos Digitales
+      </div>
+      <div style="display:flex;gap:0.75rem;flex-wrap:wrap;justify-content:flex-end">
+        <a href="/app/empathy-map.html" class="footer-cta" style="background:linear-gradient(135deg,#6366f1,#818cf8)" data-i18n="footer.empathy">Mapa de Empatía →</a>
+        <a href="/app/journey-map.html" class="footer-cta" style="background:linear-gradient(135deg,#7c3aed,#6366f1)" data-i18n="footer.journey">Journey Map →</a>
+        <a href="/app/" class="footer-cta" data-i18n="footer.twin">Ver Digital Twin →</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Scroll reveal with IntersectionObserver
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12 });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  </script>
+
+  <!-- ── LANGUAGE SYSTEM ──────────────────────────────────────────────────── -->
+  <script>
+  const LANGS = {
+    es: {
+      // Nav
+      'nav.home':    'Inicio',
+      'nav.project': 'Proyecto',
+      'nav.areas':   'Áreas',
+      'nav.team':    'Equipo',
+      'nav.process': 'Proceso',
+      'nav.tasks':   'Tareas STEAM',
+      'nav.empathy': '🧠 Mapa de Empatía',
+      'nav.journey': '🗺️ Journey Map',
+      'nav.twin':    '⚡ Ver Digital Twin',
+      // Hero
+      'hero.badge': '🏫 Feria STEAM · 10mo Grado · 2026',
+      'hero.title': 'El Aula del Futuro,<br><span class="grad">controlada por IA.</span>',
+      'hero.sub':   'Un sistema multi-agente de iluminación inteligente que reduce el consumo energético hasta un <strong style="color:var(--cyan)">60%</strong> usando Inteligencia Artificial, Gemelos Digitales e IoT — todo simulado, sin hardware.',
+      'hero.btn1':  'Explorar el Gemelo Digital',
+      'hero.btn2':  'Conoce el Proyecto',
+      'hero.stat1': 'Ahorro energético',
+      'hero.stat2': 'Agentes IA',
+      'hero.stat3': 'Zonas inteligentes',
+      'hero.stat4': 'Hardware requerido',
+      'hero.stat5': 'CO₂ evitado/año',
+      // Twin showcase
+      'twin.eyebrow':    'El producto central',
+      'twin.title':      'El Gemelo Digital<br><span style="background:linear-gradient(135deg,var(--blue),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent">en tiempo real</span>',
+      'twin.sub':        'Una réplica 3D interactiva del aula que muestra en vivo cómo la IA controla cada zona de iluminación — y cuánta energía ahorra en el proceso.',
+      'twin.view3d':     'Vista 3D — Gemelo Digital',
+      'twin.live':       'EN VIVO',
+      'twin.consumption':'Consumo actual',
+      'twin.dashboard':  'Dashboard energético',
+      'twin.chart':      'Consumo en tiempo real (W)',
+      'twin.noai':       'Sin IA',
+      'twin.withai':     'Con IA →',
+      'twin.savings':    'Ahorro hoy',
+      'twin.co2avoided': 'CO₂ evitado',
+      'twin.decisions':  'Decisiones IA recientes',
+      'twin.dec1':       '✓ Zona C apagada — sin ocupantes',
+      'twin.dec2':       '✓ Zona B en DIM — luz natural 68%',
+      'twin.dec3':       '✓ Zona A ON — 3 personas detectadas',
+      'twin.pill1':      '✓ Actualización en tiempo real',
+      'twin.pill2':      '✓ 5 agentes IA coordinados',
+      'twin.pill3':      '✓ 4 zonas de iluminación',
+      'twin.pill4':      '✓ Comparativo Con vs Sin IA',
+      'twin.cta':        'Abrir el Digital Twin en vivo',
+      'twin.ctasub':     'No requiere instalación — corre directo en el navegador',
+      // Proyecto
+      'proj.eyebrow': '¿Qué construimos?',
+      'proj.title':   'Iluminación inteligente<br>sin desperdiciar un vatio',
+      'proj.sub':     'En un salón de clases convencional las luces permanecen encendidas sin importar si hay personas, si entra luz natural o qué zona del aula está siendo utilizada. Nosotros diseñamos un sistema que lo soluciona.',
+      'proj.c1title': 'El problema',
+      'proj.c1body':  'Los salones de clase de Colombia desperdician energía eléctrica con iluminación innecesaria durante miles de horas al año.',
+      'proj.c2title': 'Nuestra solución',
+      'proj.c2body':  '5 agentes de IA coordinados toman decisiones de iluminación en tiempo real según ocupación, luz natural y comandos de voz.',
+      'proj.c3title': 'La evidencia',
+      'proj.c3body':  'El Gemelo Digital mide, compara y reporta el consumo en kWh, COP y kg CO₂ — con datos reales de la tarifa colombiana.',
+      'proj.c4title': 'El impacto',
+      'proj.c4body':  'Si se implementa en 100 salones, se evitarían más de 6,400 kg de CO₂ por año — equivalente a plantar 300 árboles.',
+      // Carbon
+      'carbon.eyebrow': 'Área 1 · Sostenibilidad',
+      'carbon.title':   'Huella de<br>Carbono',
+      'carbon.trees':   'árboles/año',
+      'carbon.km':      'km evitados',
+      'carbon.phones':  'cargas celular',
+      // AI
+      'ai.eyebrow': 'Área 2 · Computación e IA',
+      'ai.title':   'Inteligencia Artificial<br>& Gemelos Digitales',
+      'ai.c1title': 'Sistema Multi-Agente',
+      'ai.c1body':  '5 agentes autónomos coordinados por un orquestador central que procesa sensores y toma decisiones cada 5 segundos.',
+      'ai.c2title': 'Gemelo Digital',
+      'ai.c2body':  'Réplica virtual 3D del aula con Three.js que simula condiciones reales de iluminación, clima y ocupación.',
+      'ai.c3title': 'Decisiones en tiempo real',
+      'ai.c3body':  'Reglas inteligentes que combinan datos de ocupación, luz solar y comandos de voz para optimizar el consumo.',
+      'ai.c4title': 'WebSocket en vivo',
+      'ai.c4body':  'La interfaz se actualiza instantáneamente mediante WebSockets — sin recargar la página, sin latencia.',
+      // IoT
+      'iot.eyebrow': 'Área 3 · Tecnología & STEAM',
+      'iot.title':   'IoT, Automatización<br>& Metodología STEAM',
+      'iot.stack':   'Stack tecnológico',
+      // Team
+      'team.eyebrow':   'Las personas detrás',
+      'team.title':     'El Equipo',
+      'team.sub':       'Estudiantes de 10mo grado apasionados por la tecnología, el diseño y el impacto ambiental.',
+      'team.vl.role':   'Líder de Proyecto & Dev',
+      'team.vl.bio':    'Coordinación general, desarrollo del Gemelo Digital y arquitectura del sistema de agentes.',
+      'team.mg.role':   'Contexto Social & Problemática',
+      'team.mg.bio':    'Conecta la propuesta con la realidad educativa colombiana, analizando el impacto social y ambiental del desperdicio energético en las aulas.',
+      'team.mfv.role':  'Solución & Articulación del Proyecto',
+      'team.mfv.bio':   'Relaciona la solución tecnológica con los objetivos del proyecto, asegurando que cada componente responda a la problemática planteada.',
+      // Footer
+      'footer.fair':    'Feria STEAM · 10mo Grado · 2026',
+      'footer.desc':    'Proyecto de Innovación Tecnológica<br>Iluminación inteligente con IA y Gemelos Digitales',
+      'footer.empathy': 'Mapa de Empatía →',
+      'footer.journey': 'Journey Map →',
+      'footer.twin':    'Ver Digital Twin →',
+    },
+    en: {
+      // Nav
+      'nav.home':    'Home',
+      'nav.project': 'Project',
+      'nav.areas':   'Areas',
+      'nav.team':    'Team',
+      'nav.process': 'Process',
+      'nav.tasks':   'STEAM Tasks',
+      'nav.empathy': '🧠 Empathy Map',
+      'nav.journey': '🗺️ Journey Map',
+      'nav.twin':    '⚡ View Digital Twin',
+      // Hero
+      'hero.badge': '🏫 STEAM Fair · 10th Grade · 2026',
+      'hero.title': 'The Classroom of the Future,<br><span class="grad">powered by AI.</span>',
+      'hero.sub':   'A multi-agent smart lighting system that reduces energy consumption by up to <strong style="color:var(--cyan)">60%</strong> using Artificial Intelligence, Digital Twins and IoT — fully simulated, no hardware required.',
+      'hero.btn1':  'Explore the Digital Twin',
+      'hero.btn2':  'Learn About the Project',
+      'hero.stat1': 'Energy savings',
+      'hero.stat2': 'AI Agents',
+      'hero.stat3': 'Smart zones',
+      'hero.stat4': 'Hardware required',
+      'hero.stat5': 'CO₂ avoided/year',
+      // Twin showcase
+      'twin.eyebrow':    'The core product',
+      'twin.title':      'The Digital Twin<br><span style="background:linear-gradient(135deg,var(--blue),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent">in real time</span>',
+      'twin.sub':        'An interactive 3D replica of the classroom that shows in real time how AI controls each lighting zone — and how much energy it saves.',
+      'twin.view3d':     '3D View — Digital Twin',
+      'twin.live':       'LIVE',
+      'twin.consumption':'Current consumption',
+      'twin.dashboard':  'Energy dashboard',
+      'twin.chart':      'Real-time consumption (W)',
+      'twin.noai':       'Without AI',
+      'twin.withai':     'With AI →',
+      'twin.savings':    'Today\'s savings',
+      'twin.co2avoided': 'CO₂ avoided',
+      'twin.decisions':  'Recent AI decisions',
+      'twin.dec1':       '✓ Zone C off — no occupants',
+      'twin.dec2':       '✓ Zone B DIM — natural light 68%',
+      'twin.dec3':       '✓ Zone A ON — 3 people detected',
+      'twin.pill1':      '✓ Real-time updates',
+      'twin.pill2':      '✓ 5 coordinated AI agents',
+      'twin.pill3':      '✓ 4 lighting zones',
+      'twin.pill4':      '✓ AI vs No-AI comparison',
+      'twin.cta':        'Open the Live Digital Twin',
+      'twin.ctasub':     'No installation needed — runs directly in the browser',
+      // Proyecto
+      'proj.eyebrow': 'What did we build?',
+      'proj.title':   'Smart lighting<br>without wasting a watt',
+      'proj.sub':     'In a conventional classroom, lights stay on regardless of whether people are present, natural light is available, or which zone of the room is being used. We designed a system that fixes this.',
+      'proj.c1title': 'The problem',
+      'proj.c1body':  'Classrooms in Colombia waste electrical energy with unnecessary lighting for thousands of hours every year.',
+      'proj.c2title': 'Our solution',
+      'proj.c2body':  '5 coordinated AI agents make real-time lighting decisions based on occupancy, natural light, and voice commands.',
+      'proj.c3title': 'The evidence',
+      'proj.c3body':  'The Digital Twin measures, compares, and reports consumption in kWh, COP, and kg CO₂ — using real Colombian electricity rates.',
+      'proj.c4title': 'The impact',
+      'proj.c4body':  'Deployed across 100 classrooms, it would prevent over 6,400 kg of CO₂ per year — equivalent to planting 300 trees.',
+      // Carbon
+      'carbon.eyebrow': 'Area 1 · Sustainability',
+      'carbon.title':   'Carbon<br>Footprint',
+      'carbon.trees':   'trees/year',
+      'carbon.km':      'km avoided',
+      'carbon.phones':  'phone charges',
+      // AI
+      'ai.eyebrow': 'Area 2 · Computing & AI',
+      'ai.title':   'Artificial Intelligence<br>& Digital Twins',
+      'ai.c1title': 'Multi-Agent System',
+      'ai.c1body':  '5 autonomous agents coordinated by a central orchestrator that processes sensors and makes decisions every 5 seconds.',
+      'ai.c2title': 'Digital Twin',
+      'ai.c2body':  '3D virtual replica of the classroom using Three.js, simulating real lighting, weather, and occupancy conditions.',
+      'ai.c3title': 'Real-time decisions',
+      'ai.c3body':  'Smart rules combining occupancy data, sunlight, and voice commands to optimize energy consumption.',
+      'ai.c4title': 'Live WebSocket',
+      'ai.c4body':  'The interface updates instantly via WebSockets — no page reload, no latency.',
+      // IoT
+      'iot.eyebrow': 'Area 3 · Technology & STEAM',
+      'iot.title':   'IoT, Automation<br>& STEAM Methodology',
+      'iot.stack':   'Tech stack',
+      // Team
+      'team.eyebrow':   'The people behind it',
+      'team.title':     'The Team',
+      'team.sub':       '10th grade students passionate about technology, design, and environmental impact.',
+      'team.vl.role':   'Project Lead & Dev',
+      'team.vl.bio':    'Overall coordination, Digital Twin development, and multi-agent system architecture.',
+      'team.mg.role':   'Social Context & Problem',
+      'team.mg.bio':    'Connects the project to the Colombian educational reality, analyzing the social and environmental impact of energy waste in classrooms.',
+      'team.mfv.role':  'Solution & Project Articulation',
+      'team.mfv.bio':   'Links the technological solution to the project\'s goals, ensuring every component addresses the identified problem.',
+      // Footer
+      'footer.fair':    'STEAM Fair · 10th Grade · 2026',
+      'footer.desc':    'Technology Innovation Project<br>Smart lighting with AI and Digital Twins',
+      'footer.empathy': 'Empathy Map →',
+      'footer.journey': 'Journey Map →',
+      'footer.twin':    'View Digital Twin →',
+    }
+  };
+
+  function applyLang(lang) {
+    const t = LANGS[lang];
+    // Simple text nodes
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (t[key] !== undefined) el.textContent = t[key];
+    });
+    // HTML nodes (elements with embedded tags)
+    document.querySelectorAll('[data-i18n-html]').forEach(el => {
+      const key = el.getAttribute('data-i18n-html');
+      if (t[key] !== undefined) el.innerHTML = t[key];
+    });
+    // Toggle buttons
+    document.getElementById('btn-es').classList.toggle('active', lang === 'es');
+    document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+    // Persist
+    localStorage.setItem('sc-lang', lang);
+    document.documentElement.lang = lang;
+  }
+
+  function setLang(lang) { applyLang(lang); }
+
+  // Apply on load
+  applyLang(localStorage.getItem('sc-lang') || 'es');
+  </script>
+
+  <script>
+  // Dropdown "Proceso" — soporte táctil (hover CSS no funciona en móvil)
+  (function () {
+    const dropdown = document.querySelector('.nav-dropdown');
+    if (!dropdown) return;
+    const trigger = dropdown.querySelector('.nav-dropdown-trigger');
+    const menu    = dropdown.querySelector('.nav-dropdown-menu');
+
+    trigger.addEventListener('click', function () {
+      const open = menu.classList.toggle('open');
+      trigger.setAttribute('aria-expanded', String(open));
+    });
+
+    // Cierra si el toque/click fue FUERA del dropdown
+    document.addEventListener('click', function (e) {
+      if (!dropdown.contains(e.target)) {
+        menu.classList.remove('open');
+        trigger.setAttribute('aria-expanded', 'false');
+      }
+    });
+  })();
+  </script>
+</body>
+</html>
