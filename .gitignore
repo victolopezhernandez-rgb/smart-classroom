@@ -3,8 +3,9 @@ node_modules/
 __pycache__/
 *.pyc
 
-# Builds
+# Builds — se generan solos, no se suben
 frontend/dist/
+deploy/
 
 # Registros generados en ejecución
 backend/logs/

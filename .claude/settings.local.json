@@ -89,7 +89,16 @@
       "Bash(curl -s -X DELETE http://localhost:8000/api/activities/9665164184)",
       "Bash(sed -i '' 's|https://smart-classroom-api\\\\.onrender\\\\.com|https://smart-classroom-rtne.onrender.com|g' DEPLOY.md)",
       "Bash(sed -i '' 's|name: smart-classroom-api|name: smart-classroom|' render.yaml)",
-      "Bash(timeout 60 python3 -c ' *)"
+      "Bash(timeout 60 python3 -c ' *)",
+      "Bash(rm -rf testenv)",
+      "Bash(python3 -m venv testenv)",
+      "Bash(./testenv/bin/pip install *)",
+      "Bash(chmod +x scripts/build-deploy.sh)",
+      "Bash(bash scripts/build-deploy.sh)",
+      "Bash(git rm *)",
+      "Bash(sed -i '' \"/'team\\\\.\\\\\\(vl\\\\|mg\\\\|mfv\\\\\\)\\\\.bio':/d\" backend/static/landing.html)",
+      "Bash(sed -i '' \"/^    \\\\.team-bio {/d\" backend/static/landing.html)",
+      "Bash(sed -n '/<div class=\"team-grid\">/,/<\\\\/div>$/p' backend/static/landing.html)"
     ]
   }
 }

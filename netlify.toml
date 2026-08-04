@@ -1,0 +1,4 @@
+[build]
+  # Netlify arma la carpeta deploy/ en sus servidores en cada push
+  command = "bash scripts/build-deploy.sh"
+  publish = "deploy"

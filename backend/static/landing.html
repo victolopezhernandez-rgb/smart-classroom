@@ -504,12 +504,14 @@
     /* ── TEAM ─────────────────────────────────────────────────────────────── */
     #equipo { background: var(--navy); }
 
+    /* Flex centrado: las tarjetas quedan siempre centradas,
+       sin importar cuántas integrantes haya */
     .team-grid {
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem;
-      margin-top: 3rem;
+      display: flex; flex-wrap: wrap; justify-content: center;
+      gap: 1.5rem; margin-top: 3rem;
     }
-    @media (max-width: 900px) { .team-grid { grid-template-columns: 1fr 1fr; } }
-    @media (max-width: 500px) { .team-grid { grid-template-columns: 1fr; max-width: 280px; margin-left: auto; margin-right: auto; } }
+    .team-card { flex: 0 1 250px; }
+    @media (max-width: 500px) { .team-grid { max-width: 280px; margin-left: auto; margin-right: auto; } }
 
     .team-card {
       text-align: center; padding: 2rem 1.25rem 1.5rem;
@@ -535,7 +537,6 @@
 
     .team-name { font-family: 'Space Grotesk', sans-serif; font-size: 1rem; font-weight: 700; margin-bottom: 0.25rem; }
     .team-role { font-size: 0.75rem; color: var(--cyan); font-weight: 600; margin-bottom: 0.6rem; }
-    .team-bio { font-size: 0.74rem; color: var(--muted); line-height: 1.55; }
 
     /* ── FOOTER ───────────────────────────────────────────────────────────── */
     footer {
@@ -599,8 +600,7 @@
       .carbon-eq-grid { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
 
       /* Team */
-      .team-grid { grid-template-columns: 1fr 1fr; max-width: 100%; }
-      .team-card { padding: 1.4rem 1rem 1.2rem; }
+      .team-card { flex: 0 1 200px; padding: 1.4rem 1rem 1.2rem; }
       .team-avatar { width: 72px; height: 72px; font-size: 1.3rem; }
 
       /* Footer */
@@ -608,7 +608,7 @@
     }
 
     @media (max-width: 400px) {
-      .team-grid { grid-template-columns: 1fr; max-width: 280px; }
+      .team-grid { max-width: 280px; }
       .hero-stats { grid-template-columns: 1fr 1fr; }
       .carbon-eq-grid { grid-template-columns: 1fr; }
     }
@@ -1114,19 +1114,16 @@
           <div class="team-avatar" style="background:linear-gradient(135deg,#1d4ed8,#0e7490)">VL</div>
           <div class="team-name">Victoria López</div>
           <div class="team-role" data-i18n="team.vl.role">Líder de Proyecto & Dev</div>
-          <div class="team-bio" data-i18n="team.vl.bio">Coordinación general, desarrollo del Gemelo Digital y arquitectura del sistema de agentes.</div>
         </div>
         <div class="team-card reveal reveal-delay-2">
           <div class="team-avatar" style="background:linear-gradient(135deg,#0e7490,#059669)">MG</div>
           <div class="team-name">Manuela Granada</div>
           <div class="team-role" data-i18n="team.mg.role">Contexto Social & Problemática</div>
-          <div class="team-bio" data-i18n="team.mg.bio">Conecta la propuesta con la realidad educativa colombiana, analizando el impacto social y ambiental del desperdicio energético en las aulas.</div>
         </div>
         <div class="team-card reveal reveal-delay-3">
           <div class="team-avatar" style="background:linear-gradient(135deg,#b45309,#b91c1c)">MFV</div>
           <div class="team-name">Maria Fernanda Valencia</div>
           <div class="team-role" data-i18n="team.mfv.role">Solución & Articulación del Proyecto</div>
-          <div class="team-bio" data-i18n="team.mfv.bio">Relaciona la solución tecnológica con los objetivos del proyecto, asegurando que cada componente responda a la problemática planteada.</div>
         </div>
       </div>
     </div>
@@ -1251,11 +1248,8 @@
       'team.title':     'El Equipo',
       'team.sub':       'Estudiantes de 10mo grado apasionados por la tecnología, el diseño y el impacto ambiental.',
       'team.vl.role':   'Líder de Proyecto & Dev',
-      'team.vl.bio':    'Coordinación general, desarrollo del Gemelo Digital y arquitectura del sistema de agentes.',
       'team.mg.role':   'Contexto Social & Problemática',
-      'team.mg.bio':    'Conecta la propuesta con la realidad educativa colombiana, analizando el impacto social y ambiental del desperdicio energético en las aulas.',
       'team.mfv.role':  'Solución & Articulación del Proyecto',
-      'team.mfv.bio':   'Relaciona la solución tecnológica con los objetivos del proyecto, asegurando que cada componente responda a la problemática planteada.',
       // Footer
       'footer.fair':    'Feria STEAM · 10mo Grado · 2026',
       'footer.desc':    'Proyecto de Innovación Tecnológica<br>Iluminación inteligente con IA y Gemelos Digitales',
@@ -1346,11 +1340,8 @@
       'team.title':     'The Team',
       'team.sub':       '10th grade students passionate about technology, design, and environmental impact.',
       'team.vl.role':   'Project Lead & Dev',
-      'team.vl.bio':    'Overall coordination, Digital Twin development, and multi-agent system architecture.',
       'team.mg.role':   'Social Context & Problem',
-      'team.mg.bio':    'Connects the project to the Colombian educational reality, analyzing the social and environmental impact of energy waste in classrooms.',
       'team.mfv.role':  'Solution & Project Articulation',
-      'team.mfv.bio':   'Links the technological solution to the project\'s goals, ensuring every component addresses the identified problem.',
       // Footer
       'footer.fair':    'STEAM Fair · 10th Grade · 2026',
       'footer.desc':    'Technology Innovation Project<br>Smart lighting with AI and Digital Twins',

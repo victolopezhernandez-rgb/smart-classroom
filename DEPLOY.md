@@ -1,130 +1,74 @@
-# Publicar el proyecto en internet
+# Publicar y actualizar el proyecto
 
-El proyecto tiene dos mitades que van a servicios distintos:
+## Cómo está montado
 
-| Mitad | Qué es | Dónde va | Por qué |
-|---|---|---|---|
-| Páginas web | `deploy/` | **Netlify** | Son archivos estáticos |
-| Cerebro (API) | `backend/` | **Render** | Necesita correr Python |
+```
+   NAVEGADOR
+       │
+       ├── páginas ──────► NETLIFY   (archivos estáticos)
+       │
+       └── datos ────────► RENDER    (Python + los 5 agentes)
+                           https://smart-classroom-rtne.onrender.com
+```
 
-Netlify no puede correr Python, por eso el backend va aparte.
+Netlify no puede ejecutar Python; por eso el backend vive aparte.
 
 ---
 
-## Parte 1 · Backend en Render
+## Actualizar la página (el flujo normal)
 
-> ⚠️ Render no acepta arrastrar carpetas: necesita leer el código desde GitHub.
-> Este paso es obligatorio antes de continuar.
+### 1 · Edita el original
 
-### 1.1 · Subir el código a GitHub
-
-En la terminal, dentro de la carpeta del proyecto:
-
-```bash
-git init
-git add .
-git commit -m "Smart Classroom AI"
-```
-
-Luego crea un repositorio vacío en [github.com/new](https://github.com/new) (sin README) y conecta:
-
-```bash
-git remote add origin https://github.com/TU-USUARIO/smart-classroom.git
-git branch -M main
-git push -u origin main
-```
-
-El archivo `.gitignore` ya evita que se suba `node_modules`, así que esta vez no
-dará el error de `_baseIntersection.js`.
-
-### 1.2 · Crear el servicio en Render
-
-1. Entra a [render.com](https://render.com) y regístrate con tu cuenta de GitHub.
-2. **New → Web Service** y elige el repositorio que acabas de subir.
-3. Render leerá el archivo `render.yaml` y rellenará todo solo. Verifica que diga:
-
-   | Campo | Valor |
-   |---|---|
-   | Root Directory | `backend` |
-   | Build Command | `pip install -r requirements.txt` |
-   | Start Command | `uvicorn main:app --host 0.0.0.0 --port $PORT` |
-   | Instance Type | `Free` |
-
-4. **Create Web Service.** Tarda unos 3 minutos.
-
-### 1.3 · Copiar la URL
-
-Al terminar, Render te da una dirección parecida a:
-
-```
-https://smart-classroom-rtne.onrender.com
-```
-
-Compruébala abriendo `https://TU-URL.onrender.com/health` en el navegador.
-Debe responder `{"status":"healthy"}`.
-
-**Copia esa URL, la necesitas en el paso siguiente.**
-
----
-
-## Parte 2 · Conectar las páginas al backend
-
-Abre `deploy/app/index.html` y busca esta línea cerca del inicio (línea ~20):
-
-```js
-: "https://smart-classroom-rtne.onrender.com";
-```
-
-Reemplázala por **tu** URL de Render. Guarda el archivo.
-
-> Si Render te dio exactamente ese nombre, no hay que cambiar nada.
-
----
-
-## Parte 3 · Páginas en Netlify
-
-1. Entra a [app.netlify.com/drop](https://app.netlify.com/drop)
-2. Arrastra **únicamente la carpeta `deploy/`** — no la carpeta del proyecto completo.
-3. Listo. Netlify te da una URL tipo `https://algo-random.netlify.app`
-
-Puedes cambiar ese nombre en **Site configuration → Change site name**.
-
-### Qué contiene `deploy/`
-
-```
-deploy/
-├── index.html          ← página principal (la landing)
-├── vendor/             ← React y Three.js
-└── app/
-    ├── index.html      ← el gemelo digital 3D
-    ├── landing.html
-    ├── empathy-map.html
-    └── journey-map.html
-```
-
-Son 9 archivos, 4 MB. El error anterior ocurría porque arrastrabas la carpeta
-completa con `node_modules` dentro (unos 30.000 archivos de librerías).
-
----
-
-## Comprobación final
-
-Abre tu sitio de Netlify. En la app 3D, arriba a la derecha debe decir
-**🟢 Conectado**. Si dice 🔴 Conectando:
-
-| Causa | Solución |
+| Quieres cambiar | Edita este archivo |
 |---|---|
-| El backend está dormido | Espera 50 segundos y recarga |
-| La URL quedó mal | Revisa la línea del paso 2 |
-| Falta la `s` en `https` | Debe ser `https://`, no `http://` |
+| La página principal | `backend/static/landing.html` |
+| El gemelo digital 3D | `backend/static/index.html` |
+| El mapa de empatía | `backend/static/empathy-map.html` |
+| El journey map | `backend/static/journey-map.html` |
+| La lógica de los agentes | `backend/agents/…` |
+
+### 2 · Sube el cambio
+
+```bash
+git add -A && git commit -m "describe tu cambio" && git push
+```
+
+### 3 · Ya está
+
+Netlify y Render detectan el push y se actualizan solos en 1–3 minutos.
+
+> ⚠️ **Nunca edites nada dentro de `deploy/`.** Esa carpeta se regenera
+> automáticamente y tus cambios se perderían. El original vive en
+> `backend/static/`.
 
 ---
 
-## ⚠️ Importante para el día de la feria
+## Ver los cambios antes de publicar
 
-El plan gratuito de Render **duerme el servidor tras 15 minutos sin uso**.
-La primera visita después de eso tarda ~50 segundos en despertar.
+```bash
+bash scripts/build-deploy.sh
+```
 
-**Antes de presentar:** abre `https://TU-URL.onrender.com/health` un minuto
-antes de que llegue el jurado. Así el backend ya está despierto y la demo
-responde al instante.
+Genera `deploy/` en tu computador para revisarlo localmente.
+
+---
+
+## Si algo sale mal
+
+**Volver a la versión anterior:** en Netlify, pestaña **Deploys** → elige un
+despliegue anterior → **Publish deploy**. Vuelve atrás en segundos.
+
+**El sitio no se actualizó:** revisa la pestaña **Deploys** en Netlify. Si el
+build falló, el error aparece en el log.
+
+**La app 3D dice 🔴 Conectando:** el backend está dormido. Abre
+`https://smart-classroom-rtne.onrender.com/health` y espera 50 segundos.
+
+---
+
+## ⚠️ El día de la feria
+
+- Abre `https://smart-classroom-rtne.onrender.com/health` **un minuto antes**
+  de presentar. El plan gratuito duerme el servidor tras 15 min sin uso.
+- Usa **Chrome** — el control por voz no funciona en Firefox.
+- Lleva las dos URLs anotadas por si falla el wifi.
