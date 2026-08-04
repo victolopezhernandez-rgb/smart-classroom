@@ -57,7 +57,7 @@ dará el error de `_baseIntersection.js`.
 Al terminar, Render te da una dirección parecida a:
 
 ```
-https://smart-classroom-api.onrender.com
+https://smart-classroom-rtne.onrender.com
 ```
 
 Compruébala abriendo `https://TU-URL.onrender.com/health` en el navegador.
@@ -72,7 +72,7 @@ Debe responder `{"status":"healthy"}`.
 Abre `deploy/app/index.html` y busca esta línea cerca del inicio (línea ~20):
 
 ```js
-: "https://smart-classroom-api.onrender.com";
+: "https://smart-classroom-rtne.onrender.com";
 ```
 
 Reemplázala por **tu** URL de Render. Guarda el archivo.

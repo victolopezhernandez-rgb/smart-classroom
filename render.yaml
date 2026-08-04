@@ -1,9 +1,14 @@
 services:
   - type: web
-    name: smart-classroom-api
+    name: smart-classroom
     runtime: python
     rootDir: backend
     plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
+    envVars:
+      # Sin esto Render usa Python 3.13, donde pydantic intenta compilarse
+      # desde código fuente y el despliegue se cuelga.
+      - key: PYTHON_VERSION
+        value: 3.12.4

@@ -86,7 +86,10 @@
       "Bash(python3 -c \"import anthropic; print\\('anthropic OK, version:', anthropic.__version__\\)\")",
       "Bash(curl -s -X POST http://localhost:8000/api/chat -H 'Content-Type: application/json' -d '{\"message\":\"test\",\"history\":[]}' --max-time 10)",
       "Bash(curl -s -X POST http://localhost:8000/api/activities -H 'Content-Type: application/json' -d '{\"date\":\"2026-05-24\",\"type\":\"Run\",\"name\":\"Test Run\",\"duration_min\":40,\"distance_km\":6.5,\"elevation_m\":80}')",
-      "Bash(curl -s -X DELETE http://localhost:8000/api/activities/9665164184)"
+      "Bash(curl -s -X DELETE http://localhost:8000/api/activities/9665164184)",
+      "Bash(sed -i '' 's|https://smart-classroom-api\\\\.onrender\\\\.com|https://smart-classroom-rtne.onrender.com|g' DEPLOY.md)",
+      "Bash(sed -i '' 's|name: smart-classroom-api|name: smart-classroom|' render.yaml)",
+      "Bash(timeout 60 python3 -c ' *)"
     ]
   }
 }
