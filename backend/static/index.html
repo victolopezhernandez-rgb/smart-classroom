@@ -716,26 +716,97 @@
         }
         rainRef.current = { group:rainGroup, drops };
 
-        // ── Orbit controls ────────────────────────────────────────────────
+        // ── Orbit controls — ratón, dedo y lápiz ──────────────────────────
+        // Se usan Pointer Events porque unifican los tres tipos de entrada.
+        // Con "mousedown" solo funcionaba en computador: un celular nunca
+        // dispara eventos de ratón.
         let dragging=false, lastX=0, lastY=0, theta=0.38, phi=0.60, radius=15.5;
         const el = renderer.domElement;
-        el.addEventListener("mousedown", e=>{dragging=true;lastX=e.clientX;lastY=e.clientY;});
-        window.addEventListener("mouseup", ()=>dragging=false);
-        window.addEventListener("mousemove", e=>{
+
+        // Imprescindible: sin esto el navegador móvil hace scroll de la página
+        // en vez de dejar que rotemos la cámara.
+        el.style.touchAction = "none";
+
+        const pointers = new Map();   // dedos/punteros activos
+        let lastPinch = 0;
+
+        const pinchDist = () => {
+          const [a, b] = [...pointers.values()];
+          return Math.hypot(a.x - b.x, a.y - b.y);
+        };
+
+        const onDown = (e) => {
+          pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+          try { el.setPointerCapture(e.pointerId); } catch {}
+          if (pointers.size === 1) {
+            dragging = true; lastX = e.clientX; lastY = e.clientY;
+          } else if (pointers.size === 2) {
+            dragging = false;            // dos dedos = zoom, no rotación
+            lastPinch = pinchDist();
+          }
+        };
+
+        const onMove = (e) => {
+          if (!pointers.has(e.pointerId)) return;
+          pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+          if (pointers.size === 2) {     // pellizcar para acercar/alejar
+            const d = pinchDist();
+            if (lastPinch) {
+              radius = Math.max(7, Math.min(24, radius - (d - lastPinch) * 0.05));
+            }
+            lastPinch = d;
+            return;
+          }
+
           if (!dragging) return;
-          theta -= (e.clientX-lastX)*0.010;
-          phi    = Math.max(0.12,Math.min(1.30,phi-(e.clientY-lastY)*0.010));
-          lastX=e.clientX; lastY=e.clientY;
-        });
-        el.addEventListener("wheel", e=>{
+          theta -= (e.clientX - lastX) * 0.010;
+          phi    = Math.max(0.12, Math.min(1.30, phi - (e.clientY - lastY) * 0.010));
+          lastX = e.clientX; lastY = e.clientY;
+        };
+
+        const onUp = (e) => {
+          pointers.delete(e.pointerId);
+          try { el.releasePointerCapture(e.pointerId); } catch {}
+          if (pointers.size < 2) lastPinch = 0;
+          if (pointers.size === 0) {
+            dragging = false;
+          } else {
+            // Al soltar un dedo, el que queda retoma la rotación sin saltos
+            const p = [...pointers.values()][0];
+            lastX = p.x; lastY = p.y; dragging = true;
+          }
+        };
+
+        const onWheel = (e) => {
           e.preventDefault();
-          radius = Math.max(7,Math.min(24,radius+e.deltaY*0.018));
-        },{passive:false});
+          radius = Math.max(7, Math.min(24, radius + e.deltaY * 0.018));
+        };
+
+        el.addEventListener("pointerdown",   onDown);
+        el.addEventListener("pointermove",   onMove);
+        el.addEventListener("pointerup",     onUp);
+        el.addEventListener("pointercancel", onUp);
+        el.addEventListener("wheel", onWheel, { passive: false });
 
         // ── Animation loop ────────────────────────────────────────────────
         let id;
+        let lastW = 0, lastH = 0;
         const animate = () => {
           id = requestAnimationFrame(animate);
+
+          // Red de seguridad: si el contenedor cambió de tamaño y ningún
+          // evento lo avisó (rotar el móvil, ocultarse la barra del
+          // navegador), lo corregimos aquí. Garantiza que el lienzo
+          // siempre llene su espacio en cualquier dispositivo.
+          const cw = mount.clientWidth, ch = mount.clientHeight;
+          if (cw && ch && (cw !== lastW || ch !== lastH)) {
+            lastW = cw; lastH = ch;
+            camera.aspect = cw / ch;
+            camera.updateProjectionMatrix();
+            renderer.setSize(cw, ch);
+          }
+
           camera.position.set(
             5 + radius*Math.sin(theta)*Math.cos(phi),
             radius*Math.sin(phi),
@@ -753,15 +824,31 @@
         animate();
 
         const onResize = () => {
-          camera.aspect = mount.clientWidth/mount.clientHeight;
+          const w = mount.clientWidth, h = mount.clientHeight;
+          if (!w || !h) return;
+          camera.aspect = w / h;
           camera.updateProjectionMatrix();
-          renderer.setSize(mount.clientWidth,mount.clientHeight);
+          renderer.setSize(w, h);
         };
-        window.addEventListener("resize",onResize);
+        window.addEventListener("resize", onResize);
+        window.addEventListener("orientationchange", onResize);
+
+        // Reacciona también cuando cambia el contenedor sin que cambie la
+        // ventana — pasa en móvil al ocultarse la barra de direcciones.
+        const ro = typeof ResizeObserver !== "undefined"
+          ? new ResizeObserver(onResize) : null;
+        ro?.observe(mount);
 
         return () => {
           cancelAnimationFrame(id);
-          window.removeEventListener("resize",onResize);
+          window.removeEventListener("resize", onResize);
+          window.removeEventListener("orientationchange", onResize);
+          ro?.disconnect();
+          el.removeEventListener("pointerdown",   onDown);
+          el.removeEventListener("pointermove",   onMove);
+          el.removeEventListener("pointerup",     onUp);
+          el.removeEventListener("pointercancel", onUp);
+          el.removeEventListener("wheel", onWheel);
           renderer.dispose();
           if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
         };
@@ -899,7 +986,7 @@
     const TR = {
       es: {
         'home':'← Inicio','connected':'● Conectado','connecting':'● Conectando…','reset':'↺ Reiniciar','resetting':'Reiniciando…',
-        'view3d':'Vista 3D del Aula','updating':'Actualizando escena…','hint':'Arrastra para rotar · Scroll para zoom',
+        'view3d':'Vista 3D del Aula','updating':'Actualizando escena…','hint':'Arrastra para rotar · Pellizca o scroll para zoom',
         'voice':'Control por Voz (Chrome)','voice.examples':'Comandos de ejemplo',
         'voice.listening':'Escuchando…','voice.idle':'Presiona para hablar','voice.processing':'Procesando comando…','voice.applying':'Aplicando comando…',
         'demo':'Controles Demo','occ':'OCUPACIÓN','weather':'CLIMA','time':'HORA DEL DÍA',
@@ -934,7 +1021,7 @@
       },
       en: {
         'home':'← Home','connected':'● Connected','connecting':'● Connecting…','reset':'↺ Reset','resetting':'Resetting…',
-        'view3d':'3D Classroom View','updating':'Updating scene…','hint':'Drag to rotate · Scroll to zoom',
+        'view3d':'3D Classroom View','updating':'Updating scene…','hint':'Drag to rotate · Pinch or scroll to zoom',
         'voice':'Voice Control (Chrome)','voice.examples':'Example commands',
         'voice.listening':'Listening…','voice.idle':'Press to speak','voice.processing':'Processing command…','voice.applying':'Applying command…',
         'demo':'Demo Controls','occ':'OCCUPANCY','weather':'WEATHER','time':'TIME OF DAY',
