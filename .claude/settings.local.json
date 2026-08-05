@@ -100,7 +100,11 @@
       "Bash(sed -i '' \"/^    \\\\.team-bio {/d\" backend/static/landing.html)",
       "Bash(sed -n '/<div class=\"team-grid\">/,/<\\\\/div>$/p' backend/static/landing.html)",
       "Bash(sed -i '' \"s|'hint':'Arrastra para rotar · Scroll para zoom'|'hint':'Arrastra para rotar · Pellizca o scroll para zoom'|\" backend/static/index.html)",
-      "Bash(sed -i '' \"s|'hint':'Drag to rotate · Scroll to zoom'|'hint':'Drag to rotate · Pinch or scroll to zoom'|\" backend/static/index.html)"
+      "Bash(sed -i '' \"s|'hint':'Drag to rotate · Scroll to zoom'|'hint':'Drag to rotate · Pinch or scroll to zoom'|\" backend/static/index.html)",
+      "Bash(python3 -)",
+      "Bash(git add *)",
+      "Bash(git commit -q -m 'Corregir cifra de CO2 evitado y alinear umbral de luz natural con el codigo *)",
+      "Bash(git push *)"
     ]
   }
 }

@@ -139,7 +139,7 @@ The system compares two scenarios:
 ## Key Rules the AI Follows
 
 1. If 0 people in classroom → all lights OFF
-2. If natural light > 70% in a zone → lights OFF in that zone
+2. If natural light > 75% in a zone → lights OFF in that zone (40–75% → DIM)
 3. If people only in zones A+B → only zones A+B lights ON
 4. Voice command always overrides AI decisions
 5. Log every decision with timestamp and reason
