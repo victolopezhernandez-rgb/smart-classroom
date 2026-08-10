@@ -105,7 +105,10 @@
       "Bash(git add *)",
       "Bash(git commit -q -m 'Corregir cifra de CO2 evitado y alinear umbral de luz natural con el codigo *)",
       "Bash(git push *)",
-      "Bash(git commit -q -m 'Anadir GUION.md: guion corrido de 7:30 para la feria *)"
+      "Bash(git commit -q -m 'Anadir GUION.md: guion corrido de 7:30 para la feria *)",
+      "Bash(curl -s http://localhost:4400/js/config.js)",
+      "Bash(curl -s http://localhost:4400/js/juego.js)",
+      "Bash(awk -F: '$1>560')"
     ]
   }
 }
