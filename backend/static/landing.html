@@ -55,6 +55,17 @@
     .reveal-delay-3 { transition-delay: 0.3s; }
     .reveal-delay-4 { transition-delay: 0.4s; }
 
+    /* Al salir de pantalla el elemento se reinicia para volver a animarse.
+       Ese reinicio debe ser instantáneo e invisible: si se animara la salida,
+       se vería el contenido desvanecerse mientras uno sube. */
+    .reveal:not(.visible).replay { transition: none; }
+
+    /* Respeta a quien pidió menos movimiento en su sistema operativo:
+       todo aparece plano, sin animación. */
+    @media (prefers-reduced-motion: reduce) {
+      .reveal { opacity: 1; transform: none; transition: none; }
+    }
+
     /* ── NAV ──────────────────────────────────────────────────────────────── */
     nav {
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
@@ -996,17 +1007,77 @@
   </footer>
 
   <script>
-    // Scroll reveal with IntersectionObserver
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (e.isIntersecting) {
-          e.target.classList.add('visible');
-          observer.unobserve(e.target);
-        }
-      });
-    }, { threshold: 0.12 });
+    // ── Scroll reveal ──────────────────────────────────────────────────────
+    // Las secciones se animan al entrar, y se vuelven a animar si el usuario
+    // sube y baja. La clave es la HISTÉRESIS: aparece al 12% visible, pero
+    // solo se reinicia cuando sale del todo (ratio 0). Entre esos dos puntos
+    // no pasa nada, así nunca parpadea algo que el usuario está leyendo.
+    (function () {
+      const reveals = [...document.querySelectorAll('.reveal')];
 
-    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+      // Si el sistema pide menos movimiento, se muestra todo plano y ya.
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        reveals.forEach(el => el.classList.add('visible'));
+        return;
+      }
+
+      // El hero se anima una sola vez al cargar. Reanimarlo cada vez que se
+      // vuelve arriba obligaría a esperar el escalonado completo otra vez.
+      const hero = reveals.filter(el =>  el.closest('#hero'));
+      const rest = reveals.filter(el => !el.closest('#hero'));
+
+      // El rAF deja que el navegador pinte el estado inicial para que la
+      // transición se vea. Pero el rAF se congela en pestañas de segundo
+      // plano, así que el setTimeout garantiza que el hero aparezca igual.
+      const mostrarHero = () => hero.forEach(el => el.classList.add('visible'));
+      requestAnimationFrame(mostrarHero);
+      setTimeout(mostrarHero, 200);
+
+      const IN = 0.12;
+
+      const mostrar = el => { el.classList.remove('replay'); el.classList.add('visible'); };
+      const ocultar = el => { el.classList.add('replay');    el.classList.remove('visible'); };
+
+      // Navegador sin IntersectionObserver: se muestra todo y ya.
+      if (!('IntersectionObserver' in window)) {
+        reveals.forEach(el => el.classList.add('visible'));
+        return;
+      }
+
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          // Un bloque más alto que la pantalla nunca llega al 12%: para esos
+          // basta con que se asome.
+          const alto = e.boundingClientRect.height > window.innerHeight * 0.8;
+
+          if (e.isIntersecting && (alto || e.intersectionRatio >= IN)) mostrar(e.target);
+          // Fuera de pantalla: reinicio instantáneo, invisible para el usuario.
+          else if (!e.isIntersecting) ocultar(e.target);
+        });
+      }, { threshold: [0, IN] });
+
+      rest.forEach(el => io.observe(el));
+
+      // Red de seguridad. El navegador congela el observador mientras la
+      // pestaña está en segundo plano; si el usuario vuelve tras haber hecho
+      // scroll, podría encontrarse contenido invisible. Esto lo recalcula a
+      // mano y corrige. Respeta la misma histéresis: lo que está entrando a
+      // medias se queda como está.
+      const sincronizar = () => {
+        mostrarHero();
+        const vh = window.innerHeight;
+        rest.forEach(el => {
+          const r = el.getBoundingClientRect();
+          if (r.bottom <= 0 || r.top >= vh) { ocultar(el); return; }
+          const enPantalla = Math.min(r.bottom, vh) - Math.max(r.top, 0);
+          if (r.height > vh * 0.8 || enPantalla / r.height >= IN) mostrar(el);
+        });
+      };
+
+      document.addEventListener('visibilitychange', sincronizar);
+      window.addEventListener('pageshow', sincronizar);
+      window.addEventListener('orientationchange', sincronizar);
+    })();
   </script>
 
   <!-- ── LANGUAGE SYSTEM ──────────────────────────────────────────────────── -->
