@@ -86,6 +86,17 @@ app.mount("/vendor", StaticFiles(directory="static/vendor"), name="vendor")
 app.mount("/app", StaticFiles(directory="static", html=True), name="static")
 
 
+@app.middleware("http")
+async def no_cache_html(request, call_next):
+    """Evita que el navegador guarde copias viejas del HTML (crítico en la feria)."""
+    response = await call_next(request)
+    if request.url.path.startswith("/app") or request.url.path == "/app":
+        response.headers["Cache-Control"] = "no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
+
+
 @app.on_event("startup")
 async def startup():
     logger.info("Smart Classroom backend starting up…")
