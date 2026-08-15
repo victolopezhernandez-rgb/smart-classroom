@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 """
-Descarga los modelos COCO-SSD que el Boost 1 (cámara real) necesita para
-funcionar SIN INTERNET durante la feria.
+Descarga los modelos que el Boost 1 (cámara real) necesita para funcionar
+SIN INTERNET durante la feria.
 
-Los pesos son ~83 MB, así que no viven en el repositorio: se bajan una vez
-y quedan en backend/static/vendor/models/ (ignorado por git).
+Por defecto baja BlazeFace, el detector de ROSTROS que usa la demo: pesa
+menos de 1 MB. Con --all baja además los detectores de cuerpo COCO-SSD
+(~83 MB), que quedan como plan B.
+
+Los pesos no viven en el repositorio: se bajan una vez y quedan en
+backend/static/vendor/models/ (ignorado por git).
 
 Uso:
-    python3 backend/scripts/fetch_vision_models.py            # solo el modelo en uso
-    python3 backend/scripts/fetch_vision_models.py --all      # + el lite (plan B)
+    python3 backend/scripts/fetch_vision_models.py            # rostros (lo que usa la feria)
+    python3 backend/scripts/fetch_vision_models.py --all      # + los de cuerpo (plan B)
     python3 backend/scripts/fetch_vision_models.py --check    # verifica sin descargar
 
 ⚠️  Ejecutar CON internet, antes del día de la feria.
@@ -25,13 +29,21 @@ from pathlib import Path
 
 BASE_URL = "https://storage.googleapis.com/tfjs-models/savedmodel"
 
-# nombre local  ->  prefijo remoto (el mismo que usa coco-ssd.min.js)
+# nombre local  ->  URL base remota.
+# BlazeFace no vive en el bucket de savedmodel sino en TFHub, y ahí el
+# manifiesto y los shards se piden con ?tfjs-format=file.
 MODELS = {
-    "coco-ssd":      "ssd_mobilenet_v2",       # el que carga index.html (~65 MB)
-    "coco-ssd-lite": "ssdlite_mobilenet_v2",   # plan B si la laptop va lenta (~18 MB)
+    "coco-ssd":      f"{BASE_URL}/ssd_mobilenet_v2",       # cuerpos (~65 MB), plan B
+    "coco-ssd-lite": f"{BASE_URL}/ssdlite_mobilenet_v2",   # lite (~18 MB)
+    "blazeface":     "https://tfhub.dev/tensorflow/tfjs-model/blazeface/1/default/1",
 }
 
-DEFAULT_MODELS = ["coco-ssd"]
+# El detector de rostros es el que usa la feria. Pesa menos de 1 MB, así
+# que descargarlo siempre sale gratis.
+DEFAULT_MODELS = ["blazeface"]
+
+# Modelos que se piden con el sufijo de TFHub
+TFHUB = {"blazeface"}
 
 VENDOR_DIR = Path(__file__).resolve().parents[1] / "static" / "vendor" / "models"
 
@@ -41,16 +53,16 @@ def fetch(url: str) -> bytes:
         return resp.read()
 
 
-def download_model(local_name: str, remote_prefix: str) -> None:
+def download_model(local_name: str, remote: str) -> None:
     dest = VENDOR_DIR / local_name
     dest.mkdir(parents=True, exist_ok=True)
-    remote = f"{BASE_URL}/{remote_prefix}"
+    suffix = "?tfjs-format=file" if local_name in TFHUB else ""
 
     print(f"\n▶ {local_name}  ←  {remote}")
 
     manifest_path = dest / "model.json"
     print("  · model.json …", end="", flush=True)
-    manifest_bytes = fetch(f"{remote}/model.json")
+    manifest_bytes = fetch(f"{remote}/model.json{suffix}")
     manifest_path.write_bytes(manifest_bytes)
     print(f" {len(manifest_bytes) / 1024:.0f} KB")
 
@@ -60,7 +72,7 @@ def download_model(local_name: str, remote_prefix: str) -> None:
     total = 0
     for i, shard in enumerate(shards, 1):
         print(f"  · {shard}  ({i}/{len(shards)}) …", end="", flush=True)
-        data = fetch(f"{remote}/{shard}")
+        data = fetch(f"{remote}/{shard}{suffix}")
         (dest / shard).write_bytes(data)
         total += len(data)
         print(f" {len(data) / 1024 / 1024:.1f} MB")
@@ -95,7 +107,7 @@ def check_model(local_name: str) -> bool:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--all", action="store_true",
-                        help="descarga también el modelo lite (plan B de rendimiento)")
+                        help="descarga también los detectores de cuerpo (plan B)")
     parser.add_argument("--check", action="store_true",
                         help="solo verifica lo que ya está en disco")
     args = parser.parse_args()
@@ -111,7 +123,7 @@ def main() -> int:
             print("\nFaltan pesos. Corré este script sin --check (necesita internet).")
         return 0 if ok else 1
 
-    print("Descargando modelos COCO-SSD a", VENDOR_DIR)
+    print("Descargando modelos a", VENDOR_DIR)
     for name in wanted:
         try:
             download_model(name, MODELS[name])
@@ -120,8 +132,7 @@ def main() -> int:
             return 1
 
     print("\nListo. Verificá la carga offline abriendo, con el server corriendo:")
-    print("  http://localhost:8000/app/_test_vision.html        (mobilenet_v2)")
-    print("  http://localhost:8000/app/_test_vision.html?m=lite (lite, si bajaste --all)")
+    print("  http://localhost:8000/app/_test_vision.html")
     print("Debe imprimir RESULT: OFFLINE_LOAD_OK.")
     return 0
 

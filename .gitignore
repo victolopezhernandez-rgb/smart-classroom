@@ -18,7 +18,7 @@ data/energy_logs.csv
 # gemelo digital, no para publicarse
 fotos_enseñanza/
 
-# Modelos de IA (COCO-SSD) — ~83 MB, no van al repo.
+# Pesos de los modelos de IA (BlazeFace, y COCO-SSD con --all) — no van al repo.
 # Se bajan con: python3 backend/scripts/fetch_vision_models.py
 backend/static/vendor/models/
 

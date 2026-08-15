@@ -68,16 +68,24 @@ build falló, el error aparece en el log.
 
 ## 🎥 Cámara real (Boost 1) — un paso obligatorio tras clonar
 
-Los pesos del modelo de visión pesan ~83 MB, así que **no están en el repo**.
-Con internet, una sola vez:
+El modelo de visión es **BlazeFace**, un detector de **rostros**. Los pesos no
+están en el repo. Con internet, una sola vez:
 
 ```bash
-python3 backend/scripts/fetch_vision_models.py     # ~65 MB, tarda un par de minutos
+python3 backend/scripts/fetch_vision_models.py     # <1 MB, tarda segundos
 python3 backend/scripts/fetch_vision_models.py --check   # confirma que quedó completo
 ```
 
 Quedan en `backend/static/vendor/models/` (ignorado por git). A partir de ahí la
-detección corre **100% en el navegador y sin internet**.
+detección corre **100% en el navegador y sin internet**: ninguna imagen de la
+cámara sale del computador.
+
+Qué mide y cómo: la posición horizontal del rostro decide izquierda/derecha del
+salón (A·C vs B·D), y el **tamaño** del rostro decide frente/fondo — una cara
+grande está cerca de la cámara. Acercarse y alejarse cambia de zona en vivo.
+
+Con `--all` se bajan además los detectores de cuerpo COCO-SSD (~83 MB), que
+quedan como plan B pero ya no los usa la demo.
 
 Para verificar la carga offline, con el server arriba:
 `http://localhost:8000/app/_test_vision.html` → debe imprimir `RESULT: OFFLINE_LOAD_OK`.
