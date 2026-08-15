@@ -1,0 +1,130 @@
+#!/usr/bin/env python3
+"""
+Descarga los modelos COCO-SSD que el Boost 1 (cámara real) necesita para
+funcionar SIN INTERNET durante la feria.
+
+Los pesos son ~83 MB, así que no viven en el repositorio: se bajan una vez
+y quedan en backend/static/vendor/models/ (ignorado por git).
+
+Uso:
+    python3 backend/scripts/fetch_vision_models.py            # solo el modelo en uso
+    python3 backend/scripts/fetch_vision_models.py --all      # + el lite (plan B)
+    python3 backend/scripts/fetch_vision_models.py --check    # verifica sin descargar
+
+⚠️  Ejecutar CON internet, antes del día de la feria.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+import urllib.error
+import urllib.request
+from pathlib import Path
+
+BASE_URL = "https://storage.googleapis.com/tfjs-models/savedmodel"
+
+# nombre local  ->  prefijo remoto (el mismo que usa coco-ssd.min.js)
+MODELS = {
+    "coco-ssd":      "ssd_mobilenet_v2",       # el que carga index.html (~65 MB)
+    "coco-ssd-lite": "ssdlite_mobilenet_v2",   # plan B si la laptop va lenta (~18 MB)
+}
+
+DEFAULT_MODELS = ["coco-ssd"]
+
+VENDOR_DIR = Path(__file__).resolve().parents[1] / "static" / "vendor" / "models"
+
+
+def fetch(url: str) -> bytes:
+    with urllib.request.urlopen(url, timeout=120) as resp:
+        return resp.read()
+
+
+def download_model(local_name: str, remote_prefix: str) -> None:
+    dest = VENDOR_DIR / local_name
+    dest.mkdir(parents=True, exist_ok=True)
+    remote = f"{BASE_URL}/{remote_prefix}"
+
+    print(f"\n▶ {local_name}  ←  {remote}")
+
+    manifest_path = dest / "model.json"
+    print("  · model.json …", end="", flush=True)
+    manifest_bytes = fetch(f"{remote}/model.json")
+    manifest_path.write_bytes(manifest_bytes)
+    print(f" {len(manifest_bytes) / 1024:.0f} KB")
+
+    manifest = json.loads(manifest_bytes)
+    shards = [p for group in manifest["weightsManifest"] for p in group["paths"]]
+
+    total = 0
+    for i, shard in enumerate(shards, 1):
+        print(f"  · {shard}  ({i}/{len(shards)}) …", end="", flush=True)
+        data = fetch(f"{remote}/{shard}")
+        (dest / shard).write_bytes(data)
+        total += len(data)
+        print(f" {len(data) / 1024 / 1024:.1f} MB")
+
+    print(f"  ✓ {local_name}: {len(shards)} shards, {total / 1024 / 1024:.0f} MB en {dest}")
+
+
+def check_model(local_name: str) -> bool:
+    """True si el modelo está completo en disco (todos los shards del manifiesto)."""
+    dest = VENDOR_DIR / local_name
+    manifest_path = dest / "model.json"
+    if not manifest_path.is_file():
+        print(f"  ✗ {local_name}: falta model.json")
+        return False
+    try:
+        manifest = json.loads(manifest_path.read_text())
+    except json.JSONDecodeError:
+        print(f"  ✗ {local_name}: model.json corrupto")
+        return False
+
+    shards = [p for group in manifest["weightsManifest"] for p in group["paths"]]
+    missing = [s for s in shards if not (dest / s).is_file()]
+    if missing:
+        print(f"  ✗ {local_name}: faltan {len(missing)}/{len(shards)} shards")
+        return False
+
+    size = sum((dest / s).stat().st_size for s in shards)
+    print(f"  ✓ {local_name}: {len(shards)} shards, {size / 1024 / 1024:.0f} MB")
+    return True
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--all", action="store_true",
+                        help="descarga también el modelo lite (plan B de rendimiento)")
+    parser.add_argument("--check", action="store_true",
+                        help="solo verifica lo que ya está en disco")
+    args = parser.parse_args()
+
+    wanted = list(MODELS) if args.all else DEFAULT_MODELS
+
+    if args.check:
+        print("Verificando modelos en", VENDOR_DIR)
+        ok = all(check_model(name) for name in wanted)
+        if ok:
+            print("\nTodo listo — la cámara real funciona sin internet.")
+        else:
+            print("\nFaltan pesos. Corré este script sin --check (necesita internet).")
+        return 0 if ok else 1
+
+    print("Descargando modelos COCO-SSD a", VENDOR_DIR)
+    for name in wanted:
+        try:
+            download_model(name, MODELS[name])
+        except (urllib.error.URLError, urllib.error.HTTPError, OSError) as exc:
+            print(f"\n✗ Error descargando {name}: {exc}", file=sys.stderr)
+            return 1
+
+    print("\nListo. Verificá la carga offline abriendo, con el server corriendo:")
+    print("  http://localhost:8000/app/_test_vision.html        (mobilenet_v2)")
+    print("  http://localhost:8000/app/_test_vision.html?m=lite (lite, si bajaste --all)")
+    print("Debe imprimir RESULT: OFFLINE_LOAD_OK.")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

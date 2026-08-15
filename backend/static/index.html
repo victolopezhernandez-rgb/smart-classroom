@@ -9,6 +9,8 @@
   <script src="/vendor/react.min.js"></script>
   <script src="/vendor/react-dom.min.js"></script>
   <script src="/vendor/babel.min.js"></script>
+  <script src="/vendor/tf.min.js"></script>
+  <script src="/vendor/coco-ssd.min.js"></script>
   <script src="/vendor/three.min.js"></script>
 
   <!-- ── Dónde vive el backend ─────────────────────────────────────────────
@@ -182,6 +184,7 @@
     .chip.active-blue   { border-color: #3b82f6; background: #1e3a5f80; color: #93c5fd; font-weight: 600; }
     .chip.active-orange { border-color: #f97316; background: #43140780; color: #fdba74; font-weight: 600; }
     .chip.active-purple { border-color: #a855f7; background: #3b076480; color: #d8b4fe; font-weight: 600; }
+    .chip.active-green  { border-color: #22c55e; background: #05391f80; color: #86efac; font-weight: 600; }
 
     /* ── 3D Canvas ──────────────────────────────────────────────────────── */
     #canvas3d { width: 100%; height: 420px; border-radius: 0.5rem; overflow: hidden; display: block; }
@@ -422,7 +425,12 @@
           ws.onclose = () => { setConn(false); setTimeout(connect, 3000); };
           ws.onerror = () => ws.close();
           ws.onmessage = (e) => {
-            const msg = JSON.parse(e.data);
+            let msg;
+            try {
+              msg = JSON.parse(e.data);
+            } catch {
+              return; // ignore non-JSON messages (e.g. "pong" keepalive)
+            }
             if (msg.type === "STATE_UPDATE") setState(msg.payload);
           };
           const ping = setInterval(() => { if (ws.readyState === 1) ws.send("ping"); }, 25000);
@@ -1498,6 +1506,19 @@
       const weathers  = [{id:"clear",l:"☀️"},{id:"cloudy",l:"⛅"},{id:"overcast",l:"☁️"},{id:"rainy",l:"🌧️"}];
       const times     = [{h:6,l:"6h"},{h:8,l:"8h"},{h:10,l:"10h"},{h:12,l:"12h"},{h:15,l:"15h"},{h:17,l:"17h"},{h:18,l:"18h"},{h:null,k:"sc.real"}];
 
+      const [isLiveCamera, setIsLiveCamera] = useState(false);
+
+      // La lógica de cámara vive en un <script> plano (sin Babel) más abajo:
+      // window.LiveCam. Este botón solo delega y luego refleja el estado.
+      const toggleLiveCamera = async () => {
+        try {
+          const next = await window.LiveCam.toggle();
+          setIsLiveCamera(next);
+        } catch (e) {
+          console.error("Error toggling live camera:", e);
+        }
+      };
+
       return (
         <div className="panel">
           <h2>{t('demo')}</h2>
@@ -1507,6 +1528,12 @@
           <div className="chip-group">{weathers.map(({id,l})=>{const isLoading=loading===`w-${id}`; return <button key={id} className={`chip${weather===id?" active-orange":""}${isLoading?" loading":""}`} onClick={()=>setW(id)}>{isLoading&&<span className="spinner"/>}{l}</button>;})}</div>
           <div style={{fontSize:"0.65rem",color:"#64748b",marginBottom:"0.3rem"}}>{t('time')}</div>
           <div className="chip-group">{times.map(({h,l,k})=>{const isLoading=loading===`t-${h}`; return <button key={l||k} className={`chip${simTime===h?" active-purple":""}${isLoading?" loading":""}`} onClick={()=>setT(h)}>{isLoading&&<span className="spinner"/>}{k ? t(k) : l}</button>;})}</div>
+          <div style={{fontSize:"0.65rem",color:"#64748b",marginTop:"0.5rem"}}>
+            <button onClick={toggleLiveCamera} className="chip active-green"
+              style={{fontSize:"0.9rem",padding:"0.5rem 0.8rem"}}>
+              {isLiveCamera ? "📹 Modo cámara" : "🎥 Cámara real"}
+            </button>
+          </div>
         </div>
       );
     }
@@ -1937,6 +1964,201 @@
     }
 
     ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+
+  <!-- ══ Live camera module (plain JS, sin Babel) ══
+       Panel flotante tipo PiP: no toca el DOM de React. -->
+  <script>
+    (function () {
+      const ZONE_COLORS = { zone_A: "#4a90d9", zone_B: "#5cb85c", zone_C: "#e8a838", zone_D: "#9b59b6" };
+      const ZONE_LABELS = { zone_A: "A", zone_B: "B", zone_C: "C", zone_D: "D" };
+
+      function getZone(nx, ny) {
+        return nx < 0.5 ? (ny < 0.5 ? "zone_A" : "zone_C") : (ny < 0.5 ? "zone_B" : "zone_D");
+      }
+
+      let isLive = false;
+      let stream = null;
+      let model = null;
+      let rafId = null;
+      let lastPost = 0;
+      let panelEl = null;
+      let videoEl = null;
+      let canvasEl = null;
+      let statusEl = null;
+      let peopleEl = null;
+
+      function buildPanel() {
+        panelEl = document.createElement("div");
+        panelEl.style.cssText =
+          "position:fixed;left:16px;bottom:16px;width:320px;z-index:9999;" +
+          "background:#131620;border:1px solid #4a527a;border-radius:12px;" +
+          "box-shadow:0 8px 30px rgba(0,0,0,0.6);overflow:hidden;font-family:system-ui,sans-serif;";
+
+        const head = document.createElement("div");
+        head.style.cssText =
+          "display:flex;justify-content:space-between;align-items:center;" +
+          "padding:0.5rem 0.7rem;background:#1a1d27;color:#e2e8f0;font-size:0.8rem;font-weight:600;";
+        head.innerHTML = '<span><span style="color:#ef4444">●</span> CÁMARA REAL — LIVE</span>';
+        const closeBtn = document.createElement("button");
+        closeBtn.textContent = "✕";
+        closeBtn.style.cssText =
+          "background:none;border:none;color:#94a3b8;font-size:0.9rem;cursor:pointer;";
+        closeBtn.onclick = () => window.LiveCam.toggle();
+        head.appendChild(closeBtn);
+        panelEl.appendChild(head);
+
+        const wrap = document.createElement("div");
+        wrap.style.cssText = "position:relative;width:100%;height:220px;background:#000;";
+        videoEl = document.createElement("video");
+        videoEl.autoplay = true;
+        videoEl.playsInline = true;
+        videoEl.muted = true;
+        videoEl.style.cssText =
+          "width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:block;";
+        wrap.appendChild(videoEl);
+        canvasEl = document.createElement("canvas");
+        canvasEl.style.cssText =
+          "position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;";
+        wrap.appendChild(canvasEl);
+        panelEl.appendChild(wrap);
+
+        statusEl = document.createElement("div");
+        statusEl.style.cssText = "padding:0.4rem 0.7rem;font-size:0.7rem;color:#94a3b8;";
+        statusEl.textContent = "Iniciando cámara…";
+        panelEl.appendChild(statusEl);
+
+        peopleEl = document.createElement("div");
+        peopleEl.style.cssText =
+          "padding:0 0.7rem 0.6rem;font-size:0.85rem;font-weight:700;color:#4ade80;";
+        peopleEl.textContent = "Personas: 0";
+        panelEl.appendChild(peopleEl);
+
+        document.body.appendChild(panelEl);
+      }
+
+      function setStatus(msg, color) {
+        if (statusEl) { statusEl.textContent = msg; statusEl.style.color = color || "#94a3b8"; }
+      }
+
+      async function postMode(source) {
+        try {
+          await fetch("/api/vision/mode", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ source: source })
+          });
+        } catch (e) { console.error("mode post error", e); }
+      }
+
+      async function postLive(people) {
+        try {
+          await fetch("/api/vision/live", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ people: people })
+          });
+        } catch (e) { console.error("live post error", e); }
+      }
+
+      async function start() {
+        buildPanel();
+        try {
+          setStatus("Accediendo a la webcam…");
+          stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+          videoEl.srcObject = stream;
+          await videoEl.play();
+
+          setStatus("Cargando modelo de IA…");
+          if (!model) {
+            model = await cocoSsd.load({ base: "mobilenet_v2", modelUrl: "/vendor/models/coco-ssd/model.json" });
+          }
+
+          await postMode("live_camera");
+          isLive = true;
+          setStatus("● Detección activa", "#4ade80");
+          loop();
+          return true;
+        } catch (e) {
+          setStatus("Error: " + (e && e.message ? e.message : e), "#f87171");
+          isLive = false;
+          return false;
+        }
+      }
+
+      function stop() {
+        if (rafId) cancelAnimationFrame(rafId);
+        if (stream) stream.getTracks().forEach((t) => t.stop());
+        postMode("simulated");
+        if (panelEl) { panelEl.remove(); panelEl = null; }
+        isLive = false;
+        return false;
+      }
+
+      function loop() {
+        if (!isLive) return;
+        rafId = requestAnimationFrame(loop);
+        if (!videoEl || videoEl.readyState < 2 || !model) return;
+
+        const vw = videoEl.videoWidth, vh = videoEl.videoHeight;
+        if (!vw || !vh) return;
+        canvasEl.width = vw;
+        canvasEl.height = vh;
+        const ctx = canvasEl.getContext("2d");
+        ctx.clearRect(0, 0, vw, vh);
+
+        // Guías de cuadrante (pantalla): A arriba-izq, B arriba-der, C abajo-izq, D abajo-der
+        ctx.strokeStyle = "rgba(255,255,255,0.35)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(vw / 2, 0); ctx.lineTo(vw / 2, vh);
+        ctx.moveTo(0, vh / 2); ctx.lineTo(vw, vh / 2);
+        ctx.stroke();
+        ctx.font = "bold 13px system-ui";
+        ctx.fillStyle = "rgba(255,255,255,0.8)";
+        ctx.fillText("A", 8, 18); ctx.fillText("B", vw - 18, 18);
+        ctx.fillText("C", 8, vh - 8); ctx.fillText("D", vw - 18, vh - 8);
+
+        model.detect(videoEl).then(function (detections) {
+          const persons = detections.filter((d) => d.class === "person" && d.score >= 0.5);
+          peopleEl.textContent = "Personas: " + persons.length;
+
+          persons.forEach((p) => {
+            const bx = p.bbox[0], by = p.bbox[1], bw = p.bbox[2], bh = p.bbox[3];
+            const cx = bx + bw / 2, cy = by + bh / 2;
+            const nxScreen = 1 - cx / vw;   // video espejado
+            const ny = cy / vh;
+            const zone = getZone(nxScreen, ny);
+            const col = ZONE_COLORS[zone];
+            // dibuja la caja en posición espejada para coincidir con el video
+            const dx = vw - (bx + bw);
+            ctx.strokeStyle = col;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(dx, by, bw, bh);
+            ctx.fillStyle = col;
+            ctx.font = "bold 12px system-ui";
+            ctx.fillText(ZONE_LABELS[zone] + " " + Math.round(p.score * 100) + "%", dx, by > 14 ? by - 4 : 12);
+          });
+
+          const now = Date.now();
+          if (now - lastPost > 400) {
+            const people = persons.slice(0, 5).map((p) => {
+              const bx = p.bbox[0], by = p.bbox[1], bw = p.bbox[2], bh = p.bbox[3];
+              return { x: 1 - (bx + bw / 2) / vw, y: (by + bh / 2) / vh };
+            });
+            postLive(people);
+            lastPost = now;
+          }
+        }).catch(function () {});
+      }
+
+      window.LiveCam = {
+        toggle: async function () {
+          return isLive ? stop() : start();
+        },
+        isLive: function () { return isLive; }
+      };
+    })();
   </script>
 </body>
 </html>

@@ -37,3 +37,9 @@ EMERGENCY_BLINK_MS = {
 # consume la mitad. El gemelo lo contabiliza igual que cualquier otro estado:
 # una emergencia gasta energía y eso también se mide.
 WATTS_PER_ZONE_BLINK = 40.0
+
+# ── Live camera vision ────────────────────────────────────────────────────────
+LIVE_STALE_SECONDS = 8.0             # No camera data for this long → back to simulation
+ROOM_WIDTH_M = 10.0                  # Classroom width  (x axis, meters)
+ROOM_DEPTH_M = 8.0                   # Classroom depth  (y axis, meters)
+MAX_LIVE_DETECTIONS = 20             # Sanity cap per frame from the browser

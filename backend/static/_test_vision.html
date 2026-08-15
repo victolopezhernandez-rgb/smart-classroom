@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Offline COCO-SSD load test</title>
+  <script src="/vendor/tf.min.js"></script>
+  <script src="/vendor/coco-ssd.min.js"></script>
+</head>
+<body>
+  <pre id="out">starting…</pre>
+  <script>
+    const out = document.getElementById('out');
+    const log = (m) => { out.textContent += '\n' + m; console.log('[TEST] ' + m); };
+
+    (async () => {
+      try {
+        log('tfjs version: ' + tf.version.tfjs);
+        const forceBackend = new URLSearchParams(location.search).get('b');
+        if (forceBackend) {
+          await tf.setBackend(forceBackend);
+        } else {
+          try { await tf.setBackend('webgl'); } catch (e) { log('webgl unavailable: ' + e.message); }
+          if (tf.getBackend() !== 'webgl') { await tf.setBackend('cpu'); }
+        }
+        await tf.ready();
+        log('backend: ' + tf.getBackend());
+
+        const which = new URLSearchParams(location.search).get('m') || 'full';
+        const modelUrl = which === 'lite'
+          ? '/vendor/models/coco-ssd-lite/model.json'
+          : '/vendor/models/coco-ssd/model.json';
+        const base = which === 'lite' ? 'lite_mobilenet_v2' : 'mobilenet_v2';
+
+        log('loading model: ' + base + ' from ' + modelUrl);
+        const t0 = performance.now();
+        const model = await cocoSsd.load({ base, modelUrl });
+        log('model loaded in ' + Math.round(performance.now() - t0) + ' ms');
+
+        // Synthetic test image (227x227 canvas). No person expected; we only
+        // verify detect() runs end-to-end offline and returns a valid array.
+        const c = document.createElement('canvas');
+        c.width = 320; c.height = 240;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#334'; ctx.fillRect(0,0,320,240);
+        ctx.fillStyle = '#c9a'; ctx.fillRect(120,60,80,140);
+
+        const t1 = performance.now();
+        const preds = await model.detect(c);
+        log('detect() OK in ' + Math.round(performance.now() - t1) + ' ms');
+        log('predictions: ' + JSON.stringify(preds));
+        log('RESULT: OFFLINE_LOAD_OK');
+      } catch (e) {
+        log('ERROR: ' + (e && e.message ? e.message : e));
+        log('RESULT: OFFLINE_LOAD_FAIL');
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -66,6 +66,27 @@ build falló, el error aparece en el log.
 
 ---
 
+## 🎥 Cámara real (Boost 1) — un paso obligatorio tras clonar
+
+Los pesos del modelo de visión pesan ~83 MB, así que **no están en el repo**.
+Con internet, una sola vez:
+
+```bash
+python3 backend/scripts/fetch_vision_models.py     # ~65 MB, tarda un par de minutos
+python3 backend/scripts/fetch_vision_models.py --check   # confirma que quedó completo
+```
+
+Quedan en `backend/static/vendor/models/` (ignorado por git). A partir de ahí la
+detección corre **100% en el navegador y sin internet**.
+
+Para verificar la carga offline, con el server arriba:
+`http://localhost:8000/app/_test_vision.html` → debe imprimir `RESULT: OFFLINE_LOAD_OK`.
+
+La cámara solo funciona en **origen seguro**: `localhost` o HTTPS. En la feria se
+corre local (`./run.sh`), así que no hay problema.
+
+---
+
 ## ⚠️ El día de la feria
 
 - Abre `https://smart-classroom-rtne.onrender.com/health` **un minuto antes**

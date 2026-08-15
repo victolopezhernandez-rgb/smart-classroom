@@ -2,6 +2,9 @@
 node_modules/
 __pycache__/
 *.pyc
+backend/.venv/
+.venv/
+venv/
 
 # Builds — se generan solos, no se suben
 frontend/dist/
@@ -15,5 +18,12 @@ data/energy_logs.csv
 # gemelo digital, no para publicarse
 fotos_enseñanza/
 
+# Modelos de IA (COCO-SSD) — ~83 MB, no van al repo.
+# Se bajan con: python3 backend/scripts/fetch_vision_models.py
+backend/static/vendor/models/
+
 # macOS
 .DS_Store
+
+# LibreOffice
+.~lock.*#
