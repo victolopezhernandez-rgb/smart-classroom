@@ -94,20 +94,22 @@ def build_emergency_state(kind: str, occupancy: dict) -> dict:
     """
     info = EMERGENCY_TYPES.get(kind, EMERGENCY_TYPES["drill"])
     route = compute_route(occupancy)
-    label = info["label_es"]
+    # El campo reason va en inglés como el resto del motor de decisión
+    # (ver decision_engine); el banner sí se traduce, vía label_es/label_en.
+    label = info["label_en"]
 
     state = {}
     for zone in CLASSROOM_ZONES:
         if zone in route:
-            marker = "salida" if zone == EMERGENCY_EXIT_ZONE else "paso hacia la salida"
+            marker = "exit" if zone == EMERGENCY_EXIT_ZONE else "path to exit"
             state[zone] = {
                 "state":  "ON",
-                "reason": f"{label} — ruta de evacuación ({marker})",
+                "reason": f"{label} — evacuation route ({marker})",
             }
         else:
             state[zone] = {
                 "state":  "BLINK",
-                "reason": f"{label} — alerta intermitente, despejar la zona",
+                "reason": f"{label} — blinking alert, clear this zone",
             }
 
     return state
