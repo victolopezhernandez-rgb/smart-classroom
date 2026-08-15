@@ -2,9 +2,9 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Offline BlazeFace load test</title>
+  <title>Offline COCO-SSD load test</title>
   <script src="/vendor/tf.min.js"></script>
-  <script src="/vendor/blazeface.min.js"></script>
+  <script src="/vendor/coco-ssd.min.js"></script>
 </head>
 <body>
   <pre id="out">starting…</pre>
@@ -25,25 +25,29 @@
         await tf.ready();
         log('backend: ' + tf.getBackend());
 
-        const modelUrl = '/vendor/models/blazeface/model.json';
-        log('loading model: blazeface from ' + modelUrl);
+        const which = new URLSearchParams(location.search).get('m') || 'full';
+        const modelUrl = which === 'lite'
+          ? '/vendor/models/coco-ssd-lite/model.json'
+          : '/vendor/models/coco-ssd/model.json';
+        const base = which === 'lite' ? 'lite_mobilenet_v2' : 'mobilenet_v2';
+
+        log('loading model: ' + base + ' from ' + modelUrl);
         const t0 = performance.now();
-        const model = await blazeface.load({ modelUrl });
+        const model = await cocoSsd.load({ base, modelUrl });
         log('model loaded in ' + Math.round(performance.now() - t0) + ' ms');
 
-        // Imagen sintética: no hay ninguna cara, así que el resultado
-        // esperado es una lista vacía. Lo que se verifica es que el modelo
-        // cargue y que estimateFaces() corra de punta a punta sin internet.
+        // Synthetic test image (227x227 canvas). No person expected; we only
+        // verify detect() runs end-to-end offline and returns a valid array.
         const c = document.createElement('canvas');
         c.width = 320; c.height = 240;
         const ctx = c.getContext('2d');
-        ctx.fillStyle = '#334'; ctx.fillRect(0, 0, 320, 240);
-        ctx.fillStyle = '#c9a'; ctx.fillRect(120, 60, 80, 140);
+        ctx.fillStyle = '#334'; ctx.fillRect(0,0,320,240);
+        ctx.fillStyle = '#c9a'; ctx.fillRect(120,60,80,140);
 
         const t1 = performance.now();
-        const preds = await model.estimateFaces(c, false);
-        log('estimateFaces() OK in ' + Math.round(performance.now() - t1) + ' ms');
-        log('faces found: ' + preds.length);
+        const preds = await model.detect(c);
+        log('detect() OK in ' + Math.round(performance.now() - t1) + ' ms');
+        log('predictions: ' + JSON.stringify(preds));
         log('RESULT: OFFLINE_LOAD_OK');
       } catch (e) {
         log('ERROR: ' + (e && e.message ? e.message : e));

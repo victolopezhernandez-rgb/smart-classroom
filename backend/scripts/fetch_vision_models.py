@@ -3,16 +3,16 @@
 Descarga los modelos que el Boost 1 (cámara real) necesita para funcionar
 SIN INTERNET durante la feria.
 
-Por defecto baja BlazeFace, el detector de ROSTROS que usa la demo: pesa
-menos de 1 MB. Con --all baja además los detectores de cuerpo COCO-SSD
-(~83 MB), que quedan como plan B.
+RAMA prueba-coco-ssd: acá la demo usa COCO-SSD, el detector de CUERPO
+entero (~65 MB), así que ese es el que se baja por defecto. Con --all baja
+además el de rostros (BlazeFace, <1 MB) y la variante lite de COCO-SSD.
 
 Los pesos no viven en el repositorio: se bajan una vez y quedan en
 backend/static/vendor/models/ (ignorado por git).
 
 Uso:
-    python3 backend/scripts/fetch_vision_models.py            # rostros (lo que usa la feria)
-    python3 backend/scripts/fetch_vision_models.py --all      # + los de cuerpo (plan B)
+    python3 backend/scripts/fetch_vision_models.py            # cuerpos (lo que usa esta rama)
+    python3 backend/scripts/fetch_vision_models.py --all      # + rostros y lite
     python3 backend/scripts/fetch_vision_models.py --check    # verifica sin descargar
 
 ⚠️  Ejecutar CON internet, antes del día de la feria.
@@ -38,9 +38,9 @@ MODELS = {
     "blazeface":     "https://tfhub.dev/tensorflow/tfjs-model/blazeface/1/default/1",
 }
 
-# El detector de rostros es el que usa la feria. Pesa menos de 1 MB, así
-# que descargarlo siempre sale gratis.
-DEFAULT_MODELS = ["blazeface"]
+# RAMA prueba-coco-ssd: acá la demo usa el detector de CUERPO, así que ese
+# es el que se baja por defecto. En main el default es blazeface (rostros).
+DEFAULT_MODELS = ["coco-ssd"]
 
 # Modelos que se piden con el sufijo de TFHub
 TFHUB = {"blazeface"}
@@ -107,7 +107,7 @@ def check_model(local_name: str) -> bool:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--all", action="store_true",
-                        help="descarga también los detectores de cuerpo (plan B)")
+                        help="descarga también el de rostros y la variante lite")
     parser.add_argument("--check", action="store_true",
                         help="solo verifica lo que ya está en disco")
     args = parser.parse_args()
