@@ -2245,16 +2245,19 @@
       //
       // La pista buena es el TAMAÑO: el alto aparente de una cara es
       // inversamente proporcional a la distancia. Una cara que ocupa el 40%
-      // del cuadro está encima de la cámara; una del 6%, al fondo del salón.
-      // Se mantiene la convención del backend: y=0 es el frente del salón,
-      // o sea lo más lejos de la cámara.
+      // del cuadro está a un metro de la cámara; una del 6%, a unos cinco.
+      //
+      // La cámara se pone AL FRENTE del salón, junto al tablero, mirando
+      // hacia los puestos. Así que cerca de la cámara = frente del salón. El
+      // backend usa y=0 para el frente (zonas A y B) e y=1 para el fondo
+      // (C y D), o sea que cara grande → y chico.
       const FACE_NEAR = 0.40;    // alto de cara / alto de cuadro, a ~1 m
       const FACE_FAR  = 0.06;    // ídem, a ~5 m
 
       function depthFromFace(faceH, frameH) {
         const size = faceH / frameH;
-        const t = (size - FACE_FAR) / (FACE_NEAR - FACE_FAR);
-        return Math.max(0, Math.min(1, t));
+        const cerca = (size - FACE_FAR) / (FACE_NEAR - FACE_FAR);  // 1 = pegado a la cámara
+        return 1 - Math.max(0, Math.min(1, cerca));                // → 0 = frente del salón
       }
 
       let isLive = false;
@@ -2539,7 +2542,7 @@
         ctx.fillText("B · D", vw - 52 * S, 20 * S);
         ctx.font = (11 * S).toFixed(0) + "px system-ui";
         ctx.fillStyle = "rgba(255,255,255,0.6)";
-        ctx.fillText("acércate → fondo (C·D)  ·  aléjate → frente (A·B)", 8 * S, vh - 8 * S);
+        ctx.fillText("acércate → frente (A·B)  ·  aléjate → fondo (C·D)", 8 * S, vh - 8 * S);
       }
 
       function drawFaces(ctx, faces, vw, vh) {

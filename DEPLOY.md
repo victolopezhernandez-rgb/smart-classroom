@@ -81,8 +81,17 @@ detección corre **100% en el navegador y sin internet**: ninguna imagen de la
 cámara sale del computador.
 
 Qué mide y cómo: la posición horizontal del rostro decide izquierda/derecha del
-salón (A·C vs B·D), y el **tamaño** del rostro decide frente/fondo — una cara
-grande está cerca de la cámara. Acercarse y alejarse cambia de zona en vivo.
+salón (A·C vs B·D), y el **tamaño** del rostro decide frente/fondo, porque una
+cara se ve más grande cuanto más cerca está. La cámara va **al frente del salón,
+junto al tablero**, así que acercarse a ella es acercarse al frente:
+
+| En cámara | En el salón |
+|---|---|
+| cara grande (cerca) | frente → zonas **A·B** |
+| cara pequeña (lejos) | fondo → zonas **C·D** |
+
+Si algún día la cámara se pone al fondo del salón, hay que invertir el `1 -` de
+`depthFromFace()` en `backend/static/index.html`.
 
 Con `--all` se bajan además los detectores de cuerpo COCO-SSD (~83 MB), que
 quedan como plan B pero ya no los usa la demo.
