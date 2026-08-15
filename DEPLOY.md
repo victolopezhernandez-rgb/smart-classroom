@@ -66,19 +66,19 @@ build falló, el error aparece en el log.
 
 ---
 
-## 🎥 Cámara real (Boost 1) — un paso obligatorio tras clonar
+## 🎥 Cámara real (Boost 1)
 
-El modelo de visión es **BlazeFace**, un detector de **rostros**. Los pesos no
-están en el repo. Con internet, una sola vez:
+El modelo de visión es **BlazeFace**, un detector de **rostros**. Pesa 465 KB y
+**está en el repo**, así que no hay que descargar nada: funciona al clonar y
+también en el sitio publicado.
 
-```bash
-python3 backend/scripts/fetch_vision_models.py     # <1 MB, tarda segundos
-python3 backend/scripts/fetch_vision_models.py --check   # confirma que quedó completo
-```
+La detección corre **100% en el navegador**: ninguna imagen de la cámara sale
+del computador, ni siquiera hacia el backend. Lo único que viaja son las
+coordenadas de las zonas. Tampoco necesita internet, así que en la feria
+funciona igual con `./run.sh`.
 
-Quedan en `backend/static/vendor/models/` (ignorado por git). A partir de ahí la
-detección corre **100% en el navegador y sin internet**: ninguna imagen de la
-cámara sale del computador.
+La cámara solo funciona en **origen seguro**: `localhost` o HTTPS. Netlify da
+HTTPS, así que sirve en los dos casos.
 
 Qué mide y cómo: la posición horizontal del rostro decide izquierda/derecha del
 salón (A·C vs B·D), y el **tamaño** del rostro decide frente/fondo, porque una
@@ -93,14 +93,33 @@ junto al tablero**, así que acercarse a ella es acercarse al frente:
 Si algún día la cámara se pone al fondo del salón, hay que invertir el `1 -` de
 `depthFromFace()` en `backend/static/index.html`.
 
-Con `--all` se bajan además los detectores de cuerpo COCO-SSD (~83 MB), que
-quedan como plan B pero ya no los usa la demo.
-
 Para verificar la carga offline, con el server arriba:
 `http://localhost:8000/app/_test_vision.html` → debe imprimir `RESULT: OFFLINE_LOAD_OK`.
 
-La cámara solo funciona en **origen seguro**: `localhost` o HTTPS. En la feria se
-corre local (`./run.sh`), así que no hay problema.
+Los detectores de cuerpo COCO-SSD (~83 MB) son plan B y **no** están en el repo
+por su tamaño. Si algún día hacen falta:
+`python3 backend/scripts/fetch_vision_models.py --all` (necesita internet).
+
+---
+
+## Crear el sitio en Netlify (solo la primera vez)
+
+1. Entra a [app.netlify.com](https://app.netlify.com) → **Add new site** →
+   **Import an existing project** → **GitHub** → elige este repositorio.
+2. Netlify lee `netlify.toml` y rellena solo el build:
+   - Branch: **`main`**
+   - Build command: `bash scripts/build-deploy.sh`
+   - Publish directory: `deploy`
+3. **Deploy site.** En 1–2 minutos queda publicado en una URL
+   `https://algo-random.netlify.app`, que puedes renombrar en
+   **Site configuration → Change site name**.
+
+> ⚠️ La rama de producción tiene que ser **`main`**. La rama de pruebas
+> `prueba-coco-ssd` **no se puede publicar**: usa un modelo de 65 MB que no está
+> en git, así que allá la cámara daría 404.
+
+El backend ya está en Render y acepta peticiones desde cualquier origen, así que
+no hay que tocar nada más: la app publicada se conecta sola.
 
 ---
 

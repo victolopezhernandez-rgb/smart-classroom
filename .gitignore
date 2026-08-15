@@ -18,9 +18,12 @@ data/energy_logs.csv
 # gemelo digital, no para publicarse
 fotos_enseñanza/
 
-# Pesos de los modelos de IA (BlazeFace, y COCO-SSD con --all) — no van al repo.
-# Se bajan con: python3 backend/scripts/fetch_vision_models.py
-backend/static/vendor/models/
+# Pesos de los modelos de IA. Los de COCO-SSD (65 MB) no van al repo: se bajan
+# con  python3 backend/scripts/fetch_vision_models.py --all
+# BlazeFace sí va, porque pesa 465 KB y Netlify solo publica lo que está en
+# git: sin él, la cámara del sitio publicado daría 404.
+backend/static/vendor/models/*
+!backend/static/vendor/models/blazeface/
 
 # macOS
 .DS_Store

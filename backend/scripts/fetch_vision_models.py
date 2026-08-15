@@ -3,19 +3,19 @@
 Descarga los modelos que el Boost 1 (cámara real) necesita para funcionar
 SIN INTERNET durante la feria.
 
-Por defecto baja BlazeFace, el detector de ROSTROS que usa la demo: pesa
-menos de 1 MB. Con --all baja además los detectores de cuerpo COCO-SSD
-(~83 MB), que quedan como plan B.
+BlazeFace, el detector de ROSTROS que usa la demo, pesa 465 KB y YA VIENE en
+el repositorio: normalmente no hace falta correr este script. Sirve para
+verificar (--check) o para volver a bajarlo si se borró.
 
-Los pesos no viven en el repositorio: se bajan una vez y quedan en
-backend/static/vendor/models/ (ignorado por git).
+Con --all baja además los detectores de cuerpo COCO-SSD (~83 MB), que quedan
+como plan B y sí están fuera del repo por su tamaño.
 
 Uso:
-    python3 backend/scripts/fetch_vision_models.py            # rostros (lo que usa la feria)
-    python3 backend/scripts/fetch_vision_models.py --all      # + los de cuerpo (plan B)
     python3 backend/scripts/fetch_vision_models.py --check    # verifica sin descargar
+    python3 backend/scripts/fetch_vision_models.py            # vuelve a bajar rostros
+    python3 backend/scripts/fetch_vision_models.py --all      # + los de cuerpo (plan B)
 
-⚠️  Ejecutar CON internet, antes del día de la feria.
+⚠️  Con --all: ejecutar CON internet, antes del día de la feria.
 """
 
 from __future__ import annotations
