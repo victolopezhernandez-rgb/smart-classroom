@@ -377,6 +377,21 @@
 
     /* ── 3D scene loading overlay ───────────────────────────────────────── */
     .canvas-wrap { position: relative; }
+
+    /* Viñeta: oscurece las esquinas para que la mirada caiga en el centro
+       del salón. Es el remate que se le hace a cualquier plano de juego,
+       y aquí sale gratis — una capa CSS, ni un píxel extra de GPU.
+       pointer-events:none para no robarle el arrastre al lienzo. */
+    .canvas-wrap::after {
+      content: ""; position: absolute; inset: 0; pointer-events: none;
+      border-radius: 0.5rem; z-index: 1;
+      background:
+        radial-gradient(120% 90% at 50% 45%,
+          rgba(0,0,0,0) 52%, rgba(0,0,0,0.16) 78%, rgba(0,0,0,0.42) 100%);
+      mix-blend-mode: multiply;
+    }
+    /* En emergencia manda el marco rojo; la viñeta estorbaría. */
+    .canvas-wrap.emergency::after { display: none; }
     .canvas-overlay {
       position: absolute; inset: 0;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -493,6 +508,49 @@
       scene.add(m); return m;
     }
 
+    // Deriva un mapa de normales del propio dibujo de la textura, con un
+    // filtro Sobel: donde el color cambia de golpe (la junta entre dos
+    // tablas, el grano, el moteado del corcho) la superficie se inclina.
+    // Sin esto la madera es una calcomanía sobre un plano perfectamente
+    // liso y la luz resbala sin engancharse en nada. Con esto cada tabla
+    // tiene relieve propio y el piso responde al moverse la cámara.
+    function normalMapFromCanvas(src, strength) {
+      const w = src.width, h = src.height;
+      const px = src.getContext('2d').getImageData(0, 0, w, h).data;
+      const lum = new Float32Array(w * h);
+      for (let i = 0; i < w * h; i++)
+        lum[i] = (px[i*4]*0.299 + px[i*4+1]*0.587 + px[i*4+2]*0.114) / 255;
+
+      // Envuelve en los bordes: la textura se repite, así que el relieve
+      // también tiene que ser continuo o se ve la costura.
+      const at = (x, y) => lum[((y + h) % h) * w + ((x + w) % w)];
+
+      const out = document.createElement('canvas');
+      out.width = w; out.height = h;
+      const octx = out.getContext('2d');
+      const img = octx.createImageData(w, h);
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const dx = (at(x+1,y-1) + 2*at(x+1,y) + at(x+1,y+1))
+                   - (at(x-1,y-1) + 2*at(x-1,y) + at(x-1,y+1));
+          const dy = (at(x-1,y+1) + 2*at(x,y+1) + at(x+1,y+1))
+                   - (at(x-1,y-1) + 2*at(x,y-1) + at(x+1,y-1));
+          const nx = -dx * strength, ny = -dy * strength, nz = 1;
+          const len = Math.hypot(nx, ny, nz) || 1;
+          const i = (y * w + x) * 4;
+          img.data[i]     = ((nx/len) * 0.5 + 0.5) * 255;
+          img.data[i + 1] = ((ny/len) * 0.5 + 0.5) * 255;
+          img.data[i + 2] = ((nz/len) * 0.5 + 0.5) * 255;
+          img.data[i + 3] = 255;
+        }
+      }
+      octx.putImageData(img, 0, 0);
+      // Un mapa de normales guarda vectores, no color: jamás va en sRGB.
+      const t = new THREE.CanvasTexture(out);
+      t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      return t;
+    }
+
     // ── 3D Classroom ─────────────────────────────────────────────────────────
     function Classroom3D({ classroomState, weather, onLoadingChange }) {
       const mountRef        = useRef(null);
@@ -503,6 +561,9 @@
       const windowGlassRef  = useRef([]);
       const sunBeamsRef     = useRef([]);
       const rainRef         = useRef({ group: null, drops: [] });
+      // Molde de la sombra de contacto, compartido por muebles y personas.
+      const contactRef      = useRef(null);
+      const dustRef         = useRef(null);
       // Zonas que están parpadeando ahora mismo y a qué ritmo. El bucle de
       // render lo lee en cada cuadro; así el parpadeo va con el reloj real
       // y no depende de que lleguen mensajes del servidor.
@@ -574,7 +635,28 @@
         dirLight.shadow.camera.bottom = -1;
         dirLight.shadow.camera.updateProjectionMatrix();
         dirLight.shadow.bias = -0.0008;
+        // Empuja la sombra un pelo hacia dentro del objeto: mata el moaré
+        // de superficies casi paralelas al sol sin despegar la sombra del
+        // pie de los muebles.
+        dirLight.shadow.normalBias = 0.02;
         scene.add(dirLight);
+
+        // Iluminación de tres puntos, como en cine. La clave (arriba) ya
+        // está; faltan las otras dos, y son las que dan volumen:
+        //
+        //   RELLENO  frío, desde el lado opuesto, sin sombra. Levanta el
+        //            interior de las sombras para que no sean agujeros
+        //            negros, y el contraste cálido/frío separa los planos.
+        //   REBOTE   cálido, desde abajo, imitando la luz que devuelve el
+        //            piso de madera. Sin él las caras y el canto inferior
+        //            de los muebles se ven muertos.
+        const fillLight = new THREE.DirectionalLight(0x9dbcff, 0.34);
+        fillLight.position.set(11, 5, 9);
+        scene.add(fillLight);
+
+        const bounceLight = new THREE.DirectionalLight(0xffd9a0, 0.22);
+        bounceLight.position.set(5, -3, 4);
+        scene.add(bounceLight);
 
         // ── Piso de madera ────────────────────────────────────────────────
         // Roble claro, del color exacto de las fotos del colegio: no es
@@ -604,10 +686,60 @@
         const floorTex = new THREE.CanvasTexture(fc);
         floorTex.wrapS = floorTex.wrapT = THREE.RepeatWrapping;
         floorTex.repeat.set(2, 1.6);
+        // Un canvas trae color sRGB. Si no se declara, three lo interpreta
+        // como lineal y la madera sale apagada y sucia — el error de color
+        // más común al pasar un proyecto al pipeline físico.
+        floorTex.colorSpace = THREE.SRGBColorSpace;
+        // El piso se ve casi de canto desde la cámara. Sin filtrado
+        // anisotrópico las tablas del fondo se deshacen en papilla.
+        floorTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+
+        const floorNrm = normalMapFromCanvas(fc, 2.2);
+        floorNrm.repeat.copy(floorTex.repeat);
+        floorNrm.anisotropy = floorTex.anisotropy;
+
+        // Laminado escolar: no es madera cruda, está sellado. La capa de
+        // barniz (clearcoat) es lo que devuelve el reflejo alargado de las
+        // lámparas sobre el piso — el detalle que más "engaña" al ojo.
         const floor = new THREE.Mesh(new THREE.PlaneGeometry(10, 8),
-          stdMat({ map: floorTex, roughness: 0.52, metalness: 0.0 }));
+          new THREE.MeshPhysicalMaterial({
+            map: floorTex,
+            normalMap: floorNrm,
+            normalScale: new THREE.Vector2(0.55, 0.55),
+            roughness: 0.46, metalness: 0.0,
+            clearcoat: 0.42, clearcoatRoughness: 0.55,
+          }));
         floor.rotation.x = -Math.PI/2; floor.position.set(5, 0, 4);
         floor.receiveShadow = true; scene.add(floor);
+
+        // ── Sombra de contacto ────────────────────────────────────────────
+        // El mapa de sombras cubre 10×8 metros: no le alcanza la resolución
+        // para oscurecer el milímetro donde una pata toca el piso, y sin esa
+        // mancha los muebles parecen flotar un dedo por encima. Los juegos
+        // lo resuelven igual desde hace veinte años: una calcomanía difusa
+        // debajo de cada objeto. Es falso y es lo que hace que se vea real.
+        const aoCv = document.createElement('canvas'); aoCv.width = aoCv.height = 128;
+        const actx = aoCv.getContext('2d');
+        const ag = actx.createRadialGradient(64, 64, 2, 64, 64, 64);
+        ag.addColorStop(0,    'rgba(0,0,0,0.55)');
+        ag.addColorStop(0.42, 'rgba(0,0,0,0.24)');
+        ag.addColorStop(1,    'rgba(0,0,0,0)');
+        actx.fillStyle = ag; actx.fillRect(0, 0, 128, 128);
+        const aoTex = new THREE.CanvasTexture(aoCv);
+        const aoGeo = new THREE.PlaneGeometry(1, 1);
+        contactRef.current = { tex: aoTex, geo: aoGeo };
+
+        const contactShadow = (x, z, size, opacity, parent) => {
+          const m = new THREE.Mesh(aoGeo, new THREE.MeshBasicMaterial({
+            map: aoTex, transparent: true, opacity,
+            depthWrite: false, color: 0x000000,
+          }));
+          m.rotation.x = -Math.PI/2;
+          m.position.set(x, 0.008, z);       // bajo las capas de zona
+          m.scale.set(size, size, 1);
+          (parent ?? scene).add(m);
+          return m;
+        };
 
         // ── Zone overlays ─────────────────────────────────────────────────
         const zColors  = { zone_A:0x4a90d9, zone_B:0x5cb85c, zone_C:0xe8a838, zone_D:0x9b59b6 };
@@ -645,7 +777,16 @@
           wctx.strokeRect(24, by, 464, bh);
         });
         const wallTex = new THREE.CanvasTexture(wc);
-        const wallMat  = stdMat({ map: wallTex, roughness: 0.95 });
+        wallTex.colorSpace = THREE.SRGBColorSpace;
+        // Relieve suave: el corcho pica la superficie y el yeso queda con
+        // su grano. Muy sutil a propósito — un muro con demasiado relieve
+        // parece piedra, y estos son paneles lisos.
+        const wallNrm = normalMapFromCanvas(wc, 1.1);
+        const wallMat  = stdMat({
+          map: wallTex, normalMap: wallNrm,
+          normalScale: new THREE.Vector2(0.35, 0.35),
+          roughness: 0.95,
+        });
         const baseMat  = stdMat({ color: 0xe4ded0 });
         [
           { pos:[5,1.7,0.01],    ry:0,           w:10, h:3.4 },
@@ -800,6 +941,7 @@
         const monScreen = new THREE.Mesh(RBox(0.36,0.24,0.022),
           stdMat({color:0x1a2540,emissive:0x16203a,roughness:0.18,metalness:0.2}));
         monScreen.position.set(8.0,1.03,0.90); scene.add(monScreen);
+        contactShadow(8.1, 1.0, 2.5, 0.52);
 
         // ── Columnas redondas ─────────────────────────────────────────────
         // Cilíndricas y de un café rojizo cálido. En las fotos interrumpen
@@ -809,6 +951,7 @@
           const col = new THREE.Mesh(new THREE.CylinderGeometry(0.26,0.26,3.3,20), colMat);
           col.position.set(cx, 1.65, cz);
           col.castShadow = true; scene.add(col);
+          contactShadow(cx, cz, 1.0, 0.55);
         });
 
         // ── Mueble bajo salmón (muro del fondo) ───────────────────────────
@@ -824,6 +967,7 @@
             stdMat({ color: 0xefb598 }));
           dr.position.set(3.2+dx,0.44,7.42); scene.add(dr);
         });
+        contactShadow(3.2, 7.6, 3.3, 0.5);
 
         // ── Estante de canastas de colores ────────────────────────────────
         const shelfMat = stdMat({ color: 0xc98f4e });
@@ -836,6 +980,7 @@
           bin.position.set(5.78 + (i%3)*0.30, i<3 ? 0.50 : 0.20, 7.72);
           scene.add(bin);
         });
+        contactShadow(6.4, 7.7, 2.1, 0.5);
 
         // ── Student desks + chairs (30 positions) ─────────────────────────
         const dTopMat  = stdMat({ color: 0xb8915a });
@@ -857,6 +1002,8 @@
             const cl = new THREE.Mesh(new THREE.CylinderGeometry(0.016,0.016,0.44,5),cLegMat);
             cl.position.set(dx+lx,0.22,dz+0.54+lz); scene.add(cl);
           });
+          contactShadow(dx, dz,        1.15, 0.50);   // pupitre
+          contactShadow(dx, dz + 0.54, 0.78, 0.42);   // silla
         }));
 
         // ── Ceiling light fixtures ────────────────────────────────────────
@@ -956,6 +1103,42 @@
           rainGroup.add(d); drops.push(d);
         }
         rainRef.current = { group:rainGroup, drops };
+
+        // ── Polvo suspendido ──────────────────────────────────────────────
+        // Motas girando lentamente en el aire. Cuestan casi nada y hacen
+        // dos cosas: dan escala (se ve que hay aire entre la cámara y el
+        // fondo, no vacío) y delatan que la escena está viva aunque nadie
+        // toque nada. Se concentran hacia las ventanas, que es donde la luz
+        // rasante las revelaría de verdad.
+        const DUST = 140;
+        const dustPos = new Float32Array(DUST * 3);
+        const dustPhase = new Float32Array(DUST);
+        for (let i = 0; i < DUST; i++) {
+          dustPos[i*3    ] = Math.pow(Math.random(), 1.7) * 9.5 + 0.3;  // sesgo a la ventana
+          dustPos[i*3 + 1] = 0.35 + Math.random() * 2.7;
+          dustPos[i*3 + 2] = Math.random() * 7.4 + 0.3;
+          dustPhase[i] = Math.random() * Math.PI * 2;
+        }
+        const dustGeo = new THREE.BufferGeometry();
+        dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+
+        const dustCv = document.createElement('canvas'); dustCv.width = dustCv.height = 32;
+        const dctx = dustCv.getContext('2d');
+        const dgr = dctx.createRadialGradient(16,16,0,16,16,16);
+        dgr.addColorStop(0,   'rgba(255,250,235,1)');
+        dgr.addColorStop(0.4, 'rgba(255,245,220,0.35)');
+        dgr.addColorStop(1,   'rgba(255,240,200,0)');
+        dctx.fillStyle = dgr; dctx.fillRect(0,0,32,32);
+
+        const dust = new THREE.Points(dustGeo, new THREE.PointsMaterial({
+          map: new THREE.CanvasTexture(dustCv),
+          size: 0.045, sizeAttenuation: true,
+          transparent: true, opacity: 0.5,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+        }));
+        scene.add(dust);
+        dustRef.current = { points: dust, phase: dustPhase, base: dustPos.slice() };
 
         // ── Orbit controls — ratón, dedo y lápiz ──────────────────────────
         // Se usan Pointer Events porque unifican los tres tipos de entrada.
@@ -1091,6 +1274,21 @@
             });
           }
 
+          // Deriva del polvo: una sinusoide lenta por mota, cada una con su
+          // fase. Nunca se repite a la vista y no cuesta ni un milisegundo.
+          const d = dustRef.current;
+          if (d) {
+            const t = Date.now() * 0.00016;
+            const arr = d.points.geometry.attributes.position.array;
+            for (let i = 0; i < d.phase.length; i++) {
+              const ph = d.phase[i];
+              arr[i*3    ] = d.base[i*3    ] + Math.sin(t + ph) * 0.16;
+              arr[i*3 + 1] = d.base[i*3 + 1] + Math.sin(t * 0.7 + ph * 1.3) * 0.10;
+              arr[i*3 + 2] = d.base[i*3 + 2] + Math.cos(t * 0.8 + ph) * 0.16;
+            }
+            d.points.geometry.attributes.position.needsUpdate = true;
+          }
+
           if (rainRef.current.group?.visible) {
             rainRef.current.drops.forEach(d => {
               d.position.y -= d.userData.speed;
@@ -1192,6 +1390,20 @@
           const x = p.x ?? 5, z = p.y ?? 4;
           const add = m => { m.castShadow=true; sceneRef.current.add(m); peopleRef.current.push(m); };
 
+          // Sombra de contacto, igual que la del mobiliario: sin ella una
+          // figura de pie parece calcada sobre el piso.
+          const ao = contactRef.current;
+          if (ao) {
+            const sh = new THREE.Mesh(ao.geo, new THREE.MeshBasicMaterial({
+              map: ao.tex, transparent: true, opacity: 0.46,
+              depthWrite: false, color: 0x000000,
+            }));
+            sh.rotation.x = -Math.PI/2;
+            sh.position.set(x, 0.009, z);
+            sh.scale.set(0.85, 0.85, 1);
+            sceneRef.current.add(sh); peopleRef.current.push(sh);
+          }
+
           // Cápsulas en vez de cilindros: la extremidad termina en domo, sin
           // el canto duro que delataba al muñeco de bloques. Y los segmentos
           // suben lo suficiente para que la silueta se lea curva de lejos.
@@ -1199,11 +1411,25 @@
           const skinMat  = stdMat({ color: skin,  roughness: 0.62 });
           const shirtMat = stdMat({ color: shirt, roughness: 0.82 });
 
-          // Piernas
+          // Piernas — llegan hasta el piso.
+          // Antes medían 0.34 y colgaban desde la cadera: la figura entera
+          // flotaba 38 cm sobre la madera. Con la cabeza a la altura
+          // correcta el error pasaba desapercibido de lejos, pero al
+          // acercar la cámara se veía el hueco. Ahora la cápsula va de
+          // y=0 a la cadera (0.82) y la persona se apoya de verdad.
           const legsM = stdMat({ color: pants, roughness: 0.86 });
+          const LEG_R = 0.055, HIP_Y = 0.82;
+          const legLen = HIP_Y - LEG_R*2;
           [-0.058, 0.058].forEach(lx => {
-            const leg = new THREE.Mesh(cap(0.052, 0.34, 12), legsM);
-            leg.position.set(x+lx, 0.60, z); add(leg);
+            const leg = new THREE.Mesh(cap(LEG_R, legLen, 12), legsM);
+            leg.position.set(x+lx, HIP_Y/2, z); add(leg);
+          });
+          // Zapatos: rematan la pierna contra el piso. Sin ellos la cápsula
+          // termina en domo y parece que la persona está de puntillas.
+          const shoeM = stdMat({ color: 0x2b2b33, roughness: 0.6 });
+          [-0.058, 0.058].forEach(lx => {
+            const shoe = new THREE.Mesh(RBox(0.095, 0.055, 0.19), shoeM);
+            shoe.position.set(x+lx, 0.028, z + 0.022); add(shoe);
           });
           // Torso — ligeramente más ancho de hombros que de cintura
           const body = new THREE.Mesh(cap(0.118, 0.30, 16), shirtMat);
