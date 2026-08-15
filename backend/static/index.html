@@ -2585,7 +2585,11 @@
           const label = ZONE_LABELS[zone] + "  " + Math.round(f.score * 100) + "%";
           ctx.font = "bold " + (12 * S).toFixed(0) + "px system-ui";
           const tw = ctx.measureText(label).width;
-          const ly = f.y > 20 * S ? f.y - 7 * S : f.y + f.h + 15 * S;
+          // Arriba del recuadro si cabe; si no, debajo. Y siempre dentro del
+          // cuadro: una cara pegada al borde inferior empujaba la etiqueta
+          // fuera del canvas y no se veía.
+          let ly = f.y > 20 * S ? f.y - 7 * S : f.y + f.h + 15 * S;
+          ly = Math.max(14 * S, Math.min(ly, vh - 5 * S));
           ctx.fillStyle = col;
           ctx.fillRect(dx - 2 * S, ly - 12 * S, tw + 10 * S, 16 * S);
           ctx.fillStyle = "#0b1220";
