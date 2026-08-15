@@ -101,7 +101,7 @@ class EnergyTracker:
         ]
 
     def _calculate_watts(self, lighting_state: dict) -> float:
-        watts_map = {"ON": 80.0, "DIM": 40.0, "OFF": 0.0}
+        watts_map = {"ON": 80.0, "DIM": 40.0, "BLINK": 40.0, "OFF": 0.0}
         return sum(
             watts_map.get(data.get("state", "OFF"), 0)
             for data in lighting_state.values()

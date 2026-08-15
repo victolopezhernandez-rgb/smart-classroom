@@ -72,7 +72,7 @@ def run_decision_engine(occupancy: dict, natural_light: dict) -> dict:
 
 def calculate_energy_watts(lighting_state: dict) -> float:
     """Total power consumption in watts for the given lighting state."""
-    watts_map = {"ON": 80.0, "DIM": 40.0, "OFF": 0.0}
+    watts_map = {"ON": 80.0, "DIM": 40.0, "BLINK": 40.0, "OFF": 0.0}
     return sum(
         watts_map.get(data.get("state", "OFF"), 0.0)
         for data in lighting_state.values()

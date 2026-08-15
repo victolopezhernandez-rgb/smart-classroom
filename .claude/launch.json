@@ -5,6 +5,7 @@
       "name": "smart-classroom",
       "runtimeExecutable": "python3",
       "runtimeArgs": ["-m", "uvicorn", "main:app", "--host", "127.0.0.1", "--port", "8000", "--loop", "asyncio"],
+      "cwd": "backend",
       "port": 8000
     },
     {

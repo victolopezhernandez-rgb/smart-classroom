@@ -5,7 +5,10 @@ from typing import Literal
 
 CLASSROOM_ZONES = ["zone_A", "zone_B", "zone_C", "zone_D"]
 
-LightState = Literal["ON", "DIM", "OFF"]
+# BLINK solo lo produce el protocolo de emergencia: la lámpara alterna
+# encendido y apagado para llamar la atención. El parpadeo en sí lo dibuja
+# el navegador; el backend únicamente declara que la zona está en ese estado.
+LightState = Literal["ON", "DIM", "OFF", "BLINK"]
 
 
 @dataclass
@@ -26,10 +29,13 @@ class ClassroomState:
         default_factory=lambda: {z: ZoneState() for z in CLASSROOM_ZONES}
     )
     total_watts: float = 0.0
-    mode: Literal["AUTO", "MANUAL"] = "AUTO"
+    mode: Literal["AUTO", "MANUAL", "EMERGENCY"] = "AUTO"
     last_updated: str = field(default_factory=lambda: datetime.now().isoformat())
     scenario: str = "full_class"
     weather: str = "clear"
+    # None cuando no pasa nada. Durante una emergencia guarda el detalle que
+    # el navegador necesita para dibujarla: tipo, ritmo del parpadeo y ruta.
+    emergency: dict | None = None
 
     def update_lighting(self, zone: str, state: LightState, reason: str):
         if zone in self.zones:
@@ -66,10 +72,12 @@ class ClassroomState:
             "last_updated": self.last_updated,
             "scenario": self.scenario,
             "weather": self.weather,
+            "emergency": self.emergency,
         }
 
     def _recalculate_watts(self):
-        watts_map = {"ON": 80.0, "DIM": 40.0, "OFF": 0.0}
+        # BLINK enciende la mitad del tiempo → la mitad del consumo.
+        watts_map = {"ON": 80.0, "DIM": 40.0, "BLINK": 40.0, "OFF": 0.0}
         self.total_watts = sum(
             watts_map.get(s.light, 0) for s in self.zones.values()
         )

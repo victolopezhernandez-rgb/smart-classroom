@@ -19,6 +19,7 @@ from routes.vision_routes import router as vision_router
 from routes.light_sensor_routes import router as light_router
 from routes.voice_routes import router as voice_router
 from routes.orchestrator_routes import router as orchestrator_router
+from routes.emergency_routes import router as emergency_router
 
 logger = get_logger("Main")
 
@@ -31,6 +32,7 @@ app.include_router(vision_router)
 app.include_router(light_router)
 app.include_router(voice_router)
 app.include_router(orchestrator_router)
+app.include_router(emergency_router)
 
 app.add_middleware(
     CORSMiddleware,

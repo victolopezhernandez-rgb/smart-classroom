@@ -12,6 +12,7 @@ from agents.vision import vision_agent
 from agents.light_sensor import light_sensor
 from agents.voice import voice_agent
 from agents.digital_twin import digital_twin
+from agents.emergency import emergency_agent
 
 from skills.decision_engine import run_decision_engine, calculate_energy_watts
 
@@ -111,6 +112,17 @@ class OrchestratorAgent:
           - {zone: {state, reason}, ...} → lighting state dict (manual override)
         """
         voice_raw = None
+
+        # Prioridad 0: emergencia declarada. Va por encima de la voz a
+        # propósito — la voz manda sobre la comodidad, no sobre la
+        # seguridad. Para recuperar el control hay que declarar
+        # explícitamente que la emergencia terminó.
+        if emergency_agent.active:
+            classroom_state.mode = "EMERGENCY"
+            return emergency_agent.get_lighting_state(occ_zones), "EMERGENCY", None
+
+        # Fuera de emergencia el estado queda limpio para el navegador.
+        classroom_state.emergency = None
 
         # Handle __clear_override__ signal
         if isinstance(voice_cmd, dict) and voice_cmd.get("__clear_override__"):

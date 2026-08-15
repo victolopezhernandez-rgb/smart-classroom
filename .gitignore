@@ -11,5 +11,9 @@ deploy/
 backend/logs/
 data/energy_logs.csv
 
+# Fotos de referencia del salón real (331 MB) — sirven para modelar el
+# gemelo digital, no para publicarse
+fotos_enseñanza/
+
 # macOS
 .DS_Store

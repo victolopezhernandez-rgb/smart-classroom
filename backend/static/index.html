@@ -112,6 +112,60 @@
     .zone-card.ON  { border-color: #eab30860; background: #1c1a0960; box-shadow: 0 0 12px #eab30818; }
     .zone-card.DIM { border-color: #f9731660; background: #1c110960; box-shadow: 0 0 12px #f9731618; }
     .zone-card.OFF { border-color: #33415560; background: #10131a; }
+    .zone-card.BLINK {
+      border-color: #ef4444; background: #2a0d0d;
+      animation: zoneBlink 0.7s steps(1) infinite;
+    }
+    @keyframes zoneBlink {
+      0%, 49%   { box-shadow: 0 0 14px #ef444460; background: #3a1010; }
+      50%, 100% { box-shadow: 0 0 0 #ef444400; background: #1a0808; }
+    }
+
+    /* ── Emergencia ─────────────────────────────────────────────────────── */
+    .emg-banner {
+      display: flex; align-items: center; gap: 0.6rem;
+      padding: 0.6rem 0.9rem; border-radius: 0.6rem;
+      background: #7f1d1d; border: 1px solid #ef4444;
+      margin: 0 1.5rem; animation: emgPulse 0.9s ease-in-out infinite;
+    }
+    @keyframes emgPulse {
+      0%, 100% { box-shadow: 0 0 0 0 #ef444455; }
+      50%      { box-shadow: 0 0 0 7px #ef444400; }
+    }
+    .emg-banner .emg-icon  { font-size: 1.3rem; }
+    .emg-banner .emg-title { font-weight: 800; font-size: 0.85rem; color: #fecaca; letter-spacing: 0.01em; }
+    .emg-banner .emg-sub   { font-size: 0.68rem; color: #fca5a5; margin-top: 0.1rem; }
+
+    .emg-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.35rem; }
+    .emg-btn {
+      padding: 0.55rem 0.3rem; border-radius: 0.5rem; cursor: pointer;
+      border: 1px solid #ef444440; background: #2a0d0d80; color: #fca5a5;
+      font-size: 0.68rem; font-weight: 600; text-align: center;
+      transition: all 0.15s; line-height: 1.35;
+    }
+    .emg-btn:hover  { border-color: #ef4444; background: #45111180; color: #fecaca; }
+    .emg-btn.active { border-color: #ef4444; background: #7f1d1d; color: #fff; box-shadow: 0 0 12px #ef444440; }
+    .emg-btn .emg-btn-icon { font-size: 1.1rem; display: block; margin-bottom: 0.1rem; }
+    .emg-clear {
+      width: 100%; margin-top: 0.4rem; padding: 0.5rem;
+      border-radius: 0.5rem; cursor: pointer; font-size: 0.7rem; font-weight: 700;
+      border: 1px solid #4ade8050; background: #14532d40; color: #4ade80;
+      transition: all 0.15s;
+    }
+    .emg-clear:hover     { background: #14532d80; border-color: #4ade80; }
+    .emg-clear:disabled  { opacity: 0.4; cursor: not-allowed; }
+    .emg-route {
+      font-size: 0.65rem; color: #94a3b8; margin-top: 0.5rem;
+      padding-top: 0.5rem; border-top: 1px solid #1e2232; line-height: 1.5;
+    }
+    .emg-route b { color: #4ade80; }
+
+    /* El lienzo se enmarca en rojo mientras dura la emergencia */
+    .canvas-wrap.emergency { animation: canvasAlarm 0.7s steps(1) infinite; border-radius: 0.5rem; }
+    @keyframes canvasAlarm {
+      0%, 49%   { box-shadow: 0 0 0 3px #ef4444, 0 0 22px #ef444455; }
+      50%, 100% { box-shadow: 0 0 0 3px #ef444430, 0 0 0 #ef444400; }
+    }
     .zone-name  { font-weight: 600; font-size: 0.78rem; color: #cbd5e1; }
     .zone-state { font-size: 1.2rem; margin: 0.2rem 0 0.1rem; }
     .zone-meta  { font-size: 0.63rem; color: #475569; line-height: 1.4; }
@@ -397,6 +451,10 @@
       const windowGlassRef  = useRef([]);
       const sunBeamsRef     = useRef([]);
       const rainRef         = useRef({ group: null, drops: [] });
+      // Zonas que están parpadeando ahora mismo y a qué ritmo. El bucle de
+      // render lo lee en cada cuadro; así el parpadeo va con el reloj real
+      // y no depende de que lleguen mensajes del servidor.
+      const blinkRef        = useRef({ zones: [], ms: 600 });
 
       // ── Scene setup (runs once) ───────────────────────────────────────────
       useEffect(() => {
@@ -436,17 +494,19 @@
         dirLight.shadow.bias = -0.0008;
         scene.add(dirLight);
 
-        // ── Wood-plank floor ──────────────────────────────────────────────
+        // ── Piso de madera ────────────────────────────────────────────────
+        // Roble claro, del color exacto de las fotos del colegio: no es
+        // madera oscura de escritorio, es un laminado pálido casi miel.
         const fc = document.createElement('canvas'); fc.width = 512; fc.height = 512;
         const fctx = fc.getContext('2d');
         const plankH = 512 / 10;
         for (let i = 0; i < 10; i++) {
           const y = i * plankH;
-          const v = 0.88 + Math.random() * 0.18;
-          fctx.fillStyle = `rgb(${Math.round(185*v)},${Math.round(148*v)},${Math.round(96*v)})`;
+          const v = 0.93 + Math.random() * 0.12;
+          fctx.fillStyle = `rgb(${Math.round(211*v)},${Math.round(181*v)},${Math.round(137*v)})`;
           fctx.fillRect(0, y + 1, 512, plankH - 2);
           // Wood grain lines
-          fctx.strokeStyle = 'rgba(80,50,20,0.10)';
+          fctx.strokeStyle = 'rgba(120,85,40,0.09)';
           fctx.lineWidth = 1;
           for (let g = 0; g < 5; g++) {
             fctx.beginPath();
@@ -477,30 +537,34 @@
           scene.add(m); zoneOverlaysRef.current[z] = m;
         });
 
-        // ── Ceiling with acoustic-tile texture ────────────────────────────
-        const cc = document.createElement('canvas'); cc.width = 256; cc.height = 256;
-        const cctx = cc.getContext('2d');
-        cctx.fillStyle = '#f0ece4'; cctx.fillRect(0,0,256,256);
-        cctx.strokeStyle = 'rgba(0,0,0,0.13)'; cctx.lineWidth = 1.2;
-        for (let i=0; i<=4; i++) {
-          cctx.beginPath(); cctx.moveTo(i*64,0); cctx.lineTo(i*64,256); cctx.stroke();
-          cctx.beginPath(); cctx.moveTo(0,i*64); cctx.lineTo(256,i*64); cctx.stroke();
-        }
-        // Subtle stippling inside tiles
-        cctx.fillStyle = 'rgba(0,0,0,0.04)';
-        for (let r=0; r<4; r++) for (let c=0; c<4; c++)
-          for (let d=0; d<30; d++)
-            cctx.fillRect(c*64+4+Math.random()*56, r*64+4+Math.random()*56, 1.2, 1.2);
-        const ceilTex = new THREE.CanvasTexture(cc);
-        ceilTex.wrapS = ceilTex.wrapT = THREE.RepeatWrapping;
-        ceilTex.repeat.set(5, 4);
+        // ── Techo ─────────────────────────────────────────────────────────
+        // En el colegio real no hay cielo raso de plafones: la losa queda
+        // expuesta, oscura, y de ella cuelgan discos acústicos verdes. Ese
+        // contraste — techo oscuro, discos claros — es lo que hace que el
+        // salón se reconozca al instante.
         const ceil = new THREE.Mesh(new THREE.PlaneGeometry(10, 8),
-          new THREE.MeshLambertMaterial({ map:ceilTex, side: THREE.BackSide }));
-        ceil.rotation.x = Math.PI/2; ceil.position.set(5, 3.2, 4); scene.add(ceil);
+          new THREE.MeshLambertMaterial({ color: 0x24262b, side: THREE.FrontSide }));
+        ceil.rotation.x = Math.PI/2; ceil.position.set(5, 3.3, 4); scene.add(ceil);
 
-        // ── Walls ─────────────────────────────────────────────────────────
-        const wallMat  = new THREE.MeshLambertMaterial({ color: 0xece8df });
-        const baseMat  = new THREE.MeshLambertMaterial({ color: 0xd0c8b8 });
+        // ── Muros ─────────────────────────────────────────────────────────
+        // Blanco hueso con dos franjas horizontales de corcho: los paneles
+        // acústicos que recorren el salón a media altura en las fotos.
+        const wc = document.createElement('canvas'); wc.width = 512; wc.height = 256;
+        const wctx = wc.getContext('2d');
+        wctx.fillStyle = '#f2efe8'; wctx.fillRect(0,0,512,256);
+        // Las dos bandas de corcho, con su moteado
+        [[92,34],[152,34]].forEach(([by,bh]) => {
+          wctx.fillStyle = '#cfc08c';
+          wctx.fillRect(24, by, 464, bh);
+          wctx.fillStyle = 'rgba(120,100,50,0.16)';
+          for (let d=0; d<900; d++)
+            wctx.fillRect(24+Math.random()*464, by+Math.random()*bh, 1.6, 1.6);
+          wctx.strokeStyle = 'rgba(150,130,80,0.35)'; wctx.lineWidth = 1;
+          wctx.strokeRect(24, by, 464, bh);
+        });
+        const wallTex = new THREE.CanvasTexture(wc);
+        const wallMat  = new THREE.MeshLambertMaterial({ map: wallTex });
+        const baseMat  = new THREE.MeshLambertMaterial({ color: 0xe4ded0 });
         [
           { pos:[5,1.7,0.01],    ry:0,           w:10, h:3.4 },
           { pos:[5,1.7,7.99],    ry:Math.PI,     w:10, h:3.4 },
@@ -522,9 +586,10 @@
         });
 
         // ── Chalkboard (front wall) ───────────────────────────────────────
-        const frameMat = new THREE.MeshLambertMaterial({ color: 0x3d2508 });
+        // Marco naranja claro y tablero verde, como el del laboratorio
+        const frameMat = new THREE.MeshLambertMaterial({ color: 0xe08c3a });
         const boardMesh = new THREE.Mesh(new THREE.BoxGeometry(5.4, 1.55, 0.055),
-          new THREE.MeshLambertMaterial({ color: 0x1c5c3a }));
+          new THREE.MeshLambertMaterial({ color: 0x3f8a4e }));
         boardMesh.position.set(4.4, 2.12, 0.055); scene.add(boardMesh);
         // Frame strips
         [[4.4,2.92,0.07,5.6,0.10,0.07],[4.4,1.32,0.07,5.6,0.10,0.07],
@@ -543,42 +608,81 @@
           l.position.set(cx,cy,0.10); scene.add(l);
         });
 
-        // ── Door (back-right wall) ────────────────────────────────────────
-        const doorMat  = new THREE.MeshLambertMaterial({ color: 0x7a5025 });
-        const doorTrim = new THREE.MeshLambertMaterial({ color: 0x58381a });
-        const doorMesh = new THREE.Mesh(new THREE.BoxGeometry(0.96,2.32,0.07),doorMat);
-        doorMesh.rotation.y=Math.PI; doorMesh.position.set(9,1.16,7.965);
-        doorMesh.castShadow=true; scene.add(doorMesh);
-        [[0,0.40],[0,-0.38]].forEach(([px,pz]) => {
-          const p = new THREE.Mesh(new THREE.BoxGeometry(0.66,0.78,0.04),doorTrim);
-          p.position.set(9+px,1.16+pz*1.25,7.925); p.rotation.y=Math.PI; scene.add(p);
-        });
-        const knob = new THREE.Mesh(new THREE.SphereGeometry(0.055,10,10),
-          new THREE.MeshLambertMaterial({color:0xd4af37}));
-        knob.position.set(8.60,1.16,7.91); scene.add(knob);
+        // ── Puerta arqueada (muro del fondo, lado derecho = zona D) ───────
+        // Magenta con ojo de buey, tal cual la del salón de música. Es
+        // también la salida de evacuación: por eso el protocolo de
+        // emergencia deja la zona D siempre con luz fija.
+        const doorMat = new THREE.MeshLambertMaterial({ color: 0xb1478f });
+        const DW = 1.02, DH = 2.25, DR = DW/2;   // arco de medio punto arriba
 
-        // ── Windows (left wall, x=0) ──────────────────────────────────────
-        const winFrameMat = new THREE.MeshLambertMaterial({ color: 0x3d2508 });
-        const sillMat = new THREE.MeshLambertMaterial({ color: 0xcfc3a5 });
+        const doorShape = new THREE.Shape();
+        doorShape.moveTo(-DR, 0);
+        doorShape.lineTo(-DR, DH - DR);
+        doorShape.absarc(0, DH - DR, DR, Math.PI, 0, true);
+        doorShape.lineTo(DR, 0);
+        doorShape.closePath();
+
+        const doorMesh = new THREE.Mesh(
+          new THREE.ExtrudeGeometry(doorShape, { depth: 0.07, bevelEnabled: false }), doorMat);
+        doorMesh.rotation.y = Math.PI;
+        doorMesh.position.set(9, 0, 7.95);
+        doorMesh.castShadow = true; scene.add(doorMesh);
+
+        // Ojo de buey
+        const port = new THREE.Mesh(new THREE.CircleGeometry(0.14, 20),
+          new THREE.MeshBasicMaterial({ color: 0xf4f7f8 }));
+        port.rotation.y = Math.PI; port.position.set(9, 1.72, 7.87); scene.add(port);
+        const portRing = new THREE.Mesh(new THREE.TorusGeometry(0.145, 0.022, 8, 20),
+          new THREE.MeshLambertMaterial({ color: 0xf6f4ef }));
+        portRing.position.set(9, 1.72, 7.88); scene.add(portRing);
+
+        // Manija
+        const knob = new THREE.Mesh(new THREE.SphereGeometry(0.052,10,10),
+          new THREE.MeshLambertMaterial({color:0xd9d2c4}));
+        knob.position.set(8.62,1.05,7.86); scene.add(knob);
+
+        // ── Ventanas hexagonales (muro izquierdo, x=0) ────────────────────
+        // El hexágono es LA firma del colegio: aparece en la fachada, en los
+        // muros de colores y en las ventanas interiores. Una ventana
+        // rectangular cualquiera no diría nada; esta sí se reconoce.
+        const hexShape = (r) => {
+          const s = new THREE.Shape();
+          // Hexágono "de pie" (vértice arriba), como en las fotos.
+          for (let i = 0; i < 6; i++) {
+            const a = Math.PI/2 + i * Math.PI/3;
+            const px = Math.cos(a)*r, py = Math.sin(a)*r;
+            i === 0 ? s.moveTo(px,py) : s.lineTo(px,py);
+          }
+          s.closePath();
+          return s;
+        };
+
+        const winFrameMat = new THREE.MeshLambertMaterial({ color: 0xf6f4ef });
+        const sillMat     = new THREE.MeshLambertMaterial({ color: 0xe8e2d4 });
+
         [1.5, 4.0, 6.5].forEach(wz => {
-          // Outer frame
-          const outerFr = new THREE.Mesh(new THREE.BoxGeometry(0.10,1.55,1.35),winFrameMat);
-          outerFr.position.set(0.04,2.05,wz); scene.add(outerFr);
-          // Glass
-          const glass = new THREE.Mesh(new THREE.PlaneGeometry(1.15,1.35),
-            new THREE.MeshBasicMaterial({color:0x87ceeb,transparent:true,opacity:0.52,side:THREE.DoubleSide}));
-          glass.rotation.y=Math.PI/2; glass.position.set(0.09,2.05,wz);
+          // Marco: hexágono grande con el hueco del vidrio recortado
+          const R = 0.78;
+          const frameShape = hexShape(R);
+          frameShape.holes.push(hexShape(R - 0.11));
+          const frame = new THREE.Mesh(
+            new THREE.ExtrudeGeometry(frameShape, { depth: 0.12, bevelEnabled: false }),
+            winFrameMat);
+          frame.rotation.y = Math.PI/2;
+          frame.position.set(0.10, 2.00, wz);
+          scene.add(frame);
+
+          // Vidrio
+          const glass = new THREE.Mesh(
+            new THREE.ShapeGeometry(hexShape(R - 0.10)),
+            new THREE.MeshBasicMaterial({ color:0x87ceeb, transparent:true, opacity:0.52, side:THREE.DoubleSide }));
+          glass.rotation.y = Math.PI/2;
+          glass.position.set(0.06, 2.00, wz);
           scene.add(glass); windowGlassRef.current.push(glass);
-          // Cross dividers
-          const hb = new THREE.Mesh(new THREE.BoxGeometry(0.065,0.055,1.15),winFrameMat);
-          hb.position.set(0.07,2.05,wz); scene.add(hb);
-          const vb = new THREE.Mesh(new THREE.BoxGeometry(0.065,1.35,0.055),winFrameMat);
-          vb.position.set(0.07,2.05,wz); scene.add(vb);
-          // Sill + ledge
-          const sill = new THREE.Mesh(new THREE.BoxGeometry(0.20,0.06,1.35),sillMat);
-          sill.position.set(0.09,1.27,wz); scene.add(sill);
-          const ledge = new THREE.Mesh(new THREE.BoxGeometry(0.32,0.04,1.20),sillMat);
-          ledge.position.set(0.15,1.32,wz); scene.add(ledge);
+
+          // Repisa bajo la ventana
+          const sill = new THREE.Mesh(new THREE.BoxGeometry(0.26,0.05,1.30),sillMat);
+          sill.position.set(0.13,1.20,wz); scene.add(sill);
         });
 
         // ── Sun beams (cone volumes, visible when clear) ───────────────────
@@ -615,20 +719,40 @@
           new THREE.MeshLambertMaterial({color:0x1a2540,emissive:0x101830}));
         monScreen.position.set(8.0,1.03,0.90); scene.add(monScreen);
 
-        // ── Potted plant (back-left corner) ───────────────────────────────
-        const potMat = new THREE.MeshLambertMaterial({ color: 0xc0430e });
-        const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.13,0.10,0.24,12),potMat);
-        pot.position.set(0.4,0.12,7.55); scene.add(pot);
-        const soil = new THREE.Mesh(new THREE.CircleGeometry(0.13,12),
-          new THREE.MeshLambertMaterial({color:0x2e1c08}));
-        soil.rotation.x=-Math.PI/2; soil.position.set(0.4,0.245,7.55); scene.add(soil);
-        const leafMat = new THREE.MeshLambertMaterial({ color: 0x2a8040 });
-        const darkLeafMat = new THREE.MeshLambertMaterial({ color: 0x1d6030 });
-        [[0,0.62,0,leafMat],[0.15,0.45,-0.10,darkLeafMat],[-0.14,0.48,0.10,leafMat],
-         [0.08,0.52,0.15,darkLeafMat],[-0.06,0.40,-0.14,leafMat]].forEach(([lx,ly,lz,mat]) => {
-          const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.145,7,5),mat);
-          leaf.scale.set(1,0.72,1);
-          leaf.position.set(0.4+lx,0.24+ly,7.55+lz); scene.add(leaf);
+        // ── Columnas redondas ─────────────────────────────────────────────
+        // Cilíndricas y de un café rojizo cálido. En las fotos interrumpen
+        // las franjas de corcho y son parte del carácter del espacio.
+        const colMat = new THREE.MeshLambertMaterial({ color: 0x9a5f3c });
+        [[0.55, 3.0], [0.55, 5.2]].forEach(([cx,cz]) => {
+          const col = new THREE.Mesh(new THREE.CylinderGeometry(0.26,0.26,3.3,20), colMat);
+          col.position.set(cx, 1.65, cz);
+          col.castShadow = true; scene.add(col);
+        });
+
+        // ── Mueble bajo salmón (muro del fondo) ───────────────────────────
+        const cabMat  = new THREE.MeshLambertMaterial({ color: 0xe8a887 });
+        const cabTop  = new THREE.MeshLambertMaterial({ color: 0x9c6b45 });
+        const cabBody = new THREE.Mesh(new THREE.BoxGeometry(2.6,0.86,0.52), cabMat);
+        cabBody.position.set(3.2,0.43,7.68); cabBody.castShadow = true; scene.add(cabBody);
+        const cabSurf = new THREE.Mesh(new THREE.BoxGeometry(2.68,0.055,0.58), cabTop);
+        cabSurf.position.set(3.2,0.89,7.68); scene.add(cabSurf);
+        // Puertas: las ranuras horizontales del mueble original
+        [-0.66, 0.66].forEach(dx => {
+          const dr = new THREE.Mesh(new THREE.BoxGeometry(1.18,0.72,0.03),
+            new THREE.MeshLambertMaterial({ color: 0xefb598 }));
+          dr.position.set(3.2+dx,0.44,7.42); scene.add(dr);
+        });
+
+        // ── Estante de canastas de colores ────────────────────────────────
+        const shelfMat = new THREE.MeshLambertMaterial({ color: 0xc98f4e });
+        const shelfBody = new THREE.Mesh(new THREE.BoxGeometry(1.5,0.66,0.36), shelfMat);
+        shelfBody.position.set(6.4,0.33,7.75); shelfBody.castShadow = true; scene.add(shelfBody);
+        const binCols = [0xd94f3d, 0xe8a838, 0x3a8fd4, 0x4aa85c, 0xb45fb0, 0xe86a9c];
+        binCols.forEach((c,i) => {
+          const bin = new THREE.Mesh(new THREE.BoxGeometry(0.21,0.18,0.24),
+            new THREE.MeshLambertMaterial({ color: c }));
+          bin.position.set(5.78 + (i%3)*0.30, i<3 ? 0.50 : 0.20, 7.72);
+          scene.add(bin);
         });
 
         // ── Student desks + chairs (30 positions) ─────────────────────────
@@ -670,33 +794,68 @@
           zone_C:[[2.0,5.4],[3.8,6.7]],
           zone_D:[[6.2,5.4],[8.0,6.7]],
         };
+        // Cada lámpara va empotrada en un disco acústico de fieltro verde
+        // colgado del techo. Los discos varían de tamaño, tono y altura —
+        // en las fotos ninguno está a la misma altura que el vecino, y esa
+        // irregularidad es justo lo que hace que el techo se vea como el real.
+        const DISCS = [
+          { r:0.72, y:3.06, c:0x2f6b3d },  // verde bosque
+          { r:0.60, y:2.94, c:0x6f8f4a },  // verde oliva
+          { r:0.67, y:3.01, c:0x8aa35c },  // verde salvia
+          { r:0.56, y:2.88, c:0x3e7c46 },
+          { r:0.69, y:3.04, c:0x7d9a52 },
+          { r:0.62, y:2.92, c:0x2f6b3d },
+          { r:0.65, y:2.99, c:0x8aa35c },
+          { r:0.58, y:2.90, c:0x4f8348 },
+        ];
+        let discIdx = 0;
+
         Object.entries(fixPos).forEach(([zone, positions]) => {
           lightsRef.current[zone] = positions.map(([x,z]) => {
-            // Suspension rod
-            const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.018,0.018,0.22,6),
-              new THREE.MeshLambertMaterial({color:0x666666}));
-            rod.position.set(x,3.09,z); scene.add(rod);
-            // Housing
-            const housing = new THREE.Mesh(new THREE.BoxGeometry(0.68,0.08,0.30),
-              new THREE.MeshLambertMaterial({color:0x999999}));
-            housing.position.set(x,2.98,z); scene.add(housing);
-            // Emissive panel (the tube)
-            const panel = new THREE.Mesh(new THREE.BoxGeometry(0.58,0.016,0.20),
-              new THREE.MeshBasicMaterial({color:0x1c1c1c}));
-            panel.position.set(x,2.935,z); scene.add(panel);
+            const d = DISCS[discIdx++ % DISCS.length];
+
+            // Varillas de suspensión — dos por disco, como en las fotos
+            [[-d.r*0.55, 0],[d.r*0.55, 0]].forEach(([ox,oz]) => {
+              const rodH = 3.3 - d.y;
+              const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.011,0.011,rodH,5),
+                new THREE.MeshLambertMaterial({color:0x3a3a3a}));
+              rod.position.set(x+ox, d.y + rodH/2, z+oz); scene.add(rod);
+            });
+
+            // El disco de fieltro
+            const disc = new THREE.Mesh(new THREE.CylinderGeometry(d.r, d.r, 0.07, 40),
+              new THREE.MeshLambertMaterial({ color: d.c }));
+            disc.position.set(x, d.y, z);
+            disc.castShadow = true; scene.add(disc);
+
+            // Canto más oscuro: le da grosor de fieltro en vez de papel
+            const rim = new THREE.Mesh(new THREE.TorusGeometry(d.r, 0.035, 6, 40),
+              new THREE.MeshLambertMaterial({ color: d.c }));
+            rim.rotation.x = Math.PI/2;
+            rim.position.set(x, d.y - 0.035, z); scene.add(rim);
+
+            // La luminaria: un círculo empotrado en la cara inferior
+            const panel = new THREE.Mesh(new THREE.CircleGeometry(d.r*0.42, 28),
+              new THREE.MeshBasicMaterial({ color:0x1c1c1c }));
+            panel.rotation.x = Math.PI/2;
+            panel.position.set(x, d.y - 0.037, z);
+            scene.add(panel);
+
             // Point light
             const pl = new THREE.PointLight(0xfff8e0,0,7.5);
-            pl.position.set(x,2.8,z);
+            pl.position.set(x, d.y - 0.15, z);
             scene.add(pl);
-            // Glow sprite (additive, halo effect)
+
+            // Halo aditivo
             const spriteMat = new THREE.SpriteMaterial({
               map:glowTex, transparent:true, opacity:0,
               blending:THREE.AdditiveBlending, depthWrite:false
             });
             const sprite = new THREE.Sprite(spriteMat);
             sprite.scale.set(1.6,1.6,1);
-            sprite.position.set(x,2.85,z);
+            sprite.position.set(x, d.y - 0.12, z);
             scene.add(sprite);
+
             return { panel, pl, sprite };
           });
         });
@@ -813,6 +972,28 @@
             4 + radius*Math.cos(theta)*Math.cos(phi)
           );
           camera.lookAt(5, 0.5, 4);
+
+          // ── Parpadeo de emergencia ──────────────────────────────────────
+          // Media onda cuadrada: encendido y apagado en bloques iguales.
+          // Es lo que hace una baliza real — nada de desvanecerse suave,
+          // porque lo que llama la atención es el corte brusco.
+          const { zones: bz, ms: bms } = blinkRef.current;
+          if (bz.length) {
+            const on = Math.floor(Date.now() / bms) % 2 === 0;
+            bz.forEach(zone => {
+              lightsRef.current[zone]?.forEach(({panel,pl,sprite}) => {
+                pl.intensity = on ? 2.4 : 0.0;
+                // Rojo de alarma: se distingue al instante de la luz cálida
+                // normal, incluso en una foto o un video de la feria.
+                pl.color.setHex(0xff4530);
+                panel.material.color.setHex(on ? 0xff5a3c : 0x2a1210);
+                sprite.material.opacity = on ? 1.0 : 0.0;
+              });
+              const ov = zoneOverlaysRef.current[zone];
+              if (ov) { ov.material.color.setHex(0xff3b30); ov.material.opacity = on ? 0.30 : 0.06; }
+            });
+          }
+
           if (rainRef.current.group?.visible) {
             rainRef.current.drops.forEach(d => {
               d.position.y -= d.userData.speed;
@@ -861,15 +1042,41 @@
         const panelCol = { ON:0xfffac0, DIM:0xffe060, OFF:0x141414 };
         const opaMap   = { ON:0.20, DIM:0.11, OFF:0.04 };
         const glowOpa  = { ON:0.90, DIM:0.45, OFF:0.0 };
+
+        const emg      = classroomState.emergency;
+        const zColorsN = { zone_A:0x4a90d9, zone_B:0x5cb85c, zone_C:0xe8a838, zone_D:0x9b59b6 };
+
+        // Las zonas que parpadean las conduce el bucle de render, no este
+        // efecto: aquí solo se declara cuáles y a qué ritmo.
+        blinkRef.current = {
+          zones: Object.entries(classroomState.zones)
+            .filter(([, d]) => d.light === "BLINK").map(([z]) => z),
+          ms: emg?.blink_ms ?? 600,
+        };
+
         Object.entries(classroomState.zones).forEach(([zone,data]) => {
           const s = data.light ?? "OFF";
+          if (s === "BLINK") return;   // lo pinta el bucle de animación
+
+          const enRuta = !!emg && (emg.route ?? []).includes(zone);
+
           lightsRef.current[zone]?.forEach(({panel,pl,sprite}) => {
             pl.intensity = intens[s] ?? 0;
-            panel.material.color.setHex(panelCol[s] ?? 0x141414);
-            sprite.material.opacity = glowOpa[s] ?? 0;
+            // En emergencia la ruta va en blanco frío y a tope: tiene que
+            // leerse como "salida", no como iluminación de clase.
+            pl.color.setHex(enRuta ? 0xffffff : 0xfff8e0);
+            if (enRuta) pl.intensity = 2.6;
+            panel.material.color.setHex(enRuta ? 0xffffff : (panelCol[s] ?? 0x141414));
+            sprite.material.opacity = enRuta ? 1.0 : (glowOpa[s] ?? 0);
           });
-          if (zoneOverlaysRef.current[zone])
-            zoneOverlaysRef.current[zone].material.opacity = opaMap[s] ?? 0.04;
+
+          const ov = zoneOverlaysRef.current[zone];
+          if (ov) {
+            // Verde = por aquí se sale. Fuera de emergencia, el color propio
+            // de cada zona.
+            ov.material.color.setHex(enRuta ? 0x22c55e : zColorsN[zone]);
+            ov.material.opacity = enRuta ? 0.30 : (opaMap[s] ?? 0.04);
+          }
         });
 
         // Rebuild humanoid figures
@@ -1018,6 +1225,11 @@
         'eq.car':'en auto evitados','eq.car.note':'auto a gasolina',
         'eq.phone':'cargas de celular','eq.phone.note':'equivalente energía',
         'waiting':'Esperando datos…','ref.hrs.unit':'h/día','ref.days.unit':'días/año',
+        'emg':'🚨 Alerta de Desastre','emg.hint':'Simula la señal que enviaría un acelerómetro o un detector de humo',
+        'emg.earthquake':'Sismo','emg.fire':'Incendio','emg.drill':'Simulacro',
+        'emg.clear':'✓ Todo despejado','emg.active':'EMERGENCIA ACTIVA',
+        'emg.route':'Ruta iluminada (fija)','emg.blink':'Zonas en alerta (intermitentes)','emg.exit':'salida',
+        'emg.legend':'Luz fija = por aquí se sale · Luz intermitente = despeja esta zona',
       },
       en: {
         'home':'← Home','connected':'● Connected','connecting':'● Connecting…','reset':'↺ Reset','resetting':'Resetting…',
@@ -1053,6 +1265,11 @@
         'eq.car':'km avoided by car','eq.car.note':'gasoline car',
         'eq.phone':'phone charges','eq.phone.note':'energy equivalent',
         'waiting':'Waiting for data…','ref.hrs.unit':'h/day','ref.days.unit':'days/year',
+        'emg':'🚨 Disaster Alert','emg.hint':'Simulates the signal an accelerometer or smoke detector would send',
+        'emg.earthquake':'Earthquake','emg.fire':'Fire','emg.drill':'Drill',
+        'emg.clear':'✓ All clear','emg.active':'EMERGENCY ACTIVE',
+        'emg.route':'Lit route (steady)','emg.blink':'Zones on alert (blinking)','emg.exit':'exit',
+        'emg.legend':'Steady light = this is the way out · Blinking light = clear this zone',
       }
     };
     const t = (key) => TR[window._lang || 'es'][key] || key;
@@ -1389,6 +1606,76 @@
       );
     }
 
+    // ── Emergency panel ───────────────────────────────────────────────────────
+    // Los botones ocupan el lugar del sensor real: en una instalación de verdad
+    // esta llamada la dispara el acelerómetro o el detector de humo, no una persona.
+    function EmergencyPanel({ emergency, lang }) {
+      const [busy, setBusy] = useState(null);
+      const active = emergency?.kind ?? null;
+
+      const send = async (path, body) => {
+        setBusy(body?.kind ?? "clear");
+        try {
+          await fetch(path, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body ?? {}),
+          });
+        } catch {}
+        setBusy(null);
+      };
+
+      const KINDS = [
+        { kind: "earthquake", icon: "🌐" },
+        { kind: "fire",       icon: "🔥" },
+        { kind: "drill",      icon: "🔔" },
+      ];
+
+      const zoneLetter = (z) => z.replace("zone_", "");
+      const route      = emergency?.route ?? [];
+      const blinking   = ["zone_A","zone_B","zone_C","zone_D"].filter(z => !route.includes(z));
+
+      return (
+        <div className="panel" style={active ? {borderColor:"#ef444460"} : {}}>
+          <h2>{t('emg')}</h2>
+          <div className="emg-grid">
+            {KINDS.map(({ kind, icon }) => (
+              <button
+                key={kind}
+                className={`emg-btn${active === kind ? ' active' : ''}`}
+                disabled={busy !== null}
+                onClick={() => send("/api/emergency/trigger", { kind })}
+              >
+                <span className="emg-btn-icon">{icon}</span>
+                {t('emg.' + kind)}
+              </button>
+            ))}
+          </div>
+          <button className="emg-clear" disabled={!active || busy !== null}
+                  onClick={() => send("/api/emergency/clear")}>
+            {t('emg.clear')}
+          </button>
+
+          {active ? (
+            <div className="emg-route">
+              <div><b>{t('emg.route')}:</b> {route.map(z =>
+                z === emergency.exit_zone ? `${zoneLetter(z)} (${t('emg.exit')})` : zoneLetter(z)
+              ).join(" → ")}</div>
+              <div style={{marginTop:"0.2rem"}}>
+                <span style={{color:"#f87171",fontWeight:700}}>{t('emg.blink')}:</span>{" "}
+                {blinking.length ? blinking.map(zoneLetter).join(", ") : "—"}
+              </div>
+            </div>
+          ) : (
+            <div className="emg-route">{t('emg.hint')}</div>
+          )}
+          <div className="emg-route" style={{borderTop:"none",paddingTop:0,color:"#475569"}}>
+            {t('emg.legend')}
+          </div>
+        </div>
+      );
+    }
+
     // ── Main App ──────────────────────────────────────────────────────────────
     function App() {
       const { state, connected } = useClassroomWS();
@@ -1445,7 +1732,8 @@
         zone_A: t('zl.A'), zone_B: t('zl.B'),
         zone_C: t('zl.C'), zone_D: t('zl.D'),
       };
-      const ICON = { ON:"💡", DIM:"🔅", OFF:"⬛" };
+      const ICON = { ON:"💡", DIM:"🔅", OFF:"⬛", BLINK:"🚨" };
+      const emg  = state?.emergency ?? null;
 
       return (
         <>
@@ -1470,12 +1758,24 @@
             </div>
           </header>
 
+          {emg && (
+            <div className="emg-banner">
+              <span className="emg-icon">🚨</span>
+              <div>
+                <div className="emg-title">
+                  {t('emg.active')} — {lang === 'en' ? emg.label_en : emg.label_es}
+                </div>
+                <div className="emg-sub">{lang === 'en' ? emg.advice_en : emg.advice_es}</div>
+              </div>
+            </div>
+          )}
+
           <main>
             {/* Left column */}
             <div style={{display:"flex",flexDirection:"column",gap:"1rem"}}>
               <div className="panel">
                 <h2>{t('view3d')}</h2>
-                <div className="canvas-wrap">
+                <div className={`canvas-wrap${emg ? ' emergency' : ''}`}>
                   <Classroom3D classroomState={state} weather={weather} onLoadingChange={setSceneLoading} />
                   {(sceneLoading || voiceLoading) && (
                     <div className="canvas-overlay" style={voiceLoading ? {background:"#0b0e1670",backdropFilter:"blur(2px)"} : {}}>
@@ -1495,6 +1795,8 @@
 
             {/* Right column */}
             <div style={{display:"flex",flexDirection:"column",gap:"1rem"}}>
+
+              <EmergencyPanel emergency={emg} lang={lang} />
 
               {/* Voice */}
               <div className="panel">
