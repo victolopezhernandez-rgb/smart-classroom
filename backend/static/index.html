@@ -553,8 +553,57 @@
       return t;
     }
 
+    // ── El sol, en función de la hora ────────────────────────────────────────
+    // Sale a las 6 por el norte del salón (+z), pasa alto al mediodía y se
+    // pone a las 18 por el sur (-z). Siempre desde -x, que es donde están las
+    // ventanas: un sol que se fuera al otro lado dejaría el salón a oscuras
+    // en pleno día. Devuelve la POSICIÓN de la luz; los rayos viajan hacia el
+    // origen, así que su dirección es -posición.
+    const SUN_KEY = { r: 5, yMin: 2.0, yMax: 10.0, z0: 4.5, zSweep: 9 };
+    function sunPosition(hour) {
+      const u = Math.min(Math.max((hour - 6) / 12, 0), 1);
+      return new THREE.Vector3(
+        -SUN_KEY.r,
+        SUN_KEY.yMin + (SUN_KEY.yMax - SUN_KEY.yMin) * Math.sin(Math.PI * u),
+        SUN_KEY.z0 - SUN_KEY.zSweep * u);
+    }
+    // Qué tan alto está el sol, de 0 (en el horizonte) a 1 (cenit).
+    function sunHeight(hour) {
+      const u = Math.min(Math.max((hour - 6) / 12, 0), 1);
+      return Math.sin(Math.PI * u);
+    }
+
+    // Paleta del día. El exterior tiene que cambiar con la hora: a las 6 el
+    // cielo está naranja y bajo, al mediodía azul y alto, a las 18 vuelve a
+    // arder y después se apaga. `out` es cuánta luz recibe todo lo de afuera.
+    const DAY_KEYS = [
+      { h: 5.0,  sky:['#141d38','#28324f','#4a4a63'], sun:0x5a6a99, si:0.06, hi:0.16, out:0.22 },
+      { h: 6.4,  sky:['#2a3f70','#a06a7a','#e0a071'], sun:0xff9a5a, si:0.40, hi:0.30, out:0.52 },
+      { h: 8.0,  sky:['#2f6cb8','#9dc3e4','#f2d9b8'], sun:0xffd0a0, si:0.85, hi:0.40, out:0.82 },
+      { h:12.0,  sky:['#2c74cf','#82b9ea','#e6f0f5'], sun:0xfff4dc, si:1.15, hi:0.46, out:1.00 },
+      { h:15.0,  sky:['#3172c4','#8dbfe8','#ecefe9'], sun:0xfff0cd, si:1.02, hi:0.44, out:0.96 },
+      { h:17.2,  sky:['#3a5a96','#d8926b','#f5c795'], sun:0xff9e5c, si:0.50, hi:0.32, out:0.66 },
+      { h:18.6,  sky:['#1e2b52','#5b4a72','#9c6a72'], sun:0x8a76ad, si:0.14, hi:0.20, out:0.34 },
+      { h:20.0,  sky:['#141d38','#28324f','#4a4a63'], sun:0x5a6a99, si:0.06, hi:0.16, out:0.22 },
+    ];
+    function dayPalette(hour) {
+      const h = Math.min(Math.max(hour, DAY_KEYS[0].h), DAY_KEYS[DAY_KEYS.length - 1].h);
+      let i = 0;
+      while (i < DAY_KEYS.length - 2 && DAY_KEYS[i + 1].h < h) i++;
+      const a = DAY_KEYS[i], b = DAY_KEYS[i + 1];
+      const t = (h - a.h) / (b.h - a.h);
+      const mixN = (x, y) => x + (y - x) * t;
+      return {
+        sky: a.sky.map((c, k) => new THREE.Color(c).lerp(new THREE.Color(b.sky[k]), t)),
+        sun: new THREE.Color(a.sun).lerp(new THREE.Color(b.sun), t),
+        si:  mixN(a.si,  b.si),
+        hi:  mixN(a.hi,  b.hi),
+        out: mixN(a.out, b.out),
+      };
+    }
+
     // ── 3D Classroom ─────────────────────────────────────────────────────────
-    function Classroom3D({ classroomState, weather, onLoadingChange }) {
+    function Classroom3D({ classroomState, weather, hour, onLoadingChange }) {
       const mountRef        = useRef(null);
       const sceneRef        = useRef(null);
       const lightsRef       = useRef({});
@@ -565,6 +614,8 @@
       const sunPoolsRef     = useRef([]);
       const skyRef          = useRef(null);
       const outsideRef      = useRef(null);
+      const dirLightRef     = useRef(null);
+      const hemiRef         = useRef(null);
       const rainRef         = useRef({ group: null, drops: [] });
       // Molde de la sombra de contacto, compartido por muebles y personas.
       const contactRef      = useRef(null);
@@ -625,26 +676,33 @@
 
         // ── Lighting ──────────────────────────────────────────────────────
         // Sky/ground hemisphere
-        scene.add(new THREE.HemisphereLight(0xdce8ff, 0xc4a46a, 0.42));
-        // Directional (sunlight through windows)
+        const hemi = new THREE.HemisphereLight(0xdce8ff, 0xc4a46a, 0.42);
+        scene.add(hemi); hemiRef.current = hemi;
+        // Directional (sunlight through windows). La posición la manda la
+        // hora del día — ver sunPosition(); esto es solo el arranque.
         const dirLight = new THREE.DirectionalLight(0xfff4dc, 1.15);
-        dirLight.position.set(-5, 9, 3);
+        dirLight.position.copy(sunPosition(12));
         dirLight.castShadow = true;
         dirLight.shadow.mapSize.set(2048, 2048);
         dirLight.shadow.radius = 3;
+        // El sol se mueve con la hora, así que el encuadre de la sombra se
+        // apunta al centro del salón y es simétrico: un frustum ajustado a
+        // una sola posición del sol se quedaría sin cubrir el salón a las 6.
+        dirLight.target.position.set(5, 1, 4);
+        scene.add(dirLight.target);
         dirLight.shadow.camera.near   = 0.5;
-        dirLight.shadow.camera.far    = 26;
-        dirLight.shadow.camera.left   = -7;
-        dirLight.shadow.camera.right  = 12;
-        dirLight.shadow.camera.top    = 9;
-        dirLight.shadow.camera.bottom = -1;
+        dirLight.shadow.camera.far    = 40;
+        dirLight.shadow.camera.left   = -10;
+        dirLight.shadow.camera.right  = 10;
+        dirLight.shadow.camera.top    = 10;
+        dirLight.shadow.camera.bottom = -10;
         dirLight.shadow.camera.updateProjectionMatrix();
         dirLight.shadow.bias = -0.0008;
         // Empuja la sombra un pelo hacia dentro del objeto: mata el moaré
         // de superficies casi paralelas al sol sin despegar la sombra del
         // pie de los muebles.
         dirLight.shadow.normalBias = 0.02;
-        scene.add(dirLight);
+        scene.add(dirLight); dirLightRef.current = dirLight;
 
         // Iluminación de tres puntos, como en cine. La clave (arriba) ya
         // está; faltan las otras dos, y son las que dan volumen:
@@ -994,22 +1052,21 @@
           color:0xfff8d0, transparent:true, opacity:0.06,
           side:THREE.DoubleSide, depthWrite:false, fog:false, blending:THREE.AdditiveBlending,
         });
+        // La orientación la pone la hora, en el efecto de ambiente: el eje +Y
+        // del cilindro se alinea con la dirección de los rayos.
         WINDOWS.filter(w => w.r > 0.4).forEach(w => {
           const len = 3.4;
           const beam = new THREE.Mesh(
             new THREE.CylinderGeometry(w.r*0.95, w.r*1.7, len, 6, 1, true),
             beamMat.clone());
-          // El sol entra desde (-5,9,3): el haz se inclina hacia dentro y baja.
-          beam.rotation.z = -Math.PI/2 + 0.52;
-          beam.rotation.y = 0.28;
-          beam.position.set(w.r + 0.9, w.y - 0.75, w.z - 0.35);
+          beam.userData = { wy: w.y, wz: w.z, len };
           beam.visible = false;
           scene.add(beam); sunBeamsRef.current.push(beam);
         });
 
-        // Mancha de luz en el piso, con la forma del hexágono. El sol viaja en
-        // dirección (5,-9,-3), así que desde (0,y,z) toca el piso en
-        // x = 5y/9,  z = z - y/3.
+        // Mancha de luz en el piso, con la forma del hexágono. Desde la
+        // ventana (0, y, z) el rayo toca el piso donde lo diga el sol de esa
+        // hora — al amanecer entra casi horizontal y la mancha se va al fondo.
         const poolMat = new THREE.MeshBasicMaterial({
           color: 0xfff1c8, transparent: true, opacity: 0.20,
           depthWrite: false, fog: false, blending: THREE.AdditiveBlending,
@@ -1017,9 +1074,7 @@
         WINDOWS.filter(w => w.r > 0.4).forEach(w => {
           const pool = new THREE.Mesh(new THREE.ShapeGeometry(hexShape(w.r)), poolMat.clone());
           pool.rotation.x = -Math.PI/2;
-          // Estirada: la luz llega en diagonal, el hexágono se alarga.
-          pool.scale.set(1.9, 1.25, 1);
-          pool.position.set(5*w.y/9, 0.012, w.z - w.y/3);
+          pool.userData = { wy: w.y, wz: w.z };
           pool.visible = false;
           scene.add(pool); sunPoolsRef.current.push(pool);
         });
@@ -1042,24 +1097,34 @@
         // altura de la imagen, que es el ecuador de la esfera.
         const skyC = document.createElement('canvas'); skyC.width = 1024; skyC.height = 512;
         const sctx = skyC.getContext('2d');
+        // Cúmulos: elipses superpuestas, aplanadas abajo como los de verdad.
+        // Se apiñan hacia el horizonte, que es lo que hace la perspectiva.
+        //
+        // Se sortean UNA vez y se guardan. Si se sortearan en cada repintado,
+        // las nubes saltarían de sitio cada vez que cambia la hora o el clima.
+        const CLOUDS = [];
+        for (let i = 0; i < 34; i++) {
+          const cx = Math.random()*1024, cy = 26 + Math.pow(Math.random(), 0.6)*205;
+          const s = 20 + Math.random()*46;
+          const puffs = [];
+          for (let b = 0; b < 10; b++)
+            puffs.push([cx + (Math.random()-0.5)*s*2.6, cy + (Math.random()-0.5)*s*0.55,
+                        s*(0.45+Math.random()*0.6), s*(0.28+Math.random()*0.30)]);
+          CLOUDS.push({ alpha: 0.13 + Math.random()*0.20, puffs });
+        }
         const drawSky = (top, mid, low) => {
           const g = sctx.createLinearGradient(0, 0, 0, 256);
           g.addColorStop(0, top); g.addColorStop(0.62, mid); g.addColorStop(1, low);
           sctx.fillStyle = g; sctx.fillRect(0, 0, 1024, 256);
           sctx.fillStyle = low; sctx.fillRect(0, 256, 1024, 256);   // bajo el horizonte
-          // Cúmulos: elipses superpuestas, aplanadas abajo como los de verdad.
-          // Se apiñan hacia el horizonte, que es lo que hace la perspectiva.
-          for (let i = 0; i < 34; i++) {
-            const cx = Math.random()*1024, cy = 26 + Math.pow(Math.random(), 0.6)*205;
-            const s = 20 + Math.random()*46;
-            sctx.fillStyle = 'rgba(255,255,255,' + (0.13 + Math.random()*0.20) + ')';
-            for (let b = 0; b < 10; b++) {
+          CLOUDS.forEach(({ alpha, puffs }) => {
+            sctx.fillStyle = 'rgba(255,255,255,' + alpha + ')';
+            puffs.forEach(([px, py, rx, ry]) => {
               sctx.beginPath();
-              sctx.ellipse(cx + (Math.random()-0.5)*s*2.6, cy + (Math.random()-0.5)*s*0.55,
-                           s*(0.45+Math.random()*0.6), s*(0.28+Math.random()*0.30), 0, 0, Math.PI*2);
+              sctx.ellipse(px, py, rx, ry, 0, 0, Math.PI*2);
               sctx.fill();
-            }
-          }
+            });
+          });
         };
         drawSky('#2c74cf', '#82b9ea', '#dfeaf1');
         const skyTex = new THREE.CanvasTexture(skyC);
@@ -1711,7 +1776,7 @@
         });
       }, [classroomState]);
 
-      // ── Weather → windows + sun beams + rain ──────────────────────────────
+      // ── Clima + hora → cielo, sol, exterior, haces y lluvia ───────────────
       const prevWeatherRef = useRef(weather);
       useEffect(() => {
         if (!sceneRef.current) return;
@@ -1722,44 +1787,99 @@
 
         if (rainChanging) onLoadingChange?.(true);
 
-        // El vidrio casi no tiñe: ahora hay exterior detrás y taparlo sería
-        // desperdiciarlo. Quien cambia de humor es el CIELO.
+        // Dos cosas mandan sobre el exterior y no hay que confundirlas:
         //
-        // `dim` y `haze` tiñen TODO el exterior. Sin eso el cambio de clima
-        // solo se notaba mirando arriba: desde el ángulo normal casi todo el
-        // encuadre es pasto y árboles, y seguían igual de soleados bajo la
-        // lluvia. Con cielo gris y pasto apagado, el clima se lee de una.
-        const CLEAR = { color:0xdcecff, opacity:0.16, sky:['#2c74cf','#82b9ea','#e6f0f5'],
-                        dim:1.00, haze:0.00, hazeColor:0xe6f0f5 };
+        //   LA HORA   pone el color de base — amanecer naranja, mediodía
+        //             azul, noche oscura — y con él la altura y el color
+        //             del sol. Es lo que faltaba: a las 6 se veía igual
+        //             que a las 12.
+        //   EL CLIMA  no repinta el cielo: lo agrisa (`mix`) y lo apaga
+        //             (`dim`). Así un día nublado a las 7 sigue teniendo
+        //             luz de amanecer, solo que lavada.
+        //
+        // El vidrio casi no tiñe: hay exterior detrás y taparlo sería
+        // desperdiciarlo.
+        const CLEAR = { color:0xdcecff, opacity:0.16, grey:['#7f97ae','#a9bccb','#dfe7ec'],
+                        dim:1.00, mix:0.00, haze:0.00 };
         const cfg = {
           clear:    CLEAR,
-          cloudy:   { color:0xd2dae4, opacity:0.20, sky:['#5b83ac','#9fb4c6','#dde4e9'],
-                      dim:0.86, haze:0.10, hazeColor:0xdde4e9 },
-          overcast: { color:0xbfc9d0, opacity:0.26, sky:['#6f7d88','#98a4ad','#c6ced3'],
-                      dim:0.68, haze:0.20, hazeColor:0xc6ced3 },
-          rainy:    { color:0x9fb0bd, opacity:0.34, sky:['#41505d','#63727e','#8f9aa3'],
-                      dim:0.50, haze:0.30, hazeColor:0x8f9aa3 },
+          cloudy:   { color:0xd2dae4, opacity:0.20, grey:['#5b83ac','#9fb4c6','#dde4e9'],
+                      dim:0.86, mix:0.45, haze:0.10 },
+          overcast: { color:0xbfc9d0, opacity:0.26, grey:['#6f7d88','#98a4ad','#c6ced3'],
+                      dim:0.68, mix:0.72, haze:0.20 },
+          rainy:    { color:0x9fb0bd, opacity:0.34, grey:['#41505d','#63727e','#8f9aa3'],
+                      dim:0.50, mix:0.90, haze:0.30 },
         }[weather] ?? CLEAR;
+
+        const h   = Number.isFinite(hour) ? hour : 12;
+        const day = dayPalette(h);
+        const up  = sunHeight(h);              // 0 en el horizonte, 1 en el cenit
+
         windowGlassRef.current.forEach(g => {
           g.material.color.setHex(cfg.color);
           g.material.opacity = cfg.opacity;
         });
+
+        // Cielo: color de la hora, agrisado por el clima.
         if (skyRef.current) {
-          skyRef.current.draw(...cfg.sky);
+          const sky = day.sky.map((c, k) =>
+            '#' + c.clone().lerp(new THREE.Color(cfg.grey[k]), cfg.mix)
+                    .multiplyScalar(0.35 + 0.65 * cfg.dim).getHexString());
+          skyRef.current.draw(...sky);
           skyRef.current.tex.needsUpdate = true;
         }
-        // El cielo lo pinta su propio canvas, así que se salta el tinte.
+
+        // Todo lo de afuera se apaga junto: de noche el pasto no puede
+        // seguir verde brillante. El cielo lo pinta su propio canvas, así
+        // que se salta el tinte para no oscurecerlo dos veces.
         if (outsideRef.current) {
-          const hz = new THREE.Color(cfg.hazeColor);
+          const k  = cfg.dim * day.out;
+          const hz = day.sky[2].clone().multiplyScalar(k);
           outsideRef.current.traverse(o => {
             const m = o.material;
             if (!m || !m.color || o === skyRef.current?.mesh) return;
             if (!m.userData.baseColor) m.userData.baseColor = m.color.clone();
-            m.color.copy(m.userData.baseColor).multiplyScalar(cfg.dim).lerp(hz, cfg.haze);
+            m.color.copy(m.userData.baseColor).multiplyScalar(k).lerp(hz, cfg.haze);
           });
         }
-        sunBeamsRef.current.forEach(b => { b.visible = (weather === "clear"); });
-        sunPoolsRef.current.forEach(p => { p.visible = (weather === "clear"); });
+
+        // El sol: se mueve, cambia de color y de fuerza. Mover la luz es lo
+        // que hace que las sombras se alarguen al amanecer y se acorten al
+        // mediodía, que es la señal más fuerte de qué hora es.
+        const sunPos = sunPosition(h);
+        if (dirLightRef.current) {
+          dirLightRef.current.position.copy(sunPos);
+          dirLightRef.current.color.copy(day.sun);
+          dirLightRef.current.intensity = day.si * (0.30 + 0.70 * cfg.dim);
+        }
+        if (hemiRef.current)
+          hemiRef.current.intensity = day.hi * (0.45 + 0.55 * cfg.dim);
+
+        // Haces y manchas de piso: solo con cielo despejado y con el sol lo
+        // bastante alto. Rasante no entrarían — se los comería la cordillera.
+        const beamsOn = (weather === "clear") && up > 0.18;
+        const rays = sunPos.clone().negate().normalize();   // hacia dónde viajan
+        sunBeamsRef.current.forEach(b => {
+          b.visible = beamsOn;
+          if (!beamsOn) return;
+          const { wy, wz, len } = b.userData;
+          b.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), rays);
+          b.position.set(0, wy, wz).addScaledVector(rays, len / 2);
+          b.material.opacity = 0.06 * (0.4 + 0.6 * up);
+        });
+        sunPoolsRef.current.forEach(p => {
+          p.visible = beamsOn;
+          if (!beamsOn) return;
+          const { wy, wz } = p.userData;
+          const t = wy / sunPos.y;                       // recorrido hasta el piso
+          p.position.set(
+            Math.min(Math.max(sunPos.x * -t, 0.5), 9.5), 0.012,
+            Math.min(Math.max(wz - sunPos.z * t, 0.5), 7.5));
+          // Cuanto más rasante el sol, más se alarga el hexágono en el piso.
+          p.scale.set(1.2 + 1.4 * (1 - up), 1.1 + 0.5 * (1 - up), 1);
+          p.material.opacity = 0.20 * (0.35 + 0.65 * up);
+        });
+
         if (rainRef.current.group)
           rainRef.current.group.visible = (weather === "rainy");
 
@@ -1767,7 +1887,7 @@
           const t = setTimeout(() => onLoadingChange?.(false), 900);
           return () => clearTimeout(t);
         }
-      }, [weather]);
+      }, [weather, hour]);
 
       return <div ref={mountRef} id="canvas3d" />;
     }
@@ -1970,7 +2090,7 @@
     }
 
     // ── Demo controls ─────────────────────────────────────────────────────────
-    function DemoControls({ onSceneLoading }) {
+    function DemoControls({ onSceneLoading, onHour }) {
       const [scenario, setScenario] = useState("full_class");
       const [weather, setWeather]   = useState("clear");
       const [simTime, setSimTime]   = useState(null);
@@ -1998,7 +2118,10 @@
         } catch {} finally { endLoad(); }
       };
       const setT = async (h) => {
-        setSimTime(h); startLoad(`t-${h}`);
+        // Se avisa a la escena de una vez, porque el sondeo que trae la hora
+        // tarda hasta 5 s y el cielo se quedaría atrás mientras tanto. En
+        // «Real» (h = null) no hay nada que avisar: esa hora la trae el sondeo.
+        setSimTime(h); if (h != null) onHour?.(h); startLoad(`t-${h}`);
         try {
           await fetch("/api/light/time",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({hour:h})});
           await clearOverride(); await cycle();
@@ -2331,6 +2454,7 @@
       const [history, setHistory] = useState([]);
       const [stats, setStats]     = useState(null);
       const [weather, setWeather] = useState("clear");
+      const [hour, setHour]       = useState(12);
       const [lang, setLangState]  = useState(localStorage.getItem('sc-lang') || 'es');
 
       // Keep global in sync so t() calls in child components pick up the right lang
@@ -2355,7 +2479,14 @@
             ]);
             if (h.ok) setHistory(await h.json());
             if (s.ok) setStats(await s.json());
-            if (lv.ok) { const lvData = await lv.json(); if (lvData.weather) setWeather(lvData.weather); }
+            if (lv.ok) {
+              const lvData = await lv.json();
+              if (lvData.weather) setWeather(lvData.weather);
+              // Redondeada al cuarto de hora: en modo Real la hora llega con
+              // decimales y cambia cada 5 s. Sin redondear, la escena se
+              // recalcularía sola todo el tiempo sin que se note nada.
+              if (Number.isFinite(lvData.hour)) setHour(Math.round(lvData.hour * 4) / 4);
+            }
           } catch {}
         };
         load();
@@ -2425,7 +2556,7 @@
               <div className="panel">
                 <h2>{t('view3d')}</h2>
                 <div className={`canvas-wrap${emg ? ' emergency' : ''}`}>
-                  <Classroom3D classroomState={state} weather={weather} onLoadingChange={setSceneLoading} />
+                  <Classroom3D classroomState={state} weather={weather} hour={hour} onLoadingChange={setSceneLoading} />
                   {(sceneLoading || voiceLoading) && (
                     <div className="canvas-overlay" style={voiceLoading ? {background:"#0b0e1670",backdropFilter:"blur(2px)"} : {}}>
                       <div className="canvas-spinner" style={voiceLoading ? {borderTopColor:"#a78bfa",borderRightColor:"#7c3aed60",boxShadow:"0 0 14px #7c3aed30"} : {}} />
@@ -2462,7 +2593,7 @@
                 </details>
               </div>
 
-              <DemoControls onSceneLoading={setSceneLoading} lang={lang} />
+              <DemoControls onSceneLoading={setSceneLoading} onHour={setHour} lang={lang} />
 
               <div className="panel">
                 <h2>{t('zones')}</h2>
