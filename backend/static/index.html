@@ -562,6 +562,9 @@
       const peopleRef       = useRef([]);
       const windowGlassRef  = useRef([]);
       const sunBeamsRef     = useRef([]);
+      const sunPoolsRef     = useRef([]);
+      const skyRef          = useRef(null);
+      const outsideRef      = useRef(null);
       const rainRef         = useRef({ group: null, drops: [] });
       // Molde de la sombra de contacto, compartido por muebles y personas.
       const contactRef      = useRef(null);
@@ -794,11 +797,87 @@
           { pos:[5,1.7,0.01],    ry:0,           w:10, h:3.4 },
           { pos:[5,1.7,7.99],    ry:Math.PI,     w:10, h:3.4 },
           { pos:[9.99,1.7,4],    ry:-Math.PI/2,  w:8,  h:3.4 },
-          { pos:[0.01,1.7,4],    ry:Math.PI/2,   w:8,  h:3.4 },
         ].forEach(({pos,ry,w,h}) => {
           const m = new THREE.Mesh(new THREE.PlaneGeometry(w,h), wallMat);
           m.position.set(...pos); m.rotation.y=ry; m.receiveShadow=true; scene.add(m);
         });
+
+        // ── Hexágono, la firma del colegio ────────────────────────────────
+        // En las fotos de la fachada el hexágono está SENTADO: lado plano
+        // arriba y abajo, vértices a izquierda y derecha. (Antes se dibujaba
+        // de pie, con un vértice arriba — no es el del colegio.)
+        const hexShape = (r) => {
+          const s = new THREE.Shape();
+          for (let i = 0; i < 6; i++) {
+            const a = i * Math.PI/3;
+            const px = Math.cos(a)*r, py = Math.sin(a)*r;
+            i === 0 ? s.moveTo(px,py) : s.lineTo(px,py);
+          }
+          s.closePath();
+          return s;
+        };
+
+        // Las ventanas del colegio no van en fila: son racimos irregulares de
+        // hexágonos de distinto tamaño perforando el muro. Cada racimo cae
+        // sobre una franja del salón para que la luz siga entrando por donde
+        // el backend cree que entra.
+        const WINDOWS = [
+          { z: 1.30, y: 2.10, r: 0.62 },
+          { z: 2.10, y: 1.42, r: 0.31 },
+          { z: 1.95, y: 2.62, r: 0.24 },
+          { z: 3.80, y: 2.18, r: 0.70 },
+          { z: 4.60, y: 1.30, r: 0.29 },
+          { z: 6.25, y: 2.02, r: 0.58 },
+          { z: 6.98, y: 2.66, r: 0.26 },
+          { z: 7.05, y: 1.48, r: 0.22 },
+        ];
+
+        // ── Muro izquierdo, perforado de verdad ───────────────────────────
+        // Este muro no se dibuja con PlaneGeometry: se recorta. Sin agujero
+        // real, el vidrio es una calcomanía sobre una pared sólida y el ojo
+        // lo nota al instante.
+        const WALL_T = 0.24;                       // espesor del muro
+        const leftShape = new THREE.Shape();
+        leftShape.moveTo(-4, -1.7); leftShape.lineTo(4, -1.7);
+        leftShape.lineTo(4, 1.7);   leftShape.lineTo(-4, 1.7);
+        leftShape.closePath();
+        // Coordenadas locales del muro: al girarlo 90° sobre Y, el eje X
+        // local apunta hacia -Z del mundo, y el Y local es la altura.
+        const toLocal = (w) => ({ hx: 4 - w.z, hy: w.y - 1.7 });
+        WINDOWS.forEach(w => {
+          const { hx, hy } = toLocal(w);
+          const holePath = new THREE.Path();
+          for (let i = 0; i < 6; i++) {
+            const a = i * Math.PI/3;
+            const px = hx + Math.cos(a)*w.r, py = hy + Math.sin(a)*w.r;
+            i === 0 ? holePath.moveTo(px,py) : holePath.lineTo(px,py);
+          }
+          holePath.closePath();
+          leftShape.holes.push(holePath);
+        });
+        const leftGeo = new THREE.ShapeGeometry(leftShape);
+        // ShapeGeometry copia las coordenadas del contorno como UV, así que
+        // vienen en metros. Hay que normalizarlas o la textura del muro sale
+        // ampliada ocho veces.
+        {
+          const uv = leftGeo.attributes.uv;
+          for (let i = 0; i < uv.count; i++)
+            uv.setXY(i, (uv.getX(i) + 4) / 8, (uv.getY(i) + 1.7) / 3.4);
+          uv.needsUpdate = true;
+        }
+        const leftWall = new THREE.Mesh(leftGeo, wallMat);
+        leftWall.position.set(0.01, 1.7, 4);
+        leftWall.rotation.y = Math.PI/2;
+        leftWall.receiveShadow = true;
+        scene.add(leftWall);
+
+        // Cara exterior del muro, en color del colegio: se ve por el hueco
+        // de las ventanas y da a entender que el muro tiene dos lados.
+        const leftOuter = new THREE.Mesh(leftGeo.clone(),
+          stdMat({ color: 0xe8c93f, roughness: 0.88, side: THREE.DoubleSide }));
+        leftOuter.position.set(-WALL_T, 1.7, 4);
+        leftOuter.rotation.y = Math.PI/2;   // mismo giro: si se invierte, los huecos se van al lado opuesto
+        scene.add(leftOuter);
         // Baseboards
         [
           { pos:[5,0.09,0.02],   ry:0,          w:10, h:0.17 },
@@ -867,62 +946,231 @@
         knob.position.set(8.62,1.05,7.86); scene.add(knob);
 
         // ── Ventanas hexagonales (muro izquierdo, x=0) ────────────────────
-        // El hexágono es LA firma del colegio: aparece en la fachada, en los
-        // muros de colores y en las ventanas interiores. Una ventana
-        // rectangular cualquiera no diría nada; esta sí se reconoce.
-        const hexShape = (r) => {
-          const s = new THREE.Shape();
-          // Hexágono "de pie" (vértice arriba), como en las fotos.
+        // Tres cosas hacen que un hueco se lea como ventana, y ninguna es el
+        // vidrio: que se vea el ESPESOR del muro al asomarse, que haya un
+        // MUNDO detrás, y que entre LUZ con la forma del hueco. El vidrio
+        // solo pone el brillo encima.
+        const winFrameMat = stdMat({ color: 0xf7f5f0, roughness: 0.82 });
+
+        WINDOWS.forEach(w => {
+          // Derrame: el muro tiene 24 cm y el hueco los atraviesa. Este anillo
+          // extruido es la pared vista de canto — la pista de profundidad que
+          // más pesa cuando la cámara se mueve.
+          const revealShape = hexShape(w.r + 0.13);
+          const inner = new THREE.Path();
           for (let i = 0; i < 6; i++) {
-            const a = Math.PI/2 + i * Math.PI/3;
-            const px = Math.cos(a)*r, py = Math.sin(a)*r;
-            i === 0 ? s.moveTo(px,py) : s.lineTo(px,py);
+            const a = i * Math.PI/3;
+            const px = Math.cos(a)*w.r, py = Math.sin(a)*w.r;
+            i === 0 ? inner.moveTo(px,py) : inner.lineTo(px,py);
           }
-          s.closePath();
-          return s;
-        };
-
-        const winFrameMat = stdMat({ color: 0xf6f4ef });
-        const sillMat     = stdMat({ color: 0xe8e2d4 });
-
-        [1.5, 4.0, 6.5].forEach(wz => {
-          // Marco: hexágono grande con el hueco del vidrio recortado
-          const R = 0.78;
-          const frameShape = hexShape(R);
-          frameShape.holes.push(hexShape(R - 0.11));
-          const frame = new THREE.Mesh(
-            new THREE.ExtrudeGeometry(frameShape, { depth: 0.12, bevelEnabled: false }),
+          inner.closePath();
+          revealShape.holes.push(inner);
+          const reveal = new THREE.Mesh(
+            new THREE.ExtrudeGeometry(revealShape, { depth: WALL_T, bevelEnabled: false }),
             winFrameMat);
-          frame.rotation.y = Math.PI/2;
-          frame.position.set(0.10, 2.00, wz);
-          scene.add(frame);
+          reveal.rotation.y = Math.PI/2;
+          reveal.position.set(0.01, w.y, w.z);
+          reveal.castShadow = true; reveal.receiveShadow = true;
+          scene.add(reveal);
 
-          // Vidrio
+          // Vidrio: casi transparente, para que se vea el exterior. Lo que lo
+          // delata como vidrio no es el tinte sino el reflejo del entorno.
           const glass = new THREE.Mesh(
-            new THREE.ShapeGeometry(hexShape(R - 0.10)),
-            new THREE.MeshBasicMaterial({ color:0x87ceeb, transparent:true, opacity:0.52, side:THREE.DoubleSide }));
+            new THREE.ShapeGeometry(hexShape(w.r)),
+            new THREE.MeshPhysicalMaterial({
+              color: 0xdcecff, transparent: true, opacity: 0.18,
+              roughness: 0.05, metalness: 0.0,
+              envMapIntensity: 1.6, side: THREE.DoubleSide, depthWrite: false,
+            }));
           glass.rotation.y = Math.PI/2;
-          glass.position.set(0.06, 2.00, wz);
+          glass.position.set(-WALL_T/2, w.y, w.z);
           scene.add(glass); windowGlassRef.current.push(glass);
-
-          // Repisa bajo la ventana
-          const sill = new THREE.Mesh(RBox(0.26,0.05,1.30),sillMat);
-          sill.position.set(0.13,1.20,wz); scene.add(sill);
         });
 
-        // ── Sun beams (cone volumes, visible when clear) ───────────────────
+        // ── Haces de sol ──────────────────────────────────────────────────
+        // Un cilindro de 6 lados ES un prisma hexagonal: el haz sale con la
+        // forma de la ventana que lo produce, no como un cono genérico.
         const beamMat = new THREE.MeshBasicMaterial({
-          color:0xfff8d0, transparent:true, opacity:0.07,
-          side:THREE.DoubleSide, depthWrite:false
+          color:0xfff8d0, transparent:true, opacity:0.06,
+          side:THREE.DoubleSide, depthWrite:false, fog:false, blending:THREE.AdditiveBlending,
         });
-        [1.5, 4.0, 6.5].forEach((wz,i) => {
-          const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.01,0.55,2.8,8,1,true),
+        WINDOWS.filter(w => w.r > 0.4).forEach(w => {
+          const len = 3.4;
+          const beam = new THREE.Mesh(
+            new THREE.CylinderGeometry(w.r*0.95, w.r*1.7, len, 6, 1, true),
             beamMat.clone());
-          beam.rotation.z = -Math.PI/2.8;
-          beam.position.set(1.8, 1.4, wz);
+          // El sol entra desde (-5,9,3): el haz se inclina hacia dentro y baja.
+          beam.rotation.z = -Math.PI/2 + 0.52;
+          beam.rotation.y = 0.28;
+          beam.position.set(w.r + 0.9, w.y - 0.75, w.z - 0.35);
           beam.visible = false;
           scene.add(beam); sunBeamsRef.current.push(beam);
         });
+
+        // Mancha de luz en el piso, con la forma del hexágono. El sol viaja en
+        // dirección (5,-9,-3), así que desde (0,y,z) toca el piso en
+        // x = 5y/9,  z = z - y/3.
+        const poolMat = new THREE.MeshBasicMaterial({
+          color: 0xfff1c8, transparent: true, opacity: 0.20,
+          depthWrite: false, fog: false, blending: THREE.AdditiveBlending,
+        });
+        WINDOWS.filter(w => w.r > 0.4).forEach(w => {
+          const pool = new THREE.Mesh(new THREE.ShapeGeometry(hexShape(w.r)), poolMat.clone());
+          pool.rotation.x = -Math.PI/2;
+          // Estirada: la luz llega en diagonal, el hexágono se alarga.
+          pool.scale.set(1.9, 1.25, 1);
+          pool.position.set(5*w.y/9, 0.012, w.z - w.y/3);
+          pool.visible = false;
+          scene.add(pool); sunPoolsRef.current.push(pool);
+        });
+
+        // ── El exterior: Medellín ─────────────────────────────────────────
+        // Este es el bloque que convierte los hexágonos en ventanas. Una
+        // ventana no es un vidrio: es una VISTA. Sin nada detrás, el hueco
+        // mejor modelado del mundo sigue leyéndose como un adorno pegado al
+        // muro. Las fotos del colegio mandan lo que hay que ver: cielo azul
+        // con cúmulos, la cordillera al fondo y vegetación tropical encima.
+        const outside = new THREE.Group();
+
+        // El exterior es ENVOLVENTE, no un telón detrás del muro. Un telón se
+        // ve perfecto desde el ángulo para el que se armó y se descuadra en
+        // cuanto la cámara gira — y aquí la cámara gira libremente. Una cúpula
+        // resuelve todos los ángulos de una vez.
+        const ORIGIN = new THREE.Vector3(5, 0, 4);
+
+        // Cielo: degradado + cúmulos pintados a mano. El horizonte va a media
+        // altura de la imagen, que es el ecuador de la esfera.
+        const skyC = document.createElement('canvas'); skyC.width = 1024; skyC.height = 512;
+        const sctx = skyC.getContext('2d');
+        const drawSky = (top, mid, low) => {
+          const g = sctx.createLinearGradient(0, 0, 0, 256);
+          g.addColorStop(0, top); g.addColorStop(0.62, mid); g.addColorStop(1, low);
+          sctx.fillStyle = g; sctx.fillRect(0, 0, 1024, 256);
+          sctx.fillStyle = low; sctx.fillRect(0, 256, 1024, 256);   // bajo el horizonte
+          // Cúmulos: elipses superpuestas, aplanadas abajo como los de verdad.
+          // Se apiñan hacia el horizonte, que es lo que hace la perspectiva.
+          for (let i = 0; i < 34; i++) {
+            const cx = Math.random()*1024, cy = 26 + Math.pow(Math.random(), 0.6)*205;
+            const s = 20 + Math.random()*46;
+            sctx.fillStyle = 'rgba(255,255,255,' + (0.13 + Math.random()*0.20) + ')';
+            for (let b = 0; b < 10; b++) {
+              sctx.beginPath();
+              sctx.ellipse(cx + (Math.random()-0.5)*s*2.6, cy + (Math.random()-0.5)*s*0.55,
+                           s*(0.45+Math.random()*0.6), s*(0.28+Math.random()*0.30), 0, 0, Math.PI*2);
+              sctx.fill();
+            }
+          }
+        };
+        drawSky('#2c74cf', '#82b9ea', '#dfeaf1');
+        const skyTex = new THREE.CanvasTexture(skyC);
+        skyTex.colorSpace = THREE.SRGBColorSpace;
+        const sky = new THREE.Mesh(new THREE.SphereGeometry(46, 40, 24),
+          new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false }));
+        sky.position.copy(ORIGIN);
+        outside.add(sky);
+        skyRef.current = { canvas: skyC, tex: skyTex, draw: drawSky, mesh: sky };
+
+        // Cordillera: dos anillos a distinta distancia. El de atrás, más pálido
+        // y azulado — la perspectiva aérea es lo que da la sensación de km.
+        const ridge = (seed, h, color, alpha) => {
+          const c = document.createElement('canvas'); c.width = 1024; c.height = 256;
+          const g = c.getContext('2d');
+          g.clearRect(0,0,1024,256);
+          g.fillStyle = color; g.globalAlpha = alpha;
+          g.beginPath(); g.moveTo(0, 256);
+          for (let x = 0; x <= 1024; x += 6) {
+            const t = x/1024;
+            // Las tres frecuencias son múltiplos enteros de 2π: así la cresta
+            // cierra sin costura al dar la vuelta al anillo.
+            const y = 256 - h * (0.52
+              + 0.30*Math.sin(t*Math.PI*2*3  + seed)
+              + 0.15*Math.sin(t*Math.PI*2*7  + seed*2.3)
+              + 0.07*Math.sin(t*Math.PI*2*13 + seed*4.1));
+            g.lineTo(x, y);
+          }
+          g.lineTo(1024, 256); g.closePath(); g.fill();
+          const t2 = new THREE.CanvasTexture(c);
+          t2.colorSpace = THREE.SRGBColorSpace;
+          t2.wrapS = THREE.RepeatWrapping;
+          return t2;
+        };
+        [[41, 7.2, 3.0, ridge(1.7, 150, '#8ea6c2', 0.90), 2],
+         [35, 5.6, 2.0, ridge(4.2, 190, '#5f8168', 1.00), 3]].forEach(([rad, hgt, cy, tex, rep]) => {
+          tex.repeat.set(rep, 1);
+          const m = new THREE.Mesh(
+            new THREE.CylinderGeometry(rad, rad, hgt, 64, 1, true),
+            new THREE.MeshBasicMaterial({
+              map: tex, transparent: true, side: THREE.BackSide,
+              fog: false, depthWrite: false,
+            }));
+          m.position.set(ORIGIN.x, cy, ORIGIN.z);
+          outside.add(m);
+        });
+
+        // Suelo del campus, justo bajo el piso del salón: así el salón se
+        // apoya en algo en vez de flotar en el vacío.
+        //
+        // Un disco de color liso se lee como una losa de plástico y le roba
+        // protagonismo al salón. Dos cosas lo arreglan: manchones de verde
+        // (ningún césped es de un solo color) y un desvanecido al color del
+        // horizonte en el borde — la bruma de la distancia, que además esconde
+        // el canto del disco.
+        const gC = document.createElement('canvas'); gC.width = 512; gC.height = 512;
+        const gx = gC.getContext('2d');
+        gx.fillStyle = '#6d8557'; gx.fillRect(0, 0, 512, 512);
+        for (let i = 0; i < 420; i++) {
+          const r = 14 + Math.random()*54;
+          gx.fillStyle = Math.random() < 0.5
+            ? 'rgba(120,145,86,' + (0.10 + Math.random()*0.16) + ')'
+            : 'rgba(74,96,58,'   + (0.10 + Math.random()*0.16) + ')';
+          gx.beginPath();
+          gx.ellipse(Math.random()*512, Math.random()*512, r, r*(0.5+Math.random()*0.6),
+                     Math.random()*Math.PI, 0, Math.PI*2);
+          gx.fill();
+        }
+        const haze = gx.createRadialGradient(256, 256, 120, 256, 256, 256);
+        haze.addColorStop(0,    'rgba(210,226,235,0)');
+        haze.addColorStop(0.72, 'rgba(210,226,235,0.35)');
+        haze.addColorStop(1,    'rgba(219,232,239,0.92)');
+        gx.fillStyle = haze; gx.fillRect(0, 0, 512, 512);
+        const grassTex = new THREE.CanvasTexture(gC);
+        grassTex.colorSpace = THREE.SRGBColorSpace;
+        grassTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+        const grass = new THREE.Mesh(new THREE.CircleGeometry(44, 64),
+          new THREE.MeshBasicMaterial({ map: grassTex, fog: false }));
+        grass.rotation.x = -Math.PI/2; grass.position.set(ORIGIN.x, -0.06, ORIGIN.z);
+        outside.add(grass);
+
+        // Vegetación tropical justo afuera. Copas de icosaedro achatado: con
+        // flatShading leen como follaje sin costar una malla de verdad.
+        const foliage = [0x4f7c3a, 0x5f8f42, 0x436b34, 0x6b9b48];
+        // Los altos van LEJOS y los bajos cerca. Con todos pegados al muro, el
+        // follaje tapaba el cielo y las ventanas quedaban del mismo valor que
+        // la pared: un ventanal se reconoce porque BRILLA contra el muro, y
+        // ese brillo lo pone el cielo, no el vidrio.
+        const trees = [
+          { x:-3.2,  z:0.1,  s:0.70 }, { x:-2.6,  z:3.1,  s:0.62 },
+          { x:-3.6,  z:6.2,  s:0.75 }, { x:-2.9,  z:8.7,  s:0.58 },
+          { x:-9.5,  z:1.4,  s:1.45 }, { x:-11.0, z:5.6,  s:1.70 },
+          { x:-8.2,  z:9.2,  s:1.30 }, { x:-12.5, z:-1.5, s:1.55 },
+          { x:-10.2, z:12.0, s:1.40 },
+        ];
+        trees.forEach(({x, z, s}, i) => {
+          const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.07*s, 0.11*s, 1.5*s, 6),
+            new THREE.MeshBasicMaterial({ color: 0x6b5136, fog: false }));
+          trunk.position.set(x, 0.75*s - 0.05, z); outside.add(trunk);
+          for (let b = 0; b < 3; b++) {
+            const crown = new THREE.Mesh(new THREE.IcosahedronGeometry(0.62*s, 0),
+              new THREE.MeshBasicMaterial({ color: foliage[(i+b) % foliage.length], fog: false, flatShading: true }));
+            crown.position.set(x + (b-1)*0.42*s, 1.5*s - 0.05 + b*0.30*s, z + ((b%2)-0.5)*0.5*s);
+            crown.scale.set(1, 0.78, 1);
+            crown.rotation.set(b*0.7, b*1.3, 0);
+            outside.add(crown);
+          }
+        });
+
+        scene.add(outside);
+        outsideRef.current = outside;
 
         // ── Teacher's desk + monitor ──────────────────────────────────────
         const tDeskMat = stdMat({ color: 0x7c5228 });
@@ -1474,17 +1722,44 @@
 
         if (rainChanging) onLoadingChange?.(true);
 
+        // El vidrio casi no tiñe: ahora hay exterior detrás y taparlo sería
+        // desperdiciarlo. Quien cambia de humor es el CIELO.
+        //
+        // `dim` y `haze` tiñen TODO el exterior. Sin eso el cambio de clima
+        // solo se notaba mirando arriba: desde el ángulo normal casi todo el
+        // encuadre es pasto y árboles, y seguían igual de soleados bajo la
+        // lluvia. Con cielo gris y pasto apagado, el clima se lee de una.
+        const CLEAR = { color:0xdcecff, opacity:0.16, sky:['#2c74cf','#82b9ea','#e6f0f5'],
+                        dim:1.00, haze:0.00, hazeColor:0xe6f0f5 };
         const cfg = {
-          clear:    { color:0x87ceeb, opacity:0.50 },
-          cloudy:   { color:0xaabbcc, opacity:0.44 },
-          overcast: { color:0x7a8f96, opacity:0.54 },
-          rainy:    { color:0x4a6070, opacity:0.64 },
-        }[weather] ?? { color:0x87ceeb, opacity:0.50 };
+          clear:    CLEAR,
+          cloudy:   { color:0xd2dae4, opacity:0.20, sky:['#5b83ac','#9fb4c6','#dde4e9'],
+                      dim:0.86, haze:0.10, hazeColor:0xdde4e9 },
+          overcast: { color:0xbfc9d0, opacity:0.26, sky:['#6f7d88','#98a4ad','#c6ced3'],
+                      dim:0.68, haze:0.20, hazeColor:0xc6ced3 },
+          rainy:    { color:0x9fb0bd, opacity:0.34, sky:['#41505d','#63727e','#8f9aa3'],
+                      dim:0.50, haze:0.30, hazeColor:0x8f9aa3 },
+        }[weather] ?? CLEAR;
         windowGlassRef.current.forEach(g => {
           g.material.color.setHex(cfg.color);
           g.material.opacity = cfg.opacity;
         });
+        if (skyRef.current) {
+          skyRef.current.draw(...cfg.sky);
+          skyRef.current.tex.needsUpdate = true;
+        }
+        // El cielo lo pinta su propio canvas, así que se salta el tinte.
+        if (outsideRef.current) {
+          const hz = new THREE.Color(cfg.hazeColor);
+          outsideRef.current.traverse(o => {
+            const m = o.material;
+            if (!m || !m.color || o === skyRef.current?.mesh) return;
+            if (!m.userData.baseColor) m.userData.baseColor = m.color.clone();
+            m.color.copy(m.userData.baseColor).multiplyScalar(cfg.dim).lerp(hz, cfg.haze);
+          });
+        }
         sunBeamsRef.current.forEach(b => { b.visible = (weather === "clear"); });
+        sunPoolsRef.current.forEach(p => { p.visible = (weather === "clear"); });
         if (rainRef.current.group)
           rainRef.current.group.visible = (weather === "rainy");
 
