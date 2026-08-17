@@ -1,0 +1,48 @@
+name: Publicar en GitHub Pages
+
+# Cada push a main vuelve a armar el sitio y lo publica. También se puede
+# lanzar a mano desde la pestaña Actions (workflow_dispatch).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Si llegan dos pushes seguidos, se publica solo el último.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generar deploy/
+        # El sitio vive en usuario.github.io/smart-classroom/, así que las
+        # rutas absolutas necesitan ese prefijo. Si algún día se le pone
+        # dominio propio, basta cambiar esto a "/".
+        env:
+          BASE_PATH: /smart-classroom/
+        run: bash scripts/build-deploy.sh
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: deploy
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

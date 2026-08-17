@@ -30,3 +30,6 @@ backend/static/vendor/models/*
 
 # LibreOffice
 .~lock.*#
+
+# Caché local de wrangler — trae el id y el correo de la cuenta
+.wrangler/

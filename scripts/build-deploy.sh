@@ -36,4 +36,19 @@ cp -R "$SRC/vendor" "$OUT/vendor"
 cp -R "$SRC/img" "$OUT/img"
 cp -R "$SRC/img" "$OUT/app/img"
 
+# GitHub Pages publica el sitio bajo /smart-classroom/, no en la raíz del
+# dominio, así que las rutas absolutas (/vendor/…, /app/…) darían 404. Con
+# BASE_PATH se les antepone el prefijo — pero solo en la copia publicada,
+# para que backend/static/ siga funcionando en la raíz cuando corres local.
+#
+#   BASE_PATH=/smart-classroom/ bash scripts/build-deploy.sh
+#
+# Las rutas /api/ no se tocan: el gemelo ya las manda al backend de Render.
+BASE_PATH="${BASE_PATH:-/}"
+if [ "$BASE_PATH" != "/" ]; then
+  find "$OUT" -name '*.html' -print0 \
+    | xargs -0 perl -pi -e "s{(\"|')/(vendor|app)/}{\$1${BASE_PATH}\$2/}g"
+  echo "   rutas reescritas con prefijo $BASE_PATH"
+fi
+
 echo "✅ deploy/ generado — $(find "$OUT" -type f | wc -l | tr -d ' ') archivos"
