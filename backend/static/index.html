@@ -55,6 +55,7 @@
     /* ── Header ─────────────────────────────────────────────────────────── */
     header {
       display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 0.5rem 1rem;
       padding: 0.75rem 1.5rem;
       background: linear-gradient(90deg, #13162080 0%, #1a1d2780 100%);
       backdrop-filter: blur(8px);
@@ -66,6 +67,11 @@
       background: linear-gradient(90deg, #e2e8f0, #94a3b8);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
+    /* Los dos grupos del header. min-width:0 deja que el título se corte o
+       baje de línea en vez de empujar los botones fuera de la pantalla. */
+    .hdr-left  { display: flex; align-items: center; gap: 1rem; min-width: 0; }
+    .hdr-right { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .hdr-left h1 { min-width: 0; }
 
     .badge {
       font-size: 0.68rem; padding: 0.25rem 0.7rem;
@@ -88,7 +94,31 @@
       display: grid; grid-template-columns: 1fr 360px;
       gap: 1rem; padding: 1rem 1.5rem; max-width: 1400px; margin: 0 auto;
     }
-    @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+    .col-main, .col-side { display: flex; flex-direction: column; gap: 1rem; }
+
+    /* Una celda de grid no se encoge por debajo del contenido más ancho que
+       tenga dentro, y el lienzo 3D conserva el tamaño que tenía en escritorio.
+       Sin esto la columna se queda en ~840px dentro de un celular de 375 y la
+       página entera se va de lado. */
+    main > *, .col-main > *, .col-side > *, .panel { min-width: 0; }
+
+    @media (max-width: 900px) {
+      main { grid-template-columns: 1fr; }
+
+      /* Las dos columnas desaparecen como cajas y sus paneles pasan a ser
+         hijos directos de main, que aquí es una sola columna. Así el orden de
+         lectura en celular se decide con `order` y no hay que duplicar
+         marcado ni mover componentes de sitio. */
+      .col-main, .col-side { display: contents; }
+
+      .s-3d     { order: 1; }
+      .s-demo   { order: 2; }
+      .s-zones  { order: 3; }
+      .s-voice  { order: 4; }
+      .s-emg    { order: 5; }
+      .s-energy { order: 6; }
+      .s-carbon { order: 7; }
+    }
 
     /* ── Panels ─────────────────────────────────────────────────────────── */
     .panel {
@@ -210,6 +240,10 @@
 
     /* ── 3D Canvas ──────────────────────────────────────────────────────── */
     #canvas3d { width: 100%; height: 420px; border-radius: 0.5rem; overflow: hidden; display: block; }
+    /* Three.js le pone al lienzo un ancho fijo en píxeles. Al girar el celular
+       o estrechar la ventana ese ancho tarda un cuadro en actualizarse, y en
+       ese momento asoma por debajo del panel. */
+    #canvas3d canvas { max-width: 100%; display: block; }
 
     /* ── Voice button ───────────────────────────────────────────────────── */
     .voice-btn {
@@ -312,14 +346,20 @@
 
     /* ── MOBILE ─────────────────────────────────────────────────────────── */
     @media (max-width: 640px) {
-      /* Header */
-      header { padding: 0.6rem 0.9rem; gap: 0.5rem; }
-      header h1 { font-size: 0.82rem; }
+      /* Header: dos filas. Arriba el título con el enlace a la portada,
+         abajo los controles repartidos de lado a lado. En una sola fila no
+         caben — el botón de reiniciar se salía de la pantalla. */
+      header { padding: 0.6rem 0.9rem; gap: 0.45rem; }
+      header h1 { font-size: 0.82rem; line-height: 1.3; }
+      .hdr-left, .hdr-right { width: 100%; }
+      .hdr-left  { gap: 0.6rem; justify-content: space-between; }
+      .hdr-right { justify-content: space-between; gap: 0.4rem; }
       .badge { font-size: 0.65rem; padding: 0.2rem 0.55rem; }
       .reset-btn { font-size: 0.65rem; padding: 0.2rem 0.6rem; }
 
       /* Layout */
       main { padding: 0.75rem; gap: 0.75rem; }
+      .emg-banner { margin: 0 0.75rem; }
 
       /* Panels */
       .panel { padding: 0.75rem; }
@@ -343,10 +383,17 @@
       .ref-grid { grid-template-columns: 1fr 1fr; }
       .ref-value { font-size: 0.8rem; }
 
-      /* Tables */
-      .cmp-table { font-size: 0.65rem; }
-      .cmp-table th { padding: 0.3rem 0.4rem; font-size: 0.58rem; }
-      .cmp-table td { padding: 0.28rem 0.4rem; }
+      /* Tablas. Se aprieta el relleno hasta que las cuatro columnas caben en
+         un celular: la de «Ahorro» es la que demuestra el proyecto y no puede
+         quedar escondida detrás de un desplazamiento lateral. */
+      .cmp-table { font-size: 0.6rem; table-layout: fixed; }
+      .cmp-table th { padding: 0.3rem 0.18rem; font-size: 0.53rem; letter-spacing: 0; }
+      .cmp-table td { padding: 0.28rem 0.18rem; }
+      .cmp-table th:first-child, .cmp-table td:first-child { padding-left: 0.1rem; width: 34%; }
+      /* Los nombres largos de métrica vienen con nowrap en línea, pensado para
+         escritorio; aquí se dejan bajar de renglón para que no se monten
+         encima de la columna de al lado. */
+      .cmp-table td:first-child { white-space: normal !important; line-height: 1.25; }
 
       /* Carbon bars */
       .carbon-bar-track { height: 12px; }
@@ -2294,7 +2341,7 @@
       };
 
       return (
-        <div className="panel">
+        <div className="panel s-demo">
           <h2>{t('demo')}</h2>
           <div style={{fontSize:"0.65rem",color:"#64748b",marginBottom:"0.3rem"}}>{t('occ')}</div>
           <div className="chip-group">{scenarios.map(({id,k})=>{const isLoading=loading===`s-${id}`; return <button key={id} className={`chip${scenario===id?" active-blue":""}${isLoading?" loading":""}`} onClick={()=>setS(id)}>{isLoading&&<span className="spinner"/>}{t(k)}</button>;})}</div>
@@ -2353,7 +2400,7 @@
       ];
 
       return (
-        <div className="panel">
+        <div className="panel s-energy">
           <h2>{t('energy')}</h2>
 
           {/* Datos de referencia — siempre visibles */}
@@ -2420,7 +2467,7 @@
       const barW       = (v) => `${Math.min(100, Math.round(v / base_co2 * 100))}%`;
 
       return (
-        <div className="panel">
+        <div className="panel s-carbon">
           <h2>{t('carbon')}</h2>
 
           {/* Datos de referencia */}
@@ -2535,7 +2582,7 @@
       const blinking   = ["zone_A","zone_B","zone_C","zone_D"].filter(z => !route.includes(z));
 
       return (
-        <div className="panel" style={active ? {borderColor:"#ef444460"} : {}}>
+        <div className="panel s-emg" style={active ? {borderColor:"#ef444460"} : {}}>
           <h2>{t('emg')}</h2>
           <div className="emg-grid">
             {KINDS.map(({ kind, icon }) => (
@@ -2645,15 +2692,15 @@
       return (
         <>
           <header>
-            <div style={{display:"flex",alignItems:"center",gap:"1rem"}}>
-              <h1>🏫 Smart Classroom AI — Digital Twin</h1>
+            <div className="hdr-left">
+              <h1>🏫 Smart Classroom AI <span className="hdr-sub">— Digital Twin</span></h1>
               <a href="/app/landing.html" style={{fontSize:"0.75rem",fontWeight:600,color:"#94a3b8",textDecoration:"none",padding:"0.25rem 0.8rem",borderRadius:"9999px",border:"1px solid #ffffff20",whiteSpace:"nowrap",transition:"all 0.2s"}}
                 onMouseOver={e=>{ e.target.style.color="#f1f5f9"; e.target.style.background="rgba(255,255,255,0.06)"; }}
                 onMouseOut={e=>{ e.target.style.color="#94a3b8"; e.target.style.background="transparent"; }}>
                 {t('home')}
               </a>
             </div>
-            <div style={{display:"flex",alignItems:"center",gap:"0.5rem"}}>
+            <div className="hdr-right">
               <div className="lang-toggle">
                 <button className={`lang-btn${lang==='es'?' active':''}`} onClick={()=>switchLang('es')}>ES</button>
                 <button className={`lang-btn${lang==='en'?' active':''}`} onClick={()=>switchLang('en')}>EN</button>
@@ -2677,10 +2724,17 @@
             </div>
           )}
 
+          {/*
+            El orden de los paneles es Controles → Zonas → Voz → Alerta →
+            Consumo → Huella. En pantalla ancha eso se lee bajando primero la
+            columna derecha; en celular las dos columnas se aplanan en una sola
+            (ver .col-main/.col-side en el CSS) y ahí manda la propiedad order,
+            que reproduce ese mismo recorrido de arriba abajo.
+          */}
           <main>
-            {/* Left column */}
-            <div style={{display:"flex",flexDirection:"column",gap:"1rem"}}>
-              <div className="panel">
+            {/* Columna izquierda: el gemelo y las cifras que salen de él */}
+            <div className="col-main">
+              <div className="panel s-3d">
                 <h2>{t('view3d')}</h2>
                 <div className={`canvas-wrap${emg ? ' emergency' : ''}`}>
                   <Classroom3D classroomState={state} weather={weather} hour={hour} onLoadingChange={setSceneLoading} />
@@ -2700,29 +2754,12 @@
               <CarbonPanel stats={stats} watts={watts} lang={lang} />
             </div>
 
-            {/* Right column */}
-            <div style={{display:"flex",flexDirection:"column",gap:"1rem"}}>
-
-              {/* Voice */}
-              <div className="panel">
-                <h2>{t('voice')}</h2>
-                <VoiceBtn lang={lang} onProcessing={setVoiceLoading} />
-                <details style={{marginTop:"0.6rem",fontSize:"0.68rem"}}>
-                  <summary style={{color:"#475569",cursor:"pointer"}}>{t('voice.examples')}</summary>
-                  <div style={{marginTop:"0.4rem",display:"flex",flexDirection:"column",gap:"0.2rem"}}>
-                    {(lang === 'en'
-                      ? ["turn off all","turn on all","dim all","turn on zone a","turn off zone b","dim zone c","auto mode"]
-                      : ["apagar todo","encender todo","atenuar todo","encender zona a","apagar zona b","atenuar zona c","modo auto"]
-                    ).map(c => (
-                      <code key={c} style={{background:"#141820",padding:"0.15rem 0.4rem",borderRadius:"0.2rem",color:"#94a3b8"}}>"{c}"</code>
-                    ))}
-                  </div>
-                </details>
-              </div>
+            {/* Columna derecha: todo lo que el visitante puede accionar */}
+            <div className="col-side">
 
               <DemoControls onSceneLoading={setSceneLoading} onHour={setHour} lang={lang} />
 
-              <div className="panel">
+              <div className="panel s-zones">
                 <h2>{t('zones')}</h2>
                 <div className="zone-grid">
                   {["zone_A","zone_B","zone_C","zone_D"].map(z => {
@@ -2738,6 +2775,23 @@
                     );
                   })}
                 </div>
+              </div>
+
+              {/* Voice */}
+              <div className="panel s-voice">
+                <h2>{t('voice')}</h2>
+                <VoiceBtn lang={lang} onProcessing={setVoiceLoading} />
+                <details style={{marginTop:"0.6rem",fontSize:"0.68rem"}}>
+                  <summary style={{color:"#475569",cursor:"pointer"}}>{t('voice.examples')}</summary>
+                  <div style={{marginTop:"0.4rem",display:"flex",flexDirection:"column",gap:"0.2rem"}}>
+                    {(lang === 'en'
+                      ? ["turn off all","turn on all","dim all","turn on zone a","turn off zone b","dim zone c","auto mode"]
+                      : ["apagar todo","encender todo","atenuar todo","encender zona a","apagar zona b","atenuar zona c","modo auto"]
+                    ).map(c => (
+                      <code key={c} style={{background:"#141820",padding:"0.15rem 0.4rem",borderRadius:"0.2rem",color:"#94a3b8"}}>"{c}"</code>
+                    ))}
+                  </div>
+                </details>
               </div>
 
               <EmergencyPanel emergency={emg} lang={lang} />

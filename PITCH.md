@@ -117,7 +117,7 @@ ingeniería, no como "una animación bonita".*
 **[Gira el modelo con el mouse. Que vean que es 3D de verdad, no un video.]**
 
 > Y adentro de este salón virtual corre el sistema de Inteligencia Artificial
-> completo. **Cinco agentes.**
+> completo. **Seis agentes.**
 
 **[Señala cada uno en pantalla mientras lo nombras.]**
 
@@ -125,6 +125,9 @@ ingeniería, no como "una animación bonita".*
 > - El **Light Sensor Agent** calcula cuánta luz natural entra, según la hora y el clima.
 > - El **Voice Agent** escucha órdenes por voz.
 > - El **Digital Twin Agent** mide la energía y la traduce a pesos y a CO₂.
+> - El **Agente de Emergencias** convierte una alerta de sismo o incendio en un
+>   patrón de luces de evacuación, y **manda sobre todos los demás, incluida la
+>   voz**: la voz manda sobre la comodidad, no sobre la seguridad.
 > - Y el **Orquestador** es el cerebro: recibe todo eso y **cada cinco segundos**
 >   decide qué hace cada zona.
 
@@ -265,7 +268,7 @@ pregunta más probable:
 ### Por qué multi-agente y no un solo programa
 
 > Podríamos haber hecho un solo archivo gigante que hiciera todo. Lo separamos en
-> cinco agentes por tres razones de ingeniería:
+> seis agentes por tres razones de ingeniería:
 >
 > 1. **Cada agente tiene una sola responsabilidad.** El de visión no sabe nada de
 >    energía. Si se daña la detección de personas, sé exactamente dónde buscar.
@@ -537,7 +540,7 @@ Para el juez que pasa rápido o el que se para a mitad de tu pitch.
 > cuánto va a ahorrar, y para saberlo tocaría instalarlos.
 >
 > Nosotras rompimos ese círculo con un **Gemelo Digital**: una réplica virtual 3D
-> del salón, con cinco agentes de Inteligencia Artificial corriendo adentro,
+> del salón, con seis agentes de Inteligencia Artificial corriendo adentro,
 > decidiendo zona por zona según cuánta gente hay y cuánto sol entra. Cada 5
 > segundos, y dejando escrita la razón de cada decisión.
 >

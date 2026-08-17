@@ -5,13 +5,23 @@
 ```
    NAVEGADOR
        │
-       ├── páginas ──────► NETLIFY   (archivos estáticos)
+       ├── páginas ──────► GITHUB PAGES   (archivos estáticos)
+       │                   https://victolopezhernandez-rgb.github.io/smart-classroom/
        │
-       └── datos ────────► RENDER    (Python + los 6 agentes)
+       └── datos ────────► RENDER         (Python + los 6 agentes)
                            https://smart-classroom-rtne.onrender.com
 ```
 
-Netlify no puede ejecutar Python; por eso el backend vive aparte.
+GitHub Pages no puede ejecutar Python; por eso el backend vive aparte.
+
+El sitio se publica solo con el flujo de trabajo `.github/workflows/deploy.yml`:
+cada `push` a `main` corre `scripts/build-deploy.sh` y sube el resultado. No hay
+que entrar a ninguna consola ni conectar ninguna cuenta.
+
+> Como el sitio cuelga de `/smart-classroom/` y no de la raíz del dominio, el
+> flujo de trabajo le pasa `BASE_PATH=/smart-classroom/` al script, que antepone
+> ese prefijo a las rutas `/vendor/…` y `/app/…`. Sin eso todo daría 404. Si
+> algún día le pones dominio propio, cambia ese valor a `/`.
 
 ---
 
@@ -35,7 +45,8 @@ git add -A && git commit -m "describe tu cambio" && git push
 
 ### 3 · Ya está
 
-Netlify y Render detectan el push y se actualizan solos en 1–3 minutos.
+GitHub Pages y Render detectan el push y se actualizan solos en 1–3 minutos.
+El avance se ve en la pestaña **Actions** del repositorio.
 
 > ⚠️ **Nunca edites nada dentro de `deploy/`.** Esa carpeta se regenera
 > automáticamente y tus cambios se perderían. El original vive en
@@ -55,11 +66,17 @@ Genera `deploy/` en tu computador para revisarlo localmente.
 
 ## Si algo sale mal
 
-**Volver a la versión anterior:** en Netlify, pestaña **Deploys** → elige un
-despliegue anterior → **Publish deploy**. Vuelve atrás en segundos.
+**Volver a la versión anterior:** deshaz el commit y vuelve a empujar. Como cada
+push republica el sitio, el `git revert` es el botón de retroceso:
 
-**El sitio no se actualizó:** revisa la pestaña **Deploys** en Netlify. Si el
-build falló, el error aparece en el log.
+```bash
+git revert HEAD && git push
+```
+
+**El sitio no se actualizó:** mira la pestaña **Actions** del repositorio. Si el
+flujo de trabajo falló, el error sale en el registro del paso que se puso rojo.
+Para volver a publicar sin cambiar nada: **Actions** → *Publicar en GitHub
+Pages* → **Run workflow**.
 
 **La app 3D dice 🔴 Conectando:** el backend está dormido. Abre
 `https://smart-classroom-rtne.onrender.com/health` y espera 50 segundos.
@@ -77,8 +94,8 @@ del computador, ni siquiera hacia el backend. Lo único que viaja son las
 coordenadas de las zonas. Tampoco necesita internet, así que en la feria
 funciona igual con `./run.sh`.
 
-La cámara solo funciona en **origen seguro**: `localhost` o HTTPS. Netlify da
-HTTPS, así que sirve en los dos casos.
+La cámara solo funciona en **origen seguro**: `localhost` o HTTPS. GitHub Pages
+da HTTPS, así que sirve en los dos casos.
 
 Qué mide y cómo: la posición horizontal del rostro decide izquierda/derecha del
 salón (A·C vs B·D), y el **tamaño** del rostro decide frente/fondo, porque una
@@ -102,24 +119,32 @@ por su tamaño. Si algún día hacen falta:
 
 ---
 
-## Crear el sitio en Netlify (solo la primera vez)
+## Cómo quedó montada la publicación (ya está hecho)
 
-1. Entra a [app.netlify.com](https://app.netlify.com) → **Add new site** →
-   **Import an existing project** → **GitHub** → elige este repositorio.
-2. Netlify lee `netlify.toml` y rellena solo el build:
-   - Branch: **`main`**
-   - Build command: `bash scripts/build-deploy.sh`
-   - Publish directory: `deploy`
-3. **Deploy site.** En 1–2 minutos queda publicado en una URL
-   `https://algo-random.netlify.app`, que puedes renombrar en
-   **Site configuration → Change site name**.
+No hay nada que configurar: todo está en `.github/workflows/deploy.yml`, dentro
+del repositorio. Se explica aquí por si hay que rehacerlo o mudarlo a otro lado.
 
-> ⚠️ La rama de producción tiene que ser **`main`**. La rama de pruebas
-> `prueba-coco-ssd` **no se puede publicar**: usa un modelo de 65 MB que no está
-> en git, así que allá la cámara daría 404.
+- Se dispara con cada `push` a `main`, y también a mano desde **Actions**.
+- Arma el sitio con `BASE_PATH=/smart-classroom/ bash scripts/build-deploy.sh`.
+- Sube la carpeta `deploy/` como artefacto y la publica en GitHub Pages.
+- El paso `configure-pages` lleva `enablement: true`, así que prende Pages solo
+  la primera vez sin tener que entrar a **Settings**.
+
+`deploy/` está en `.gitignore` **a propósito**: no se sube a git, se genera en
+cada publicación. Por eso nunca hay que editarla ni versionarla.
+
+> ⚠️ Solo se publica **`main`**. La rama de pruebas `prueba-coco-ssd` **no se
+> puede publicar**: usa un modelo de 65 MB que no está en git, así que allá la
+> cámara daría 404.
 
 El backend ya está en Render y acepta peticiones desde cualquier origen, así que
-no hay que tocar nada más: la app publicada se conecta sola.
+no hay que tocar nada más: la app publicada se conecta sola. El gemelo decide a
+qué backend hablarle según dónde esté abierto (`window.API_BASE` en
+`index.html`): en `localhost` habla con el servidor local, y en cualquier otro
+sitio con Render. Por eso mudarse de Netlify a Pages no obligó a tocar código.
+
+> `netlify.toml` sigue en el repositorio, pero **ya no se usa**. Se puede borrar
+> cuando quieras; no molesta.
 
 ---
 
@@ -128,4 +153,6 @@ no hay que tocar nada más: la app publicada se conecta sola.
 - Abre `https://smart-classroom-rtne.onrender.com/health` **un minuto antes**
   de presentar. El plan gratuito duerme el servidor tras 15 min sin uso.
 - Usa **Chrome** — el control por voz no funciona en Firefox.
-- Lleva las dos URLs anotadas por si falla el wifi.
+- Lleva las dos URLs anotadas por si falla el wifi:
+  - Sitio: `https://victolopezhernandez-rgb.github.io/smart-classroom/`
+  - Backend: `https://smart-classroom-rtne.onrender.com`

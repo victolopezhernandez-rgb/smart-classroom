@@ -19,8 +19,8 @@ ahorra. Todo el salón existe como **gemelo digital 3D**: no hay hardware.
 | **DigitalTwin** | `backend/agents/digital_twin.py` | Estado del salón y contabilidad de energía |
 | **Emergency** | `backend/agents/emergency.py` | Ruta de evacuación iluminada (añadido después del plan original) |
 
-El `CLAUDE.md` de la raíz describe 5 agentes; hoy son **6**. El de emergencias
-nació del Boost y manda sobre todos los demás, incluida la voz.
+El plan original tenía 5; hoy son **6**. El de emergencias nació del Boost y
+manda sobre todos los demás, incluida la voz.
 
 ---
 
@@ -68,6 +68,21 @@ explícitamente que la emergencia terminó.
 La luz natural sale de una senoide entre las 6:00 y las 18:00 multiplicada por
 el clima (`clear` 1.00 · `cloudy` 0.55 · `overcast` 0.30 · `rainy` 0.15) y por
 la exposición de cada zona — `backend/skills/natural_light_simulation.py`.
+
+### La hora es la de Colombia, no la del servidor
+
+Todo lo que dependa de «qué hora es en el salón» pasa por
+`backend/shared/clock.py`, que responde en `America/Bogota`. **Nadie debe usar
+`datetime.now()` a secas.**
+
+El servidor de Render corre en UTC, cinco horas adelante. Con el reloj del
+servidor, a la una de la tarde el gemelo creía que eran las seis: sol puesto,
+luz natural en `0.0` en las cuatro zonas y la IA encendiendo todo — justo lo
+contrario de lo que el proyecto quiere mostrar, y en plena franja de la feria.
+Se puede cambiar de país con la variable de entorno `CLASSROOM_TZ`.
+
+Ojo: esto solo se nota con el botón **Real** puesto. El backend arranca con la
+hora simulada en **10 h**, así que al abrirlo la hora del servidor no se ve.
 
 ---
 
@@ -136,6 +151,26 @@ pantalla en sRGB, así que multiplicar un color por 0.43 se ve como un 69 % de
 brillo. Por eso las 6 y las 12 seguían pareciéndose aunque el código estuviera
 bien. Se corrige con `dimmer(k) = k^2.2`.
 
+### El orden de los paneles
+
+De arriba abajo: **Controles Demo · Zonas · Voz · Alerta de Desastre · Consumo ·
+Huella de Carbono.** Primero lo que el visitante toca, después lo que el sistema
+responde. En pantalla ancha eso se lee bajando la columna derecha; en celular
+todo se aplana en una sola columna y **el orden se mantiene igual**.
+
+Cómo está hecho, por si hay que mover un panel: cada panel lleva una clase
+(`s-demo`, `s-zones`, `s-voice`, `s-emg`, `s-energy`, `s-carbon`, `s-3d`). Por
+debajo de 900 px las dos columnas se vuelven `display: contents` —dejan de
+existir como cajas— y sus paneles pasan a ser hijos directos de `main`, donde
+el orden lo decide la propiedad `order`. Así se cambia el orden en celular
+tocando solo el CSS, sin duplicar marcado.
+
+**Trampa que costó un rato:** una celda de grid no se encoge por debajo de su
+contenido más ancho, y el lienzo 3D conserva en píxeles el tamaño que tenía en
+escritorio. Resultado: en un celular de 375 px la columna se quedaba en 840 y la
+página entera se iba de lado. Se arregla con `min-width: 0` en los hijos de
+`main` — está comentado en el CSS.
+
 ---
 
 ## 7 · Estructura real del repositorio
@@ -147,7 +182,7 @@ smart-classroom/
 │   ├── agents/                  los 6 agentes
 │   ├── skills/                  la lógica pura, sin estado
 │   ├── routes/                  la API REST por agente
-│   ├── shared/                  estado, umbrales, log, broadcaster
+│   ├── shared/                  estado, umbrales, log, broadcaster, clock
 │   ├── static/                  ← LA INTERFAZ REAL
 │   │   ├── landing.html         página de entrada
 │   │   ├── index.html           gemelo digital 3D + tablero
@@ -157,8 +192,9 @@ smart-classroom/
 │   └── data/energy_logs.csv     mediciones (se regenera al correr)
 ├── agents/                      AGENT.md y SKILL_*.md — las instrucciones
 ├── shared_skills/               con que Claude Code construyó el sistema
-├── deploy/                      generado; NO editar
+├── deploy/                      generado; NO editar (y fuera de git a propósito)
 ├── scripts/build-deploy.sh      arma deploy/ desde backend/static/
+├── .github/workflows/deploy.yml publica en GitHub Pages con cada push a main
 ├── frontend/                    ⚠️ React+Vite del primer commit — YA NO SE USA
 ├── CLAUDE.md   DEPLOY.md   PITCH.md   GUION.md   PLAN_BOOST.md
 └── run.sh
@@ -237,13 +273,19 @@ un pulso, es un override. Solo funciona en **Chrome**.
 
 ```
    NAVEGADOR
-       ├── páginas ──► NETLIFY   (estático, build: bash scripts/build-deploy.sh)
-       └── datos ────► RENDER    https://smart-classroom-rtne.onrender.com
+       ├── páginas ──► GITHUB PAGES  https://victolopezhernandez-rgb.github.io/smart-classroom/
+       └── datos ────► RENDER        https://smart-classroom-rtne.onrender.com
 ```
 
-Netlify no ejecuta Python; por eso el backend vive aparte. Un `git push` a
-`main` actualiza los dos en 1–3 minutos. **Netlify solo publica lo que está en
-git.** Nunca edites `deploy/`: se regenera.
+GitHub Pages no ejecuta Python; por eso el backend vive aparte. Un `git push` a
+`main` actualiza los dos en 1–3 minutos: el sitio lo arma el flujo de trabajo
+`.github/workflows/deploy.yml` y el avance se ve en la pestaña **Actions**.
+**Solo se publica lo que está en git.** Nunca edites `deploy/`: se regenera.
+
+> Antes esto estaba en Netlify. Se mudó a GitHub Pages en agosto de 2026 al
+> acabarse los créditos, y **no hubo que tocar una sola línea de código**: el
+> gemelo elige a qué backend hablarle según dónde esté abierto, no según dónde
+> esté publicado. `netlify.toml` quedó en el repositorio pero ya no se usa.
 
 Detalles completos —incluido cómo volver a una versión anterior— en
 [DEPLOY.md](DEPLOY.md).
@@ -265,7 +307,7 @@ Detalles completos —incluido cómo volver a una versión anterior— en
 
 | Archivo | Para qué |
 |---|---|
-| `CLAUDE.md` | El plan original con que se construyó. Habla de 5 agentes; hoy son 6 |
+| `CLAUDE.md` | El plan con que se construyó, ya puesto al día. Incluye las convenciones que hay que respetar al tocar código |
 | `DEPLOY.md` | Publicar, actualizar y rescatar el sitio |
 | `PITCH.md` | Argumento y sustento del proyecto |
 | `GUION.md` | Qué decir en la presentación |

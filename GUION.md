@@ -73,14 +73,16 @@ Ventanas a la izquierda, tablero adelante.
 
 **[Gira el modelo. Que vean que es 3D de verdad.]**
 
-Y adentro corre el sistema de Inteligencia Artificial completo: **cinco agentes**.
+Y adentro corre el sistema de Inteligencia Artificial completo: **seis agentes**.
 
 **[Señala cada uno al nombrarlo.]**
 
 El **Vision Agent** cuenta personas y en qué zona están. El **Light Sensor**
 calcula la luz natural según hora y clima. El **Voice Agent** escucha órdenes por
-voz. El **Digital Twin** mide la energía y la traduce a pesos y a CO₂. Y el
-**Orquestador** es el cerebro: **cada cinco segundos** decide qué hace cada zona.
+voz. El **Digital Twin** mide la energía y la traduce a pesos y a CO₂. El
+**Agente de Emergencias** convierte una alerta de sismo o incendio en luces de
+evacuación. Y el **Orquestador** es el cerebro: **cada cinco segundos** decide
+qué hace cada zona.
 
 Los separamos así a propósito: **hoy el Vision Agent simula personas; mañana se
 le conecta una cámara real y el resto del sistema no se entera.** Esa
