@@ -623,6 +623,7 @@
       const dirLightRef     = useRef(null);
       const hemiRef         = useRef(null);
       const rainRef         = useRef({ group: null, drops: [] });
+      const corniceRef      = useRef([]);
       // Molde de la sombra de contacto, compartido por muebles y personas.
       const contactRef      = useRef(null);
       const dustRef         = useRef(null);
@@ -857,6 +858,10 @@
           roughness: 0.95,
         });
         const baseMat  = stdMat({ color: 0xe4ded0 });
+        // Los tres muros son planos de una sola cara: desaparecen solos cuando
+        // uno los mira por detrás, y por eso se ve el salón como casa de
+        // muñecas. Se guardan para que su remate desaparezca con ellos.
+        const planeWalls = [];
         [
           { pos:[5,1.7,0.01],    ry:0,           w:10, h:3.4 },
           { pos:[5,1.7,7.99],    ry:Math.PI,     w:10, h:3.4 },
@@ -864,6 +869,7 @@
         ].forEach(({pos,ry,w,h}) => {
           const m = new THREE.Mesh(new THREE.PlaneGeometry(w,h), wallMat);
           m.position.set(...pos); m.rotation.y=ry; m.receiveShadow=true; scene.add(m);
+          planeWalls.push(m);
         });
 
         // ── Hexágono, la firma del colegio ────────────────────────────────
@@ -1297,14 +1303,21 @@
         // amarillo, el salón quedaba dentro de un marco de cuadro que se
         // comía la escena. Gris claro se lee como el canto de la losa y no
         // compite con nada.
+        // Ojo: el remate SÍ es un volumen sólido, así que no desaparece solo
+        // como su muro. Si se deja quieto, el del muro de enfrente cruza la
+        // vista de casa de muñecas como una barra blanca de lado a lado.
+        // Por eso cada pieza viaja emparejada con su muro y se esconde con él
+        // (`corniceRef`, se resuelve en el bucle de animación). La del muro de
+        // ventanas no lleva pareja: ese muro es un sólido de verdad.
         const corniceMat = stdMat({ color: 0xcdc6b8, roughness: 0.92 });
-        [[5, 3.45, -0.06, 10.5, 0.13, 0.22],
-         [5, 3.45,  8.06, 10.5, 0.13, 0.22],
-         [10.06, 3.45, 4, 0.22, 0.13, 8.5],
-         [-0.11, 3.45, 4, 0.26, 0.13, 8.5],
-        ].forEach(([cx, cy, cz, cw, ch, cd]) => {
+        [[5, 3.45, -0.06, 10.5, 0.13, 0.22, planeWalls[0]],
+         [5, 3.45,  8.06, 10.5, 0.13, 0.22, planeWalls[1]],
+         [10.06, 3.45, 4, 0.22, 0.13, 8.5,  planeWalls[2]],
+         [-0.11, 3.45, 4, 0.26, 0.13, 8.5,  null],
+        ].forEach(([cx, cy, cz, cw, ch, cd, wall]) => {
           const c = new THREE.Mesh(RBox(cw, ch, cd), corniceMat);
           c.position.set(cx, cy, cz); c.castShadow = true; scene.add(c);
+          if (wall) corniceRef.current.push({ mesh: c, wall });
         });
 
         // ── Teacher's desk + monitor ──────────────────────────────────────
@@ -1616,6 +1629,7 @@
         // ── Animation loop ────────────────────────────────────────────────
         let id;
         let lastW = 0, lastH = 0;
+        const _camDir = new THREE.Vector3();   // reutilizado cada cuadro
         const animate = () => {
           id = requestAnimationFrame(animate);
 
@@ -1637,6 +1651,13 @@
             4 + radius*Math.cos(theta)*Math.cos(phi)
           );
           camera.lookAt(5, 0.5, 4);
+
+          // Cada remate se esconde cuando su muro queda de espaldas. La
+          // normal del plano es +Z girada por su propio rotation.y.
+          corniceRef.current.forEach(({ mesh, wall }) => {
+            const n = new THREE.Vector3(0, 0, 1).applyQuaternion(wall.quaternion);
+            mesh.visible = n.dot(_camDir.subVectors(camera.position, wall.position)) > 0;
+          });
 
           // ── Parpadeo de emergencia ──────────────────────────────────────
           // Media onda cuadrada: encendido y apagado en bloques iguales.
