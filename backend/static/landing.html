@@ -12,19 +12,30 @@
     /* ── Reset & Base ─────────────────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    /* La paleta viene del salón que se ve en el gemelo: el amarillo de las
+       franjas del muro, el ladrillo de las columnas y el verde del campus,
+       sobre un fondo oscuro cálido. El azul frío de antes competía con las
+       capturas; el ocre las acompaña. */
     :root {
-      --navy:    #040d1e;
-      --navy2:   #071428;
-      --blue:    #2563eb;
-      --blue-l:  #3b82f6;
-      --cyan:    #06b6d4;
-      --purple:  #818cf8;
-      --green:   #10b981;
-      --text:    #f1f5f9;
-      --muted:   #94a3b8;
-      --dim:     #475569;
-      --card:    rgba(7, 20, 40, 0.75);
-      --border:  rgba(255,255,255,0.07);
+      --navy:    #0c1016;   /* fondo base */
+      --navy2:   #121821;   /* fondo de sección alterna */
+      --amber:   #f2b134;   /* amarillo del colegio — acento principal */
+      --amber-l: #ffd166;
+      --terra:   #e08a4f;   /* ladrillo de las columnas */
+      --green:   #3fa87a;   /* verde del campus */
+      --green-l: #6fd3a3;
+      --text:    #f5f2ec;
+      --muted:   #a9a49c;
+      --dim:     #6b6660;
+      --card:    rgba(255,255,255,0.035);
+      --border:  rgba(255,255,255,0.08);
+
+      /* Nombres heredados del diseño azul, ya reasignados. Se conservan
+         porque medio archivo los usa en estilos en línea. */
+      --blue:    #c98a22;
+      --blue-l:  #e0a230;
+      --cyan:    #ffc857;
+      --purple:  #e08a4f;
     }
 
     html { scroll-behavior: smooth; }
@@ -39,7 +50,7 @@
 
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: var(--navy); }
-    ::-webkit-scrollbar-thumb { background: #1e3a6e; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb { background: #3d3524; border-radius: 3px; }
 
     h1, h2, h3, h4 { font-family: 'Space Grotesk', sans-serif; line-height: 1.15; }
 
@@ -71,7 +82,7 @@
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
       display: flex; align-items: center; justify-content: space-between;
       padding: 0.9rem 2rem;
-      background: rgba(4, 13, 30, 0.85);
+      background: rgba(12, 16, 22, 0.85);
       backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--border);
     }
@@ -79,7 +90,7 @@
       font-family: 'Space Grotesk', sans-serif;
       font-weight: 700; font-size: 1rem;
       letter-spacing: -0.02em;
-      background: linear-gradient(90deg, #60a5fa, #06b6d4);
+      background: linear-gradient(90deg, #f2b134, #ffc857);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
     .nav-links { display: flex; align-items: center; gap: 1.5rem; }
@@ -95,10 +106,10 @@
       background: linear-gradient(135deg, var(--blue), var(--cyan));
       border-radius: 9999px; font-size: 0.8rem; font-weight: 600;
       color: #fff !important; text-decoration: none;
-      box-shadow: 0 0 18px rgba(37,99,235,0.35);
+      box-shadow: 0 0 18px rgba(242,177,52,0.35);
       transition: box-shadow 0.2s, transform 0.2s;
     }
-    .nav-cta:hover { box-shadow: 0 0 28px rgba(37,99,235,0.55); transform: translateY(-1px); }
+    .nav-cta:hover { box-shadow: 0 0 28px rgba(242,177,52,0.55); transform: translateY(-1px); }
 
     /* ── LANG TOGGLE ──────────────────────────────────────────────────────── */
     .lang-toggle {
@@ -114,7 +125,7 @@
     }
     .lang-btn.active {
       background: linear-gradient(135deg, var(--blue), var(--cyan));
-      color: #fff; box-shadow: 0 0 10px rgba(37,99,235,0.4);
+      color: #fff; box-shadow: 0 0 10px rgba(242,177,52,0.4);
     }
     .lang-btn:not(.active):hover { color: var(--muted); }
 
@@ -130,9 +141,9 @@
     .hero-bg {
       position: absolute; inset: 0; z-index: 0;
       background:
-        radial-gradient(ellipse 80% 60% at 20% 40%, rgba(37,99,235,0.18) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 50% at 80% 60%, rgba(6,182,212,0.14) 0%, transparent 60%),
-        radial-gradient(ellipse 70% 70% at 50% 100%, rgba(129,140,248,0.10) 0%, transparent 60%),
+        radial-gradient(ellipse 80% 60% at 20% 40%, rgba(242,177,52,0.18) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 80% 60%, rgba(255,200,87,0.14) 0%, transparent 60%),
+        radial-gradient(ellipse 70% 70% at 50% 100%, rgba(224,138,79,0.10) 0%, transparent 60%),
         var(--navy2);
       animation: heroShift 10s ease-in-out infinite alternate;
     }
@@ -156,9 +167,9 @@
       position: absolute; border-radius: 50%; filter: blur(70px); z-index: 0;
       animation: float 8s ease-in-out infinite alternate;
     }
-    .orb-1 { width: 420px; height: 420px; background: rgba(37,99,235,0.15); top: -10%; left: -8%; animation-duration: 9s; }
-    .orb-2 { width: 320px; height: 320px; background: rgba(6,182,212,0.12); bottom: 5%; right: -5%; animation-duration: 11s; animation-delay: -3s; }
-    .orb-3 { width: 250px; height: 250px; background: rgba(129,140,248,0.12); top: 30%; right: 15%; animation-duration: 7s; animation-delay: -1s; }
+    .orb-1 { width: 420px; height: 420px; background: rgba(242,177,52,0.15); top: -10%; left: -8%; animation-duration: 9s; }
+    .orb-2 { width: 320px; height: 320px; background: rgba(255,200,87,0.12); bottom: 5%; right: -5%; animation-duration: 11s; animation-delay: -3s; }
+    .orb-3 { width: 250px; height: 250px; background: rgba(224,138,79,0.12); top: 30%; right: 15%; animation-duration: 7s; animation-delay: -1s; }
     @keyframes float {
       0%   { transform: translate(0, 0) scale(1); }
       100% { transform: translate(20px, -30px) scale(1.05); }
@@ -169,8 +180,8 @@
     .hero-badge {
       display: inline-flex; align-items: center; gap: 0.4rem;
       padding: 0.3rem 0.9rem; border-radius: 9999px;
-      border: 1px solid rgba(6,182,212,0.35);
-      background: rgba(6,182,212,0.08);
+      border: 1px solid rgba(255,200,87,0.35);
+      background: rgba(255,200,87,0.08);
       font-size: 0.72rem; font-weight: 600; color: var(--cyan);
       letter-spacing: 0.06em; text-transform: uppercase;
       margin-bottom: 1.5rem;
@@ -184,7 +195,7 @@
       margin-bottom: 1.25rem;
     }
     .hero-title .grad {
-      background: linear-gradient(135deg, #60a5fa 0%, #06b6d4 40%, #818cf8 100%);
+      background: linear-gradient(135deg, #f2b134 0%, #ffc857 40%, #e08a4f 100%);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
 
@@ -201,11 +212,11 @@
       padding: 0.8rem 1.8rem; border-radius: 9999px;
       background: linear-gradient(135deg, var(--blue), var(--cyan));
       font-weight: 700; font-size: 0.95rem; color: #fff; text-decoration: none;
-      box-shadow: 0 0 30px rgba(37,99,235,0.4);
+      box-shadow: 0 0 30px rgba(242,177,52,0.4);
       transition: transform 0.2s, box-shadow 0.2s;
       font-family: 'Space Grotesk', sans-serif;
     }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 45px rgba(37,99,235,0.6); }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 45px rgba(242,177,52,0.6); }
 
     .btn-ghost {
       display: inline-flex; align-items: center; gap: 0.5rem;
@@ -215,21 +226,23 @@
       transition: border-color 0.2s, background 0.2s;
       font-family: 'Space Grotesk', sans-serif;
     }
-    .btn-ghost:hover { border-color: rgba(96,165,250,0.4); background: rgba(96,165,250,0.06); }
+    .btn-ghost:hover { border-color: rgba(242,177,52,0.4); background: rgba(242,177,52,0.06); }
 
     /* Hero stats */
+    /* Cinco cifras en rejilla, no en flex: con flex la quinta se caía sola
+       a una segunda línea y rompía la fila de separadores. */
     .hero-stats {
-      display: flex; justify-content: center; flex-wrap: wrap; gap: 2rem;
-      padding: 1.5rem 2rem; border-radius: 1rem;
+      display: grid; grid-template-columns: repeat(5, 1fr);
+      padding: 1.5rem 1rem; border-radius: 1rem;
       background: rgba(255,255,255,0.03);
       border: 1px solid var(--border);
       backdrop-filter: blur(8px);
     }
-    .hero-stat { text-align: center; }
+    .hero-stat { text-align: center; padding: 0 0.75rem; }
+    .hero-stat + .hero-stat { border-left: 1px solid var(--border); }
     .hero-stat-num { font-family: 'Space Grotesk', sans-serif; font-size: 1.9rem; font-weight: 800; color: var(--text); line-height: 1; }
     .hero-stat-num span { font-size: 1.1rem; font-weight: 600; color: var(--cyan); }
     .hero-stat-label { font-size: 0.7rem; color: var(--muted); margin-top: 0.25rem; text-transform: uppercase; letter-spacing: 0.06em; }
-    .stat-div { width: 1px; background: var(--border); }
 
     /* ── SECTION COMMONS ──────────────────────────────────────────────────── */
     section { padding: 6rem 1.5rem; }
@@ -250,8 +263,69 @@
     }
     .divider {
       width: 48px; height: 3px; border-radius: 2px;
+      background: linear-gradient(90deg, var(--amber), var(--terra));
       margin: 1.25rem 0;
     }
+
+    /* El degradado de titular, disponible en cualquier título y no solo
+       en el del hero. */
+    .grad {
+      background: linear-gradient(135deg, var(--amber) 0%, var(--amber-l) 45%, var(--terra) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ── BLOQUE DT — CAPTURAS DEL GEMELO ──────────────────────────────────── */
+    #twin { background: var(--navy2); }
+    .twin-head { text-align: center; max-width: 620px; margin: 0 auto 3rem; }
+    .twin-head .divider { margin-left: auto; margin-right: auto; }
+
+    /* Las capturas son el argumento de esta sección, así que se muestran
+       grandes y sin marco de navegador dibujado: lo que se ve es lo que hay. */
+    .shot {
+      border-radius: 1rem; overflow: hidden;
+      background: var(--card); border: 1px solid var(--border);
+    }
+    .shot img { display: block; width: 100%; height: auto; }
+    .shot figcaption {
+      padding: 1rem 1.15rem 1.15rem;
+      display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-start;
+    }
+    .shot-chip {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      padding: 0.25rem 0.7rem; border-radius: 9999px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.01em;
+      color: var(--amber-l);
+      background: rgba(242,177,52,0.1); border: 1px solid rgba(242,177,52,0.28);
+    }
+    .shot-chip-alert {
+      color: #fca5a5;
+      background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3);
+    }
+    .shot-text { font-size: 0.86rem; color: var(--muted); line-height: 1.65; }
+
+    .shot-lead { margin-bottom: 1.25rem; }
+    .shot-lead figcaption { padding: 1.15rem 1.4rem 1.35rem; }
+    .shot-lead .shot-text { font-size: 0.95rem; }
+
+    .shot-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+    @media (max-width: 760px) { .shot-pair { grid-template-columns: 1fr; } }
+
+    .twin-pills {
+      display: flex; flex-wrap: wrap; justify-content: center;
+      gap: 0.6rem; margin-top: 2.5rem;
+    }
+    .pill {
+      padding: 0.4rem 1rem; border-radius: 9999px;
+      font-size: 0.76rem; font-weight: 600; border: 1px solid;
+    }
+    .pill-amber { color: var(--amber-l); background: rgba(242,177,52,0.08); border-color: rgba(242,177,52,0.22); }
+    .pill-green { color: var(--green-l); background: rgba(63,168,122,0.08);  border-color: rgba(63,168,122,0.25); }
+    .pill-terra { color: #f0b184;        background: rgba(224,138,79,0.08);  border-color: rgba(224,138,79,0.25); }
+
+    .twin-cta { text-align: center; margin-top: 2.5rem; }
+    .twin-cta p { margin-top: 0.85rem; font-size: 0.78rem; color: var(--dim); }
 
     /* ── BLOCK 2 — PROJECT ────────────────────────────────────────────────── */
     #proyecto { background: var(--navy2); }
@@ -274,7 +348,7 @@
       background: var(--card); border: 1px solid var(--border);
       transition: border-color 0.2s;
     }
-    .project-card:hover { border-color: rgba(96,165,250,0.25); }
+    .project-card:hover { border-color: rgba(242,177,52,0.25); }
     .project-card-icon {
       width: 2.5rem; height: 2.5rem; border-radius: 0.5rem; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center; font-size: 1.15rem;
@@ -294,6 +368,12 @@
     }
     @media (max-width: 900px) { .area-grid { grid-template-columns: 1fr 1fr; } }
     @media (max-width: 560px) { .area-grid { grid-template-columns: 1fr; } }
+
+    /* Rejilla de dos columnas para las áreas que la piden. Va en una clase y
+       no en un estilo en línea: en línea le ganaba a las media queries y en
+       el celular las tarjetas quedaban en dos columnas apretadas. */
+    .area-grid-2 { grid-template-columns: 1fr 1fr; }
+    @media (max-width: 560px) { .area-grid-2 { grid-template-columns: 1fr; } }
 
     .area-card {
       padding: 1.5rem; border-radius: 0.875rem;
@@ -339,14 +419,14 @@
       display: flex; align-items: center; justify-content: center;
       width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 1rem;
       background: linear-gradient(135deg, var(--blue), var(--purple));
-      font-size: 1.5rem; box-shadow: 0 0 30px rgba(37,99,235,0.4);
+      font-size: 1.5rem; box-shadow: 0 0 30px rgba(242,177,52,0.4);
     }
     .agent-center-label { text-align: center; font-size: 0.72rem; font-weight: 700; color: var(--text); margin-bottom: 1.25rem; }
-    .agent-nodes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.4rem; }
+    .agent-nodes { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.4rem; }
     .agent-node {
       padding: 0.4rem 0.3rem; border-radius: 0.5rem; text-align: center;
-      background: rgba(37,99,235,0.12); border: 1px solid rgba(37,99,235,0.25);
-      font-size: 0.6rem; font-weight: 600; color: #93c5fd;
+      background: rgba(242,177,52,0.12); border: 1px solid rgba(242,177,52,0.25);
+      font-size: 0.6rem; font-weight: 600; color: #ffd08a;
     }
     .agent-node span { display: block; font-size: 1rem; margin-bottom: 0.15rem; }
 
@@ -359,7 +439,7 @@
     .co2-fill { height: 100%; border-radius: 7px; }
 
     .co2-eq { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
-    .co2-eq-item { flex: 1; text-align: center; padding: 0.75rem 0.5rem; border-radius: 0.625rem; background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); }
+    .co2-eq-item { flex: 1; text-align: center; padding: 0.75rem 0.5rem; border-radius: 0.625rem; background: rgba(63,168,122,0.08); border: 1px solid rgba(63,168,122,0.2); }
     .co2-eq-item .big { font-size: 1.2rem; font-weight: 800; color: var(--green); }
     .co2-eq-item .small { font-size: 0.6rem; color: var(--muted); margin-top: 0.2rem; }
 
@@ -388,7 +468,7 @@
       border-radius: 1rem; background: var(--card); border: 1px solid var(--border);
       transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
     }
-    .team-card:hover { transform: translateY(-6px); box-shadow: 0 16px 50px rgba(0,0,0,0.35); border-color: rgba(96,165,250,0.2); }
+    .team-card:hover { transform: translateY(-6px); box-shadow: 0 16px 50px rgba(0,0,0,0.35); border-color: rgba(242,177,52,0.2); }
 
     .team-avatar {
       width: 88px; height: 88px; border-radius: 50%; margin: 0 auto 1.1rem;
@@ -410,7 +490,7 @@
 
     /* ── FOOTER ───────────────────────────────────────────────────────────── */
     footer {
-      background: #020810; border-top: 1px solid var(--border);
+      background: #070a0e; border-top: 1px solid var(--border);
       padding: 2.5rem 1.5rem;
     }
     .footer-inner {
@@ -418,16 +498,16 @@
       display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
     }
     .footer-brand { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 0.9rem; }
-    .footer-brand span { background: linear-gradient(90deg, #60a5fa, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .footer-brand span { background: linear-gradient(90deg, #f2b134, #ffc857); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     .footer-meta { font-size: 0.75rem; color: var(--dim); }
     .footer-cta {
       display: inline-flex; align-items: center; gap: 0.4rem;
       padding: 0.4rem 1rem; border-radius: 9999px;
-      border: 1px solid rgba(96,165,250,0.3); background: rgba(96,165,250,0.06);
-      font-size: 0.76rem; font-weight: 600; color: #93c5fd; text-decoration: none;
+      border: 1px solid rgba(242,177,52,0.3); background: rgba(242,177,52,0.06);
+      font-size: 0.76rem; font-weight: 600; color: #ffd08a; text-decoration: none;
       transition: all 0.2s;
     }
-    .footer-cta:hover { background: rgba(96,165,250,0.12); border-color: rgba(96,165,250,0.5); }
+    .footer-cta:hover { background: rgba(242,177,52,0.12); border-color: rgba(242,177,52,0.5); }
 
     /* ── MOBILE ─────────────────────────────────────────────────────────── */
     @media (max-width: 640px) {
@@ -447,8 +527,9 @@
       .btn-primary, .btn-ghost { justify-content: center; padding: 0.9rem 1.2rem; font-size: 0.88rem; }
 
       /* Stats */
-      .hero-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem 0.5rem; padding: 1rem; }
-      .stat-div   { display: none; }
+      .hero-stats { grid-template-columns: 1fr 1fr; gap: 1rem 0; padding: 1rem 0.5rem; }
+      .hero-stat:last-child { grid-column: 1 / -1; border-left: none; padding-top: 1rem; border-top: 1px solid var(--border); }
+      .hero-stat:nth-child(3) { border-left: none; }
       .hero-stat-num { font-size: 1.5rem; }
 
       /* Layout */
@@ -538,22 +619,18 @@
           <div class="hero-stat-num">60<span>%</span></div>
           <div class="hero-stat-label" data-i18n="hero.stat1">Ahorro energético</div>
         </div>
-        <div class="stat-div"></div>
         <div class="hero-stat">
-          <div class="hero-stat-num">5</div>
+          <div class="hero-stat-num">6</div>
           <div class="hero-stat-label" data-i18n="hero.stat2">Agentes IA</div>
         </div>
-        <div class="stat-div"></div>
         <div class="hero-stat">
           <div class="hero-stat-num">4</div>
           <div class="hero-stat-label" data-i18n="hero.stat3">Zonas inteligentes</div>
         </div>
-        <div class="stat-div"></div>
         <div class="hero-stat">
           <div class="hero-stat-num">0</div>
           <div class="hero-stat-label" data-i18n="hero.stat4">Hardware requerido</div>
         </div>
-        <div class="stat-div"></div>
         <div class="hero-stat">
           <div class="hero-stat-num">64<span>kg</span></div>
           <div class="hero-stat-label" data-i18n="hero.stat5">CO₂ evitado/año</div>
@@ -563,149 +640,80 @@
   </section>
 
   <!-- ── BLOQUE DT — DIGITAL TWIN SHOWCASE ────────────────────────────────── -->
-  <section id="twin" style="background:var(--navy2);padding:5rem 1.5rem">
-    <div style="max-width:1100px;margin:0 auto">
+  <section id="twin">
+    <div class="container">
 
-      <div style="text-align:center;margin-bottom:3rem">
-        <div class="section-eyebrow reveal" style="color:var(--cyan)" data-i18n="twin.eyebrow">El producto central</div>
-        <h2 class="section-title reveal" style="font-size:clamp(1.8rem,4vw,2.8rem)" data-i18n-html="twin.title">El Gemelo Digital<br><span style="background:linear-gradient(135deg,var(--blue),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent">en tiempo real</span></h2>
-        <div class="divider reveal" style="background:linear-gradient(90deg,var(--blue),var(--cyan));margin:1rem auto 1.25rem"></div>
-        <p class="section-sub reveal" style="max-width:600px;margin:0 auto" data-i18n="twin.sub">Una réplica 3D interactiva del aula que muestra en vivo cómo la IA controla cada zona de iluminación — y cuánta energía ahorra en el proceso.</p>
+      <div class="twin-head">
+        <div class="section-eyebrow reveal" style="color:var(--amber)" data-i18n="twin.eyebrow">El producto central</div>
+        <h2 class="section-title reveal" data-i18n-html="twin.title">El gemelo digital,<br><span class="grad">tal como se ve</span></h2>
+        <div class="divider reveal"></div>
+        <p class="section-sub reveal" style="margin:0 auto" data-i18n="twin.sub">
+          Una réplica 3D del aula que corre en el navegador. Las imágenes de abajo
+          no son ilustraciones: son capturas del gemelo funcionando.
+        </p>
       </div>
 
-      <!-- Mockup UI -->
-      <div class="reveal" style="position:relative;max-width:900px;margin:0 auto 3rem">
-        <!-- Browser chrome -->
-        <div style="background:#0a1628;border:1px solid rgba(99,102,241,0.25);border-radius:1rem;overflow:hidden;box-shadow:0 30px 100px rgba(0,0,0,0.6),0 0 0 1px rgba(255,255,255,0.04)">
-          <!-- Title bar -->
-          <div style="background:#070f1e;padding:0.7rem 1rem;display:flex;align-items:center;gap:0.75rem;border-bottom:1px solid rgba(255,255,255,0.06)">
-            <div style="display:flex;gap:0.4rem">
-              <div style="width:11px;height:11px;border-radius:50%;background:#ef4444;opacity:0.8"></div>
-              <div style="width:11px;height:11px;border-radius:50%;background:#f59e0b;opacity:0.8"></div>
-              <div style="width:11px;height:11px;border-radius:50%;background:#10b981;opacity:0.8"></div>
-            </div>
-            <div style="flex:1;background:rgba(255,255,255,0.05);border-radius:0.375rem;padding:0.25rem 0.75rem;font-size:0.68rem;color:var(--dim);font-family:monospace">127.0.0.1:8000/app/</div>
-            <div style="font-size:0.65rem;color:var(--dim);display:flex;align-items:center;gap:0.3rem"><span style="width:6px;height:6px;background:#10b981;border-radius:50%;display:inline-block;box-shadow:0 0 6px #10b981"></span>Conectado</div>
-          </div>
-          <!-- App layout -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;min-height:340px">
-            <!-- Left: 3D view -->
-            <div style="background:linear-gradient(160deg,#060e1e,#0d1a30);padding:1rem;border-right:1px solid rgba(255,255,255,0.05);position:relative;overflow:hidden">
-              <div style="font-size:0.6rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--dim);margin-bottom:0.75rem" data-i18n="twin.view3d">Vista 3D — Gemelo Digital</div>
-              <!-- Classroom grid visual -->
-              <div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:6px;height:200px">
-                <div style="background:rgba(74,222,128,0.12);border:1px solid rgba(74,222,128,0.35);border-radius:0.4rem;display:flex;flex-direction:column;justify-content:space-between;padding:0.5rem;position:relative;overflow:hidden">
-                  <div style="font-size:0.55rem;color:#4ade80;font-weight:700">Zona A</div>
-                  <div style="display:flex;gap:3px">
-                    <div style="flex:1;height:4px;background:#4ade80;border-radius:2px;box-shadow:0 0 6px #4ade80;opacity:0.9"></div>
-                    <div style="flex:1;height:4px;background:#4ade80;border-radius:2px;box-shadow:0 0 6px #4ade80;opacity:0.9"></div>
-                  </div>
-                  <div style="font-size:0.5rem;color:rgba(74,222,128,0.6)">💡 ON · 80W</div>
-                  <div style="position:absolute;inset:0;background:rgba(74,222,128,0.04);animation:zonePulse 2.5s ease-in-out infinite"></div>
-                </div>
-                <div style="background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.25);border-radius:0.4rem;display:flex;flex-direction:column;justify-content:space-between;padding:0.5rem">
-                  <div style="font-size:0.55rem;color:#4ade80;font-weight:700">Zona B</div>
-                  <div style="display:flex;gap:3px">
-                    <div style="flex:1;height:4px;background:#4ade80;border-radius:2px;box-shadow:0 0 4px #4ade80;opacity:0.6"></div>
-                    <div style="flex:1;height:4px;background:#4ade80;border-radius:2px;box-shadow:0 0 4px #4ade80;opacity:0.6"></div>
-                  </div>
-                  <div style="font-size:0.5rem;color:rgba(74,222,128,0.6)">🔅 DIM · 40W</div>
-                </div>
-                <div style="background:rgba(71,85,105,0.15);border:1px solid rgba(71,85,105,0.3);border-radius:0.4rem;display:flex;flex-direction:column;justify-content:space-between;padding:0.5rem">
-                  <div style="font-size:0.55rem;color:#64748b;font-weight:700">Zona C</div>
-                  <div style="display:flex;gap:3px">
-                    <div style="flex:1;height:4px;background:#334155;border-radius:2px"></div>
-                    <div style="flex:1;height:4px;background:#334155;border-radius:2px"></div>
-                  </div>
-                  <div style="font-size:0.5rem;color:#475569">⬛ OFF · 0W</div>
-                </div>
-                <div style="background:rgba(71,85,105,0.15);border:1px solid rgba(71,85,105,0.3);border-radius:0.4rem;display:flex;flex-direction:column;justify-content:space-between;padding:0.5rem">
-                  <div style="font-size:0.55rem;color:#64748b;font-weight:700">Zona D</div>
-                  <div style="display:flex;gap:3px">
-                    <div style="flex:1;height:4px;background:#334155;border-radius:2px"></div>
-                    <div style="flex:1;height:4px;background:#334155;border-radius:2px"></div>
-                  </div>
-                  <div style="font-size:0.5rem;color:#475569">⬛ OFF · 0W</div>
-                </div>
-              </div>
-              <!-- Live badge -->
-              <div style="position:absolute;top:0.75rem;right:0.75rem;display:flex;align-items:center;gap:0.3rem;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);border-radius:9999px;padding:0.2rem 0.55rem;font-size:0.58rem;font-weight:700;color:#10b981">
-                <span style="width:5px;height:5px;background:#10b981;border-radius:50%;display:inline-block;animation:liveBlink 1s ease-in-out infinite"></span><span data-i18n="twin.live">EN VIVO</span>
-              </div>
-              <!-- Saving indicator -->
-              <div style="margin-top:0.75rem;display:flex;align-items:center;justify-content:space-between">
-                <div style="font-size:0.58rem;color:var(--dim)" data-i18n="twin.consumption">Consumo actual</div>
-                <div style="font-size:0.9rem;font-weight:800;color:#4ade80;font-family:'Space Grotesk',sans-serif">120W <span style="font-size:0.58rem;color:#64748b;font-weight:400">/ 320W baseline</span></div>
-              </div>
-              <div style="height:5px;background:rgba(255,255,255,0.05);border-radius:9999px;margin-top:0.4rem;overflow:hidden">
-                <div style="width:62.5%;height:100%;background:linear-gradient(90deg,#4ade80,#22d3ee);border-radius:9999px;box-shadow:0 0 8px rgba(74,222,128,0.5)"></div>
-              </div>
-            </div>
-            <!-- Right: dashboard panels -->
-            <div style="padding:1rem;display:flex;flex-direction:column;gap:0.6rem;background:#060e1e">
-              <div style="font-size:0.6rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--dim)" data-i18n="twin.dashboard">Dashboard energético</div>
-              <!-- Mini chart bars -->
-              <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:0.5rem;padding:0.6rem">
-                <div style="font-size:0.58rem;color:var(--dim);margin-bottom:0.5rem" data-i18n="twin.chart">Consumo en tiempo real (W)</div>
-                <div style="display:flex;align-items:flex-end;gap:3px;height:50px">
-                  <div style="flex:1;background:#ef4444;border-radius:2px 2px 0 0;height:100%;opacity:0.4"></div>
-                  <div style="flex:1;background:#ef4444;border-radius:2px 2px 0 0;height:95%;opacity:0.4"></div>
-                  <div style="flex:1;background:#ef4444;border-radius:2px 2px 0 0;height:98%;opacity:0.4"></div>
-                  <div style="flex:1;background:linear-gradient(180deg,#4ade80,#22c55e);border-radius:2px 2px 0 0;height:45%"></div>
-                  <div style="flex:1;background:linear-gradient(180deg,#4ade80,#22c55e);border-radius:2px 2px 0 0;height:38%"></div>
-                  <div style="flex:1;background:linear-gradient(180deg,#4ade80,#22c55e);border-radius:2px 2px 0 0;height:40%"></div>
-                  <div style="flex:1;background:linear-gradient(180deg,#4ade80,#22c55e);border-radius:2px 2px 0 0;height:42%;box-shadow:0 0 6px rgba(74,222,128,0.4)"></div>
-                </div>
-                <div style="display:flex;justify-content:space-between;margin-top:0.3rem;font-size:0.5rem;color:var(--dim)"><span data-i18n="twin.noai">Sin IA</span><span style="color:#4ade80" data-i18n="twin.withai">Con IA →</span></div>
-              </div>
-              <!-- Stats mini -->
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
-                <div style="background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.18);border-radius:0.5rem;padding:0.5rem">
-                  <div style="font-size:0.55rem;color:var(--dim)" data-i18n="twin.savings">Ahorro hoy</div>
-                  <div style="font-size:1rem;font-weight:800;color:#4ade80;font-family:'Space Grotesk',sans-serif">62.5%</div>
-                </div>
-                <div style="background:rgba(6,182,212,0.07);border:1px solid rgba(6,182,212,0.18);border-radius:0.5rem;padding:0.5rem">
-                  <div style="font-size:0.55rem;color:var(--dim)" data-i18n="twin.co2avoided">CO₂ evitado</div>
-                  <div style="font-size:1rem;font-weight:800;color:var(--cyan);font-family:'Space Grotesk',sans-serif">64kg</div>
-                </div>
-              </div>
-              <!-- Agent log -->
-              <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:0.5rem;padding:0.6rem;flex:1">
-                <div style="font-size:0.55rem;color:var(--dim);margin-bottom:0.4rem" data-i18n="twin.decisions">Decisiones IA recientes</div>
-                <div style="font-size:0.58rem;color:#4ade80;margin-bottom:0.25rem" data-i18n="twin.dec1">✓ Zona C apagada — sin ocupantes</div>
-                <div style="font-size:0.58rem;color:#f59e0b;margin-bottom:0.25rem" data-i18n="twin.dec2">✓ Zona B en DIM — luz natural 68%</div>
-                <div style="font-size:0.58rem;color:var(--dim)" data-i18n="twin.dec3">✓ Zona A ON — 3 personas detectadas</div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- Glow under mockup -->
-        <div style="position:absolute;bottom:-40px;left:50%;transform:translateX(-50%);width:60%;height:40px;background:radial-gradient(ellipse,rgba(37,99,235,0.3) 0%,transparent 70%);filter:blur(12px);pointer-events:none"></div>
+      <!-- Captura principal -->
+      <figure class="shot shot-lead reveal">
+        <img src="img/twin-mediodia.jpg" width="1500" height="669" loading="lazy" decoding="async"
+             alt="Vista 3D del aula al mediodía: sol alto, luz entrando por las ventanas hexagonales y estudiantes en sus puestos."
+             data-i18n-alt="shot.mediodia.alt" />
+        <figcaption>
+          <span class="shot-chip" data-i18n="shot.mediodia.chip">☀️ Mediodía despejado</span>
+          <span class="shot-text" data-i18n="shot.mediodia.text">
+            Entra tanto sol por las ventanas que la IA apaga la zona pegada a la
+            ventana y deja las del fondo en media luz. Nadie tocó un interruptor.
+          </span>
+        </figcaption>
+      </figure>
+
+      <!-- Dos capturas de apoyo -->
+      <div class="shot-pair">
+        <figure class="shot reveal reveal-delay-1">
+          <img src="img/twin-atardecer.jpg" width="1500" height="669" loading="lazy" decoding="async"
+               alt="La misma aula a las cinco y media de la tarde: cielo naranja, sol bajo y las lámparas encendidas."
+               data-i18n-alt="shot.atardecer.alt" />
+          <figcaption>
+            <span class="shot-chip" data-i18n="shot.atardecer.chip">🌇 Cinco y media</span>
+            <span class="shot-text" data-i18n="shot.atardecer.text">
+              El sol baja, el cielo se pone naranja y las sombras se alargan. Con
+              menos luz natural el sistema vuelve a encender lo que hace falta.
+            </span>
+          </figcaption>
+        </figure>
+
+        <figure class="shot reveal reveal-delay-2">
+          <img src="img/twin-emergencia.jpg" width="1500" height="669" loading="lazy" decoding="async"
+               alt="La misma aula en modo emergencia: las lámparas del frente izquierdo apagadas mientras el resto de la ruta a la puerta sigue encendida."
+               data-i18n-alt="shot.emergencia.alt" />
+          <figcaption>
+            <span class="shot-chip shot-chip-alert" data-i18n="shot.emergencia.chip">🔥 Modo emergencia</span>
+            <span class="shot-text" data-i18n="shot.emergencia.text">
+              Se declara un incendio: la ruta hacia la puerta se queda fija y la
+              zona que hay que desocupar parpadea. Luz fija = por aquí se sale.
+            </span>
+          </figcaption>
+        </figure>
       </div>
 
-      <!-- Feature pills -->
-      <div class="reveal" style="display:flex;flex-wrap:wrap;justify-content:center;gap:0.65rem;margin-bottom:2.5rem">
-        <div style="display:flex;align-items:center;gap:0.5rem;background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.2);border-radius:9999px;padding:0.4rem 1rem;font-size:0.75rem;color:#4ade80;font-weight:600" data-i18n="twin.pill1">✓ Actualización en tiempo real</div>
-        <div style="display:flex;align-items:center;gap:0.5rem;background:rgba(6,182,212,0.07);border:1px solid rgba(6,182,212,0.2);border-radius:9999px;padding:0.4rem 1rem;font-size:0.75rem;color:var(--cyan);font-weight:600" data-i18n="twin.pill2">✓ 5 agentes IA coordinados</div>
-        <div style="display:flex;align-items:center;gap:0.5rem;background:rgba(99,102,241,0.07);border:1px solid rgba(99,102,241,0.2);border-radius:9999px;padding:0.4rem 1rem;font-size:0.75rem;color:var(--purple);font-weight:600" data-i18n="twin.pill3">✓ 4 zonas de iluminación</div>
-        <div style="display:flex;align-items:center;gap:0.5rem;background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.2);border-radius:9999px;padding:0.4rem 1rem;font-size:0.75rem;color:var(--amber,#f59e0b);font-weight:600" data-i18n="twin.pill4">✓ Comparativo Con vs Sin IA</div>
+      <!-- Lo que se ve en pantalla -->
+      <div class="twin-pills reveal">
+        <span class="pill pill-amber" data-i18n="twin.pill1">✓ Se actualiza en vivo</span>
+        <span class="pill pill-amber" data-i18n="twin.pill2">✓ 6 agentes coordinados</span>
+        <span class="pill pill-green" data-i18n="twin.pill3">✓ 4 zonas de iluminación</span>
+        <span class="pill pill-green" data-i18n="twin.pill4">✓ Comparativo con y sin IA</span>
+        <span class="pill pill-terra" data-i18n="twin.pill5">✓ Hora, clima y ocupación a la mano</span>
       </div>
 
-      <!-- CTA -->
-      <div class="reveal" style="text-align:center">
-        <a href="/app/" style="display:inline-flex;align-items:center;gap:0.6rem;background:linear-gradient(135deg,var(--blue),var(--cyan));color:#fff;text-decoration:none;font-family:'Space Grotesk',sans-serif;font-size:1rem;font-weight:700;padding:0.85rem 2.2rem;border-radius:9999px;box-shadow:0 0 40px rgba(37,99,235,0.4),0 0 0 1px rgba(255,255,255,0.08);transition:all 0.25s;letter-spacing:-0.01em">
-          <span style="font-size:1.2rem">⚡</span> <span data-i18n="twin.cta">Abrir el Digital Twin en vivo</span>
+      <div class="twin-cta reveal">
+        <a href="/app/" class="btn-primary">
+          <span>⚡</span> <span data-i18n="twin.cta">Abrir el gemelo en vivo</span>
         </a>
-        <p style="margin-top:0.85rem;font-size:0.75rem;color:var(--dim)" data-i18n="twin.ctasub">No requiere instalación — corre directo en el navegador</p>
+        <p data-i18n="twin.ctasub">No hay que instalar nada — corre en el navegador</p>
       </div>
 
     </div>
   </section>
-
-  <style>
-    @keyframes zonePulse { 0%,100%{opacity:0.04} 50%{opacity:0.12} }
-    @keyframes liveBlink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-  </style>
 
   <!-- ── BLOQUE 2 — PROYECTO ──────────────────────────────────────────────── -->
   <section id="proyecto">
@@ -737,37 +745,37 @@
           </p>
           <div class="connect-row">
             <span class="connect-label">Tecnologías</span>
-            <span class="connect-pill" style="color:#93c5fd;border-color:#3b82f640;background:rgba(59,130,246,0.08)">Python · FastAPI</span>
-            <span class="connect-pill" style="color:#67e8f9;border-color:#06b6d440;background:rgba(6,182,212,0.08)">Three.js</span>
-            <span class="connect-pill" style="color:#a5b4fc;border-color:#818cf840;background:rgba(129,140,248,0.08)">WebSocket</span>
-            <span class="connect-pill" style="color:#6ee7b7;border-color:#10b98140;background:rgba(16,185,129,0.08)">React</span>
+            <span class="connect-pill" style="color:#ffd08a;border-color:#e0a23040;background:rgba(242,177,52,0.08)">Python · FastAPI</span>
+            <span class="connect-pill" style="color:#ffdf9e;border-color:#ffc85740;background:rgba(255,200,87,0.08)">Three.js</span>
+            <span class="connect-pill" style="color:#f0b184;border-color:#e08a4f40;background:rgba(224,138,79,0.08)">WebSocket</span>
+            <span class="connect-pill" style="color:#8fdcb8;border-color:#3fa87a40;background:rgba(63,168,122,0.08)">React</span>
           </div>
         </div>
 
         <div class="project-cards reveal reveal-delay-2">
           <div class="project-card">
-            <div class="project-card-icon" style="background:rgba(37,99,235,0.15)">🎯</div>
+            <div class="project-card-icon" style="background:rgba(242,177,52,0.15)">🎯</div>
             <div>
               <h4 data-i18n="proj.c1title">El problema</h4>
               <p data-i18n="proj.c1body">Los salones de clase de Colombia desperdician energía eléctrica con iluminación innecesaria durante miles de horas al año.</p>
             </div>
           </div>
           <div class="project-card">
-            <div class="project-card-icon" style="background:rgba(6,182,212,0.15)">💡</div>
+            <div class="project-card-icon" style="background:rgba(255,200,87,0.15)">💡</div>
             <div>
               <h4 data-i18n="proj.c2title">Nuestra solución</h4>
-              <p data-i18n="proj.c2body">5 agentes de IA coordinados toman decisiones de iluminación en tiempo real según ocupación, luz natural y comandos de voz.</p>
+              <p data-i18n="proj.c2body">6 agentes de IA coordinados deciden la iluminación en tiempo real según ocupación, luz natural, comandos de voz y emergencias.</p>
             </div>
           </div>
           <div class="project-card">
-            <div class="project-card-icon" style="background:rgba(16,185,129,0.15)">📊</div>
+            <div class="project-card-icon" style="background:rgba(63,168,122,0.15)">📊</div>
             <div>
               <h4 data-i18n="proj.c3title">La evidencia</h4>
               <p data-i18n="proj.c3body">El Gemelo Digital mide, compara y reporta el consumo en kWh, COP y kg CO₂ — con datos reales de la tarifa colombiana.</p>
             </div>
           </div>
           <div class="project-card">
-            <div class="project-card-icon" style="background:rgba(129,140,248,0.15)">🌍</div>
+            <div class="project-card-icon" style="background:rgba(224,138,79,0.15)">🌍</div>
             <div>
               <h4 data-i18n="proj.c4title">El impacto</h4>
               <p data-i18n="proj.c4body">Si se implementa en 100 salones, se evitarían unos 3,800 kg de CO₂ por año — equivalente a plantar 180 árboles.</p>
@@ -785,7 +793,7 @@
         <div class="reveal">
           <div class="section-eyebrow" style="color:var(--green)" data-i18n="carbon.eyebrow">Área 1 · Sostenibilidad</div>
           <h2 class="section-title" data-i18n-html="carbon.title">Huella de<br>Carbono</h2>
-          <div class="divider" style="background:linear-gradient(90deg,var(--green),#34d399)"></div>
+          <div class="divider" style="background:linear-gradient(90deg,var(--green),#6fd3a3)"></div>
           <p class="section-sub" style="font-size:0.95rem">
             Cada kilovatio-hora de electricidad consumida en Colombia genera
             <strong style="color:var(--green)">0.126 kg de CO₂</strong> (UPME, 2023).
@@ -805,8 +813,8 @@
           </div>
           <div class="connect-row" style="margin-top:1rem">
             <span class="connect-label">Vincula con</span>
-            <span class="connect-pill" style="color:#6ee7b7;border-color:#10b98135;background:rgba(16,185,129,0.08)">ODS 13 Acción Climática</span>
-            <span class="connect-pill" style="color:#6ee7b7;border-color:#10b98135;background:rgba(16,185,129,0.08)">ODS 7 Energía Limpia</span>
+            <span class="connect-pill" style="color:#8fdcb8;border-color:#3fa87a35;background:rgba(63,168,122,0.08)">ODS 13 Acción Climática</span>
+            <span class="connect-pill" style="color:#8fdcb8;border-color:#3fa87a35;background:rgba(63,168,122,0.08)">ODS 7 Energía Limpia</span>
           </div>
         </div>
 
@@ -819,7 +827,7 @@
             </div>
             <div class="co2-bar-group" style="margin-top:0.85rem">
               <div class="co2-bar-label"><span>Con IA</span><strong>~26 kg CO₂/año</strong></div>
-              <div class="co2-track"><div class="co2-fill" style="width:40%;background:linear-gradient(90deg,#10b981,#34d399)"></div></div>
+              <div class="co2-track"><div class="co2-fill" style="width:40%;background:linear-gradient(90deg,#3fa87a,#6fd3a3)"></div></div>
             </div>
             <div class="co2-bar-group" style="margin-top:0.85rem">
               <div class="co2-bar-label"><span style="color:var(--green)">Ahorro</span><strong style="color:var(--green)">~38 kg CO₂/año</strong></div>
@@ -855,31 +863,41 @@
           <div class="divider" style="background:linear-gradient(90deg,var(--blue),var(--purple))"></div>
           <p class="section-sub" style="font-size:0.95rem">
             El sistema está construido sobre una arquitectura <strong style="color:var(--text)">multi-agente</strong>:
-            cinco módulos especializados que se comunican entre sí para tomar decisiones de iluminación
+            seis módulos especializados que se comunican entre sí para tomar decisiones de iluminación
             en tiempo real. El <strong style="color:var(--text)">Gemelo Digital</strong> replica el
             comportamiento físico del aula en un entorno virtual 3D, permitiendo medir el impacto
             sin necesidad de instalar hardware.
           </p>
-          <div class="area-grid" style="grid-template-columns:1fr 1fr;margin-top:1.5rem">
-            <div class="area-card" style="border-color:rgba(129,140,248,0.2)">
+          <div class="area-grid area-grid-2" style="margin-top:1.5rem">
+            <div class="area-card" style="border-color:rgba(224,138,79,0.2)">
               <div class="area-card-icon">🧠</div>
               <h4 data-i18n="ai.c1title">Sistema Multi-Agente</h4>
-              <p data-i18n="ai.c1body">5 agentes autónomos coordinados por un orquestador central que procesa sensores y toma decisiones cada 5 segundos.</p>
+              <p data-i18n="ai.c1body">6 agentes autónomos coordinados por un orquestador central que lee los sensores y decide cada 5 segundos.</p>
             </div>
-            <div class="area-card" style="border-color:rgba(129,140,248,0.2)">
+            <div class="area-card" style="border-color:rgba(224,138,79,0.2)">
               <div class="area-card-icon">🪞</div>
               <h4 data-i18n="ai.c2title">Gemelo Digital</h4>
               <p data-i18n="ai.c2body">Réplica virtual 3D del aula con Three.js que simula condiciones reales de iluminación, clima y ocupación.</p>
             </div>
-            <div class="area-card" style="border-color:rgba(129,140,248,0.2)">
+            <div class="area-card" style="border-color:rgba(224,138,79,0.2)">
               <div class="area-card-icon">⚡</div>
               <h4 data-i18n="ai.c3title">Decisiones en tiempo real</h4>
               <p data-i18n="ai.c3body">Reglas inteligentes que combinan datos de ocupación, luz solar y comandos de voz para optimizar el consumo.</p>
             </div>
-            <div class="area-card" style="border-color:rgba(129,140,248,0.2)">
+            <div class="area-card" style="border-color:rgba(224,138,79,0.2)">
               <div class="area-card-icon">📡</div>
               <h4 data-i18n="ai.c4title">WebSocket en vivo</h4>
               <p data-i18n="ai.c4body">La interfaz se actualiza instantáneamente mediante WebSockets — sin recargar la página, sin latencia.</p>
+            </div>
+            <div class="area-card" style="border-color:rgba(224,138,79,0.2)">
+              <div class="area-card-icon">🎥</div>
+              <h4 data-i18n="ai.c5title">Cámara real, opcional</h4>
+              <p data-i18n="ai.c5body">Con BlazeFace el aula puede contar personas de verdad. Todo ocurre dentro del navegador: ninguna imagen sale del computador.</p>
+            </div>
+            <div class="area-card" style="border-color:rgba(239,68,68,0.22)">
+              <div class="area-card-icon">🚨</div>
+              <h4 data-i18n="ai.c6title">Modo emergencia</h4>
+              <p data-i18n="ai.c6body">Luz fija para la ruta de salida, parpadeo donde no hay que quedarse. Manda sobre todo lo demás, incluso sobre la voz.</p>
             </div>
           </div>
         </div>
@@ -894,8 +912,9 @@
               <div class="agent-node"><span>☀️</span>Light Sensor</div>
               <div class="agent-node"><span>🎙</span>Voice Agent</div>
               <div class="agent-node"><span>🪞</span>Digital Twin</div>
+              <div class="agent-node"><span>🚨</span>Emergency</div>
             </div>
-            <div style="margin-top:1.25rem;padding:0.75rem;border-radius:0.5rem;background:rgba(129,140,248,0.08);border:1px solid rgba(129,140,248,0.2);text-align:center">
+            <div style="margin-top:1.25rem;padding:0.75rem;border-radius:0.5rem;background:rgba(224,138,79,0.08);border:1px solid rgba(224,138,79,0.2);text-align:center">
               <div style="font-size:0.65rem;color:var(--purple);font-weight:700;text-transform:uppercase;letter-spacing:0.06em">Backend · FastAPI + Python</div>
               <div style="font-size:0.6rem;color:var(--dim);margin-top:0.2rem">WebSocket · REST API · asyncio</div>
             </div>
@@ -912,7 +931,7 @@
         <div class="reveal">
           <div class="section-eyebrow" style="color:var(--cyan)" data-i18n="iot.eyebrow">Área 3 · Tecnología & STEAM</div>
           <h2 class="section-title" data-i18n-html="iot.title">IoT, Automatización<br>& Metodología STEAM</h2>
-          <div class="divider" style="background:linear-gradient(90deg,var(--cyan),#67e8f9)"></div>
+          <div class="divider" style="background:linear-gradient(90deg,var(--cyan),#ffdf9e)"></div>
           <p class="section-sub" style="font-size:0.95rem">
             El proyecto integra conceptos de <strong style="color:var(--text)">Internet de las Cosas</strong>
             —sensores virtuales de luz, movimiento y voz— con principios de automatización industrial
@@ -921,30 +940,30 @@
           </p>
           <div class="connect-row" style="margin-top:1.5rem">
             <span class="connect-label">Áreas STEAM</span>
-            <span class="connect-pill" style="color:#67e8f9;border-color:#06b6d435;background:rgba(6,182,212,0.08)">🔬 Ciencia</span>
-            <span class="connect-pill" style="color:#67e8f9;border-color:#06b6d435;background:rgba(6,182,212,0.08)">⚙️ Tecnología</span>
-            <span class="connect-pill" style="color:#67e8f9;border-color:#06b6d435;background:rgba(6,182,212,0.08)">🔧 Ingeniería</span>
-            <span class="connect-pill" style="color:#67e8f9;border-color:#06b6d435;background:rgba(6,182,212,0.08)">🎨 Arte</span>
-            <span class="connect-pill" style="color:#67e8f9;border-color:#06b6d435;background:rgba(6,182,212,0.08)">📐 Matemáticas</span>
+            <span class="connect-pill" style="color:#ffdf9e;border-color:#ffc85735;background:rgba(255,200,87,0.08)">🔬 Ciencia</span>
+            <span class="connect-pill" style="color:#ffdf9e;border-color:#ffc85735;background:rgba(255,200,87,0.08)">⚙️ Tecnología</span>
+            <span class="connect-pill" style="color:#ffdf9e;border-color:#ffc85735;background:rgba(255,200,87,0.08)">🔧 Ingeniería</span>
+            <span class="connect-pill" style="color:#ffdf9e;border-color:#ffc85735;background:rgba(255,200,87,0.08)">🎨 Arte</span>
+            <span class="connect-pill" style="color:#ffdf9e;border-color:#ffc85735;background:rgba(255,200,87,0.08)">📐 Matemáticas</span>
           </div>
         </div>
 
         <div class="area-visual reveal reveal-delay-1">
           <div class="iot-layers" style="width:100%">
             <div style="font-size:0.65rem;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:0.5rem" data-i18n="iot.stack">Stack tecnológico</div>
-            <div class="iot-layer" style="border-color:rgba(6,182,212,0.3);background:rgba(6,182,212,0.07);color:#67e8f9">
+            <div class="iot-layer" style="border-color:rgba(255,200,87,0.3);background:rgba(255,200,87,0.07);color:#ffdf9e">
               <span>🖥</span> Capa de presentación — React + Three.js
             </div>
             <div style="text-align:center;color:var(--dim);font-size:0.85rem">↕</div>
-            <div class="iot-layer" style="border-color:rgba(129,140,248,0.3);background:rgba(129,140,248,0.07);color:#a5b4fc">
+            <div class="iot-layer" style="border-color:rgba(224,138,79,0.3);background:rgba(224,138,79,0.07);color:#f0b184">
               <span>🧠</span> Capa de decisión — Agentes IA (Python)
             </div>
             <div style="text-align:center;color:var(--dim);font-size:0.85rem">↕</div>
-            <div class="iot-layer" style="border-color:rgba(37,99,235,0.3);background:rgba(37,99,235,0.07);color:#93c5fd">
+            <div class="iot-layer" style="border-color:rgba(242,177,52,0.3);background:rgba(242,177,52,0.07);color:#ffd08a">
               <span>📡</span> Capa de comunicación — FastAPI + WebSocket
             </div>
             <div style="text-align:center;color:var(--dim);font-size:0.85rem">↕</div>
-            <div class="iot-layer" style="border-color:rgba(16,185,129,0.3);background:rgba(16,185,129,0.07);color:#6ee7b7">
+            <div class="iot-layer" style="border-color:rgba(63,168,122,0.3);background:rgba(63,168,122,0.07);color:#8fdcb8">
               <span>📟</span> Capa de sensores — IoT Virtual (simulado)
             </div>
             <div style="text-align:center;color:var(--dim);font-size:0.85rem">↕</div>
@@ -971,12 +990,12 @@
 
       <div class="team-grid">
         <div class="team-card reveal reveal-delay-1">
-          <div class="team-avatar" style="background:linear-gradient(135deg,#1d4ed8,#0e7490)">VL</div>
+          <div class="team-avatar" style="background:linear-gradient(135deg,#b8791c,#8a5a2b)">VL</div>
           <div class="team-name">Victoria López</div>
           <div class="team-role" data-i18n="team.vl.role">Líder de Proyecto & Dev</div>
         </div>
         <div class="team-card reveal reveal-delay-2">
-          <div class="team-avatar" style="background:linear-gradient(135deg,#0e7490,#059669)">MG</div>
+          <div class="team-avatar" style="background:linear-gradient(135deg,#8a5a2b,#3fa87a)">MG</div>
           <div class="team-name">Manuela Granada</div>
           <div class="team-role" data-i18n="team.mg.role">Contexto Social & Problemática</div>
         </div>
@@ -1101,29 +1120,26 @@
       'hero.stat3': 'Zonas inteligentes',
       'hero.stat4': 'Hardware requerido',
       'hero.stat5': 'CO₂ evitado/año',
-      // Twin showcase
+      // Gemelo digital
       'twin.eyebrow':    'El producto central',
-      'twin.title':      'El Gemelo Digital<br><span style="background:linear-gradient(135deg,var(--blue),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent">en tiempo real</span>',
-      'twin.sub':        'Una réplica 3D interactiva del aula que muestra en vivo cómo la IA controla cada zona de iluminación — y cuánta energía ahorra en el proceso.',
-      'twin.view3d':     'Vista 3D — Gemelo Digital',
-      'twin.live':       'EN VIVO',
-      'twin.consumption':'Consumo actual',
-      'twin.dashboard':  'Dashboard energético',
-      'twin.chart':      'Consumo en tiempo real (W)',
-      'twin.noai':       'Sin IA',
-      'twin.withai':     'Con IA →',
-      'twin.savings':    'Ahorro hoy',
-      'twin.co2avoided': 'CO₂ evitado',
-      'twin.decisions':  'Decisiones IA recientes',
-      'twin.dec1':       '✓ Zona C apagada — sin ocupantes',
-      'twin.dec2':       '✓ Zona B en DIM — luz natural 68%',
-      'twin.dec3':       '✓ Zona A ON — 3 personas detectadas',
-      'twin.pill1':      '✓ Actualización en tiempo real',
-      'twin.pill2':      '✓ 5 agentes IA coordinados',
+      'twin.title':      'El gemelo digital,<br><span class="grad">tal como se ve</span>',
+      'twin.sub':        'Una réplica 3D del aula que corre en el navegador. Las imágenes de abajo no son ilustraciones: son capturas del gemelo funcionando.',
+      'shot.mediodia.chip': '☀️ Mediodía despejado',
+      'shot.mediodia.text': 'Entra tanto sol por las ventanas que la IA apaga la zona pegada a la ventana y deja las del fondo en media luz. Nadie tocó un interruptor.',
+      'shot.mediodia.alt':  'Vista 3D del aula al mediodía: sol alto, luz entrando por las ventanas hexagonales y estudiantes en sus puestos.',
+      'shot.atardecer.chip':'🌇 Cinco y media',
+      'shot.atardecer.text':'El sol baja, el cielo se pone naranja y las sombras se alargan. Con menos luz natural el sistema vuelve a encender lo que hace falta.',
+      'shot.atardecer.alt': 'La misma aula a las cinco y media de la tarde: cielo naranja, sol bajo y las lámparas encendidas.',
+      'shot.emergencia.chip':'🔥 Modo emergencia',
+      'shot.emergencia.text':'Se declara un incendio: la ruta hacia la puerta se queda fija y la zona que hay que desocupar parpadea. Luz fija = por aquí se sale.',
+      'shot.emergencia.alt': 'La misma aula en modo emergencia: las lámparas del frente izquierdo apagadas mientras el resto de la ruta a la puerta sigue encendida.',
+      'twin.pill1':      '✓ Se actualiza en vivo',
+      'twin.pill2':      '✓ 6 agentes coordinados',
       'twin.pill3':      '✓ 4 zonas de iluminación',
-      'twin.pill4':      '✓ Comparativo Con vs Sin IA',
-      'twin.cta':        'Abrir el Digital Twin en vivo',
-      'twin.ctasub':     'No requiere instalación — corre directo en el navegador',
+      'twin.pill4':      '✓ Comparativo con y sin IA',
+      'twin.pill5':      '✓ Hora, clima y ocupación a la mano',
+      'twin.cta':        'Abrir el gemelo en vivo',
+      'twin.ctasub':     'No hay que instalar nada — corre en el navegador',
       // Proyecto
       'proj.eyebrow': '¿Qué construimos?',
       'proj.title':   'Iluminación inteligente<br>sin desperdiciar un vatio',
@@ -1131,7 +1147,7 @@
       'proj.c1title': 'El problema',
       'proj.c1body':  'Los salones de clase de Colombia desperdician energía eléctrica con iluminación innecesaria durante miles de horas al año.',
       'proj.c2title': 'Nuestra solución',
-      'proj.c2body':  '5 agentes de IA coordinados toman decisiones de iluminación en tiempo real según ocupación, luz natural y comandos de voz.',
+      'proj.c2body':  '6 agentes de IA coordinados deciden la iluminación en tiempo real según ocupación, luz natural, comandos de voz y emergencias.',
       'proj.c3title': 'La evidencia',
       'proj.c3body':  'El Gemelo Digital mide, compara y reporta el consumo en kWh, COP y kg CO₂ — con datos reales de la tarifa colombiana.',
       'proj.c4title': 'El impacto',
@@ -1146,13 +1162,17 @@
       'ai.eyebrow': 'Área 2 · Computación e IA',
       'ai.title':   'Inteligencia Artificial<br>& Gemelos Digitales',
       'ai.c1title': 'Sistema Multi-Agente',
-      'ai.c1body':  '5 agentes autónomos coordinados por un orquestador central que procesa sensores y toma decisiones cada 5 segundos.',
+      'ai.c1body':  '6 agentes autónomos coordinados por un orquestador central que lee los sensores y decide cada 5 segundos.',
       'ai.c2title': 'Gemelo Digital',
       'ai.c2body':  'Réplica virtual 3D del aula con Three.js que simula condiciones reales de iluminación, clima y ocupación.',
       'ai.c3title': 'Decisiones en tiempo real',
       'ai.c3body':  'Reglas inteligentes que combinan datos de ocupación, luz solar y comandos de voz para optimizar el consumo.',
       'ai.c4title': 'WebSocket en vivo',
       'ai.c4body':  'La interfaz se actualiza instantáneamente mediante WebSockets — sin recargar la página, sin latencia.',
+      'ai.c5title': 'Cámara real, opcional',
+      'ai.c5body':  'Con BlazeFace el aula puede contar personas de verdad. Todo ocurre dentro del navegador: ninguna imagen sale del computador.',
+      'ai.c6title': 'Modo emergencia',
+      'ai.c6body':  'Luz fija para la ruta de salida, parpadeo donde no hay que quedarse. Manda sobre todo lo demás, incluso sobre la voz.',
       // IoT
       'iot.eyebrow': 'Área 3 · Tecnología & STEAM',
       'iot.title':   'IoT, Automatización<br>& Metodología STEAM',
@@ -1187,29 +1207,26 @@
       'hero.stat3': 'Smart zones',
       'hero.stat4': 'Hardware required',
       'hero.stat5': 'CO₂ avoided/year',
-      // Twin showcase
+      // Digital twin
       'twin.eyebrow':    'The core product',
-      'twin.title':      'The Digital Twin<br><span style="background:linear-gradient(135deg,var(--blue),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent">in real time</span>',
-      'twin.sub':        'An interactive 3D replica of the classroom that shows in real time how AI controls each lighting zone — and how much energy it saves.',
-      'twin.view3d':     '3D View — Digital Twin',
-      'twin.live':       'LIVE',
-      'twin.consumption':'Current consumption',
-      'twin.dashboard':  'Energy dashboard',
-      'twin.chart':      'Real-time consumption (W)',
-      'twin.noai':       'Without AI',
-      'twin.withai':     'With AI →',
-      'twin.savings':    'Today\'s savings',
-      'twin.co2avoided': 'CO₂ avoided',
-      'twin.decisions':  'Recent AI decisions',
-      'twin.dec1':       '✓ Zone C off — no occupants',
-      'twin.dec2':       '✓ Zone B DIM — natural light 68%',
-      'twin.dec3':       '✓ Zone A ON — 3 people detected',
-      'twin.pill1':      '✓ Real-time updates',
-      'twin.pill2':      '✓ 5 coordinated AI agents',
+      'twin.title':      'The digital twin,<br><span class="grad">exactly as it looks</span>',
+      'twin.sub':        'A 3D replica of the classroom running in the browser. The images below are not illustrations: they are screenshots of the twin at work.',
+      'shot.mediodia.chip': '☀️ Clear midday',
+      'shot.mediodia.text': 'So much sun comes through the windows that the AI switches off the zone next to them and dims the ones at the back. Nobody touched a switch.',
+      'shot.mediodia.alt':  '3D view of the classroom at midday: high sun, light pouring through the hexagonal windows and students at their desks.',
+      'shot.atardecer.chip':'🌇 Half past five',
+      'shot.atardecer.text':'The sun drops, the sky turns orange and the shadows stretch out. With less daylight the system turns back on only what is needed.',
+      'shot.atardecer.alt': 'The same classroom at half past five: orange sky, low sun and the lamps switched on.',
+      'shot.emergencia.chip':'🔥 Emergency mode',
+      'shot.emergencia.text':'A fire is declared: the route to the door stays lit while the zone to be cleared blinks. Steady light means this is the way out.',
+      'shot.emergencia.alt': 'The same classroom in emergency mode: the front-left lamps off while the rest of the route to the door stays lit.',
+      'twin.pill1':      '✓ Updates live',
+      'twin.pill2':      '✓ 6 coordinated agents',
       'twin.pill3':      '✓ 4 lighting zones',
-      'twin.pill4':      '✓ AI vs No-AI comparison',
-      'twin.cta':        'Open the Live Digital Twin',
-      'twin.ctasub':     'No installation needed — runs directly in the browser',
+      'twin.pill4':      '✓ With-AI vs without-AI comparison',
+      'twin.pill5':      '✓ Time, weather and occupancy at hand',
+      'twin.cta':        'Open the live twin',
+      'twin.ctasub':     'Nothing to install — it runs in the browser',
       // Proyecto
       'proj.eyebrow': 'What did we build?',
       'proj.title':   'Smart lighting<br>without wasting a watt',
@@ -1217,7 +1234,7 @@
       'proj.c1title': 'The problem',
       'proj.c1body':  'Classrooms in Colombia waste electrical energy with unnecessary lighting for thousands of hours every year.',
       'proj.c2title': 'Our solution',
-      'proj.c2body':  '5 coordinated AI agents make real-time lighting decisions based on occupancy, natural light, and voice commands.',
+      'proj.c2body':  '6 coordinated AI agents decide the lighting in real time based on occupancy, natural light, voice commands and emergencies.',
       'proj.c3title': 'The evidence',
       'proj.c3body':  'The Digital Twin measures, compares, and reports consumption in kWh, COP, and kg CO₂ — using real Colombian electricity rates.',
       'proj.c4title': 'The impact',
@@ -1232,13 +1249,17 @@
       'ai.eyebrow': 'Area 2 · Computing & AI',
       'ai.title':   'Artificial Intelligence<br>& Digital Twins',
       'ai.c1title': 'Multi-Agent System',
-      'ai.c1body':  '5 autonomous agents coordinated by a central orchestrator that processes sensors and makes decisions every 5 seconds.',
+      'ai.c1body':  '6 autonomous agents coordinated by a central orchestrator that reads the sensors and decides every 5 seconds.',
       'ai.c2title': 'Digital Twin',
       'ai.c2body':  '3D virtual replica of the classroom using Three.js, simulating real lighting, weather, and occupancy conditions.',
       'ai.c3title': 'Real-time decisions',
       'ai.c3body':  'Smart rules combining occupancy data, sunlight, and voice commands to optimize energy consumption.',
       'ai.c4title': 'Live WebSocket',
       'ai.c4body':  'The interface updates instantly via WebSockets — no page reload, no latency.',
+      'ai.c5title': 'Real camera, optional',
+      'ai.c5body':  'With BlazeFace the classroom can count real people. It all happens inside the browser: no image ever leaves the computer.',
+      'ai.c6title': 'Emergency mode',
+      'ai.c6body':  'Steady light along the exit route, blinking where nobody should stay. It overrides everything else, voice included.',
       // IoT
       'iot.eyebrow': 'Area 3 · Technology & STEAM',
       'iot.title':   'IoT, Automation<br>& STEAM Methodology',
@@ -1268,6 +1289,12 @@
     document.querySelectorAll('[data-i18n-html]').forEach(el => {
       const key = el.getAttribute('data-i18n-html');
       if (t[key] !== undefined) el.innerHTML = t[key];
+    });
+    // Texto alternativo de las imágenes: describe la captura para quien
+    // usa lector de pantalla, así que también cambia de idioma.
+    document.querySelectorAll('[data-i18n-alt]').forEach(el => {
+      const key = el.getAttribute('data-i18n-alt');
+      if (t[key] !== undefined) el.alt = t[key];
     });
     // Toggle buttons
     document.getElementById('btn-es').classList.toggle('active', lang === 'es');

@@ -31,4 +31,9 @@ cp "$SRC/journey-map.html" "$OUT/app/journey-map.html"
 # vendor va en la raíz porque los <script> lo piden como /vendor/…
 cp -R "$SRC/vendor" "$OUT/vendor"
 
+# Las capturas del gemelo se piden con ruta relativa (img/…), y la landing
+# queda publicada en dos sitios, así que la carpeta va en los dos.
+cp -R "$SRC/img" "$OUT/img"
+cp -R "$SRC/img" "$OUT/app/img"
+
 echo "✅ deploy/ generado — $(find "$OUT" -type f | wc -l | tr -d ' ') archivos"

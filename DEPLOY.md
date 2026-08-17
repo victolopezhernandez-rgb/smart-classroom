@@ -7,7 +7,7 @@
        │
        ├── páginas ──────► NETLIFY   (archivos estáticos)
        │
-       └── datos ────────► RENDER    (Python + los 5 agentes)
+       └── datos ────────► RENDER    (Python + los 6 agentes)
                            https://smart-classroom-rtne.onrender.com
 ```
 
