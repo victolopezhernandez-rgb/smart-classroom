@@ -31,7 +31,11 @@ jobs:
           BASE_PATH: /smart-classroom/
         run: bash scripts/build-deploy.sh
 
+      # enablement prende Pages la primera vez, sin tener que entrar a
+      # Settings a mano. Después de eso no hace nada.
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - uses: actions/upload-pages-artifact@v3
         with:
