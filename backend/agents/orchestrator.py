@@ -1,12 +1,12 @@
 from __future__ import annotations
 import asyncio
-from datetime import datetime
 from collections import deque
 
 from shared.classroom_state import classroom_state, CLASSROOM_ZONES
 from shared.broadcaster import broadcast
 from shared.logger import get_logger, log_decision
 from shared.thresholds import DECISION_INTERVAL_SECONDS
+from shared import clock
 
 from agents.vision import vision_agent
 from agents.light_sensor import light_sensor
@@ -153,7 +153,7 @@ class OrchestratorAgent:
 
     def _record_history(self, lighting_state, occ, light, mode, voice_raw):
         _history.appendleft({
-            "timestamp":     datetime.now().isoformat(),
+            "timestamp":     clock.now().isoformat(),
             "mode":          mode,
             "voice_command": voice_raw,
             "total_watts":   classroom_state.total_watts,

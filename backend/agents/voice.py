@@ -1,7 +1,7 @@
 from __future__ import annotations
-from datetime import datetime
 
 from shared.logger import get_logger
+from shared import clock
 from skills.command_parser import parse_command, command_to_lighting_state, ParsedCommand
 
 logger = get_logger("VoiceAgent")
@@ -32,7 +32,7 @@ class VoiceAgent:
             self._pending = parsed
             entry = {
                 **parsed.to_dict(),
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": clock.now().isoformat(),
             }
             self._history.append(entry)
             # Keep only last 20 commands

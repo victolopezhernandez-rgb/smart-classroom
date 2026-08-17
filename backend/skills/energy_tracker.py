@@ -1,11 +1,11 @@
 from __future__ import annotations
 import csv
 import os
-from datetime import datetime
 from dataclasses import dataclass
 from typing import Literal
 
 from shared.thresholds import BASELINE_WATTS
+from shared import clock
 
 LOG_FILE = "data/energy_logs.csv"
 
@@ -39,7 +39,7 @@ class EnergyTracker:
         }
 
         reading = EnergyReading(
-            timestamp=datetime.now().isoformat(),
+            timestamp=clock.now().isoformat(),
             watts=watts,
             zone_states=zone_states,
             mode=mode,

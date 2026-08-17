@@ -1,7 +1,6 @@
 from __future__ import annotations
-from datetime import datetime
-
 from shared.logger import get_logger
+from shared import clock
 from skills.natural_light_simulation import calculate_light_levels, WEATHER_MULTIPLIERS
 
 logger = get_logger("LightSensorAgent")
@@ -50,7 +49,7 @@ class LightSensorAgent:
         """
         hour = self._current_hour()
         levels = calculate_light_levels(hour, self.weather)
-        levels["timestamp"] = datetime.now().isoformat()
+        levels["timestamp"] = clock.now().isoformat()
         levels["weather"] = self.weather
         levels["hour"] = round(hour, 2)
         return levels
@@ -60,8 +59,7 @@ class LightSensorAgent:
     def _current_hour(self) -> float:
         if self.simulated_time is not None:
             return self.simulated_time
-        now = datetime.now()
-        return now.hour + now.minute / 60.0
+        return clock.hour_of_day()
 
 
 # Singleton

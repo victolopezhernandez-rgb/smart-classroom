@@ -1,6 +1,5 @@
 from __future__ import annotations
 import time
-from datetime import datetime
 
 from shared.classroom_state import CLASSROOM_ZONES
 from shared.logger import get_logger
@@ -10,6 +9,7 @@ from shared.thresholds import (
     ROOM_DEPTH_M,
     MAX_LIVE_DETECTIONS,
 )
+from shared import clock
 from skills.people_detection import generate_people, nudge_positions, SCENARIO_CONFIG
 from skills.zone_mapping import get_zone
 
@@ -123,7 +123,7 @@ class VisionAgent:
                 for person in self._live_people:
                     counts[person["zone"]] += 1
                 counts["total"] = len(self._live_people)
-                counts["timestamp"] = datetime.now().isoformat()
+                counts["timestamp"] = clock.now().isoformat()
                 counts["scenario"] = "live_camera"
                 return counts
 
@@ -135,7 +135,7 @@ class VisionAgent:
             counts[person["zone"]] += 1
 
         counts["total"] = len(self.people)
-        counts["timestamp"] = datetime.now().isoformat()
+        counts["timestamp"] = clock.now().isoformat()
         counts["scenario"] = self.scenario
         return counts
 

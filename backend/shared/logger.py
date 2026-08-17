@@ -1,10 +1,16 @@
 from __future__ import annotations
 import logging
 import json
-from datetime import datetime
 from pathlib import Path
 
+from . import clock
+
 Path("logs").mkdir(exist_ok=True)
+
+# El %(asctime)s de logging trae su propio reloj, que es el del servidor. Sin
+# esto los mensajes de consola saldrían en UTC mientras el resto del sistema
+# habla en hora del salón, y cotejar un log con la demo sería un lío.
+logging.Formatter.converter = lambda *args: clock.now().timetuple()
 
 logging.basicConfig(
     level=logging.INFO,
@@ -22,7 +28,7 @@ def get_logger(agent_name: str) -> logging.Logger:
 
 def log_decision(lighting_state: dict, occupancy: dict, natural_light: dict, voice_cmd: str | None):
     entry = {
-        "timestamp": datetime.now().isoformat(),
+        "timestamp": clock.now().isoformat(),
         "lighting_state": {
             zone: data.get("state") for zone, data in lighting_state.items()
             if isinstance(data, dict)

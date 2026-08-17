@@ -1,7 +1,8 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from datetime import datetime
 from typing import Literal
+
+from . import clock
 
 CLASSROOM_ZONES = ["zone_A", "zone_B", "zone_C", "zone_D"]
 
@@ -30,7 +31,7 @@ class ClassroomState:
     )
     total_watts: float = 0.0
     mode: Literal["AUTO", "MANUAL", "EMERGENCY"] = "AUTO"
-    last_updated: str = field(default_factory=lambda: datetime.now().isoformat())
+    last_updated: str = field(default_factory=lambda: clock.now().isoformat())
     scenario: str = "full_class"
     weather: str = "clear"
     # None cuando no pasa nada. Durante una emergencia guarda el detalle que
@@ -41,20 +42,20 @@ class ClassroomState:
         if zone in self.zones:
             self.zones[zone].light = state
             self.zones[zone].reason = reason
-        self.last_updated = datetime.now().isoformat()
+        self.last_updated = clock.now().isoformat()
         self._recalculate_watts()
 
     def update_occupancy(self, occupancy: dict):
         for zone, count in occupancy.items():
             if zone in self.zones:
                 self.zones[zone].occupancy = count
-        self.last_updated = datetime.now().isoformat()
+        self.last_updated = clock.now().isoformat()
 
     def update_natural_light(self, levels: dict):
         for zone, level in levels.items():
             if zone in self.zones:
                 self.zones[zone].natural_light = level
-        self.last_updated = datetime.now().isoformat()
+        self.last_updated = clock.now().isoformat()
 
     def to_dict(self) -> dict:
         return {

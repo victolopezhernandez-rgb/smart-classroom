@@ -1,8 +1,8 @@
-from datetime import datetime
 
 from shared.classroom_state import classroom_state, CLASSROOM_ZONES
 from shared.thresholds import BASELINE_WATTS, HIGH_CONSUMPTION_ALERT_WATTS
 from shared.logger import get_logger
+from shared import clock
 from skills.energy_tracker import EnergyTracker
 
 logger = get_logger("DigitalTwinAgent")
@@ -17,7 +17,7 @@ class DigitalTwinAgent:
     """
 
     def __init__(self):
-        session_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+        session_id = clock.now().strftime("%Y%m%d_%H%M%S")
         self.tracker = EnergyTracker(session_id)
         self.mode = "AI"   # "AI" or "BASELINE"
         logger.info(f"DigitalTwinAgent started — session {session_id}")
@@ -97,7 +97,7 @@ class DigitalTwinAgent:
 
     def reset_session(self):
         """Clear energy log and start a new session."""
-        session_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+        session_id = clock.now().strftime("%Y%m%d_%H%M%S")
         self.tracker = EnergyTracker(session_id)
         logger.info(f"Session reset — new session {session_id}")
 

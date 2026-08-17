@@ -1,9 +1,9 @@
 from __future__ import annotations
-from datetime import datetime
 
 from shared.classroom_state import classroom_state
 from shared.logger import get_logger
 from shared.thresholds import EMERGENCY_EXIT_ZONE
+from shared import clock
 from skills.emergency_protocol import (
     EMERGENCY_TYPES,
     build_emergency_state,
@@ -47,7 +47,7 @@ class EmergencyAgent:
                 f"Válidos: {list(EMERGENCY_TYPES)}"
             )
         self.active = kind
-        self.started_at = datetime.now().isoformat()
+        self.started_at = clock.now().isoformat()
         logger.warning(f"EMERGENCIA DECLARADA: {kind} — salida por {EMERGENCY_EXIT_ZONE}")
 
     def clear(self):
