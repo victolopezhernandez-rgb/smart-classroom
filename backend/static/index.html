@@ -188,6 +188,26 @@
     .chip.active-purple { border-color: #a855f7; background: #3b076480; color: #d8b4fe; font-weight: 600; }
     .chip.active-green  { border-color: #22c55e; background: #05391f80; color: #86efac; font-weight: 600; }
 
+    /* El botón de cámara real es un interruptor, no un chip de escoger: la
+       etiqueta se queda quieta y lo que cambia es el estado. Apagado se ve
+       gris como los demás chips; encendido se pone verde y prende la insignia. */
+    .cam-toggle {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      font-size: 0.9rem; padding: 0.5rem 0.8rem;
+    }
+    .cam-state {
+      font-size: 0.6rem; font-weight: 700; letter-spacing: 0.09em;
+      padding: 0.12rem 0.4rem; border-radius: 0.25rem;
+      border: 1px solid currentColor; opacity: 0.7;
+    }
+    .cam-toggle.cam-on {
+      border-color: #22c55e; background: #05391f80; color: #86efac; font-weight: 600;
+      box-shadow: 0 0 12px #22c55e30;
+    }
+    .cam-toggle.cam-on .cam-state {
+      background: #22c55e; border-color: #22c55e; color: #04240f; opacity: 1;
+    }
+
     /* ── 3D Canvas ──────────────────────────────────────────────────────── */
     #canvas3d { width: 100%; height: 420px; border-radius: 0.5rem; overflow: hidden; display: block; }
 
@@ -2027,6 +2047,7 @@
         'voice':'Control por Voz (Chrome)','voice.examples':'Comandos de ejemplo',
         'voice.listening':'Escuchando…','voice.idle':'Presiona para hablar','voice.processing':'Procesando comando…','voice.applying':'Aplicando comando…',
         'demo':'Controles Demo','occ':'OCUPACIÓN','weather':'CLIMA','time':'HORA DEL DÍA',
+        'cam.label':'Cámara real','cam.on':'ON','cam.off':'OFF',
         'sc.empty':'Vacío','sc.few':'Pocos','sc.half':'Mitad','sc.full':'Lleno','sc.back':'Atrás','sc.real':'Real',
         'zones':'Zonas de Iluminación','people':'personas','natural':'luz natural',
         'zl.A':'A — Frente Izq','zl.B':'B — Frente Der','zl.C':'C — Atrás Izq','zl.D':'D — Atrás Der',
@@ -2067,6 +2088,7 @@
         'voice':'Voice Control (Chrome)','voice.examples':'Example commands',
         'voice.listening':'Listening…','voice.idle':'Press to speak','voice.processing':'Processing command…','voice.applying':'Applying command…',
         'demo':'Demo Controls','occ':'OCCUPANCY','weather':'WEATHER','time':'TIME OF DAY',
+        'cam.label':'Real camera','cam.on':'ON','cam.off':'OFF',
         'sc.empty':'Empty','sc.few':'Few','sc.half':'Half','sc.full':'Full','sc.back':'Back','sc.real':'Live',
         'zones':'Lighting Zones','people':'people','natural':'natural light',
         'zl.A':'A — Front Left','zl.B':'B — Front Right','zl.C':'C — Back Left','zl.D':'D — Back Right',
@@ -2282,10 +2304,11 @@
           <div className="chip-group">{times.map(({h,l,k})=>{const isLoading=loading===`t-${h}`; return <button key={l||k} className={`chip${simTime===h?" active-purple":""}${isLoading?" loading":""}`} onClick={()=>setT(h)}>{isLoading&&<span className="spinner"/>}{k ? t(k) : l}</button>;})}</div>
           <div style={{fontSize:"0.65rem",color:"#64748b",marginTop:"0.5rem"}}>
             <button onClick={toggleLiveCamera}
-              className={`chip active-green${loading==="cam"?" loading":""}`}
-              style={{fontSize:"0.9rem",padding:"0.5rem 0.8rem"}}>
+              className={`chip cam-toggle${isLiveCamera?" cam-on":""}${loading==="cam"?" loading":""}`}
+              aria-pressed={isLiveCamera}>
               {loading==="cam" && <span className="spinner"/>}
-              {isLiveCamera ? "📹 Modo cámara" : "🎥 Cámara real"}
+              <span>🎥 {t('cam.label')}</span>
+              <span className="cam-state">{t(isLiveCamera ? 'cam.on' : 'cam.off')}</span>
             </button>
           </div>
         </div>
