@@ -586,6 +586,11 @@
       { h:18.6,  sky:['#1e2b52','#5b4a72','#9c6a72'], sun:0x8a76ad, si:0.14, hi:0.20, out:0.34 },
       { h:20.0,  sky:['#141d38','#28324f','#4a4a63'], sun:0x5a6a99, si:0.06, hi:0.16, out:0.22 },
     ];
+    // Los colores de three.js viven en lineal y salen a pantalla en sRGB, así
+    // que multiplicar por 0.43 se ve como un 69 % de brillo — casi nada. Para
+    // que «bajarle al 43 %» se vea como un 43 %, hay que atenuar con gamma.
+    const dimmer = k => Math.pow(Math.max(k, 0), 2.2);
+
     function dayPalette(hour) {
       const h = Math.min(Math.max(hour, DAY_KEYS[0].h), DAY_KEYS[DAY_KEYS.length - 1].h);
       let i = 0;
@@ -614,6 +619,7 @@
       const sunPoolsRef     = useRef([]);
       const skyRef          = useRef(null);
       const outsideRef      = useRef(null);
+      const sunDiscRef      = useRef(null);
       const dirLightRef     = useRef(null);
       const hemiRef         = useRef(null);
       const rainRef         = useRef({ group: null, drops: [] });
@@ -1092,6 +1098,10 @@
         // cuanto la cámara gira — y aquí la cámara gira libremente. Una cúpula
         // resuelve todos los ángulos de una vez.
         const ORIGIN = new THREE.Vector3(5, 0, 4);
+        // El campus queda medio metro por debajo del piso del salón. Sin ese
+        // desnivel el edificio no se apoya en nada: el piso flotaba a ras de
+        // pasto y se leía como una alfombra, no como una construcción.
+        const GROUND_Y = -0.45;
 
         // Cielo: degradado + cúmulos pintados a mano. El horizonte va a media
         // altura de la imagen, que es el ecuador de la esfera.
@@ -1203,7 +1213,7 @@
         grassTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
         const grass = new THREE.Mesh(new THREE.CircleGeometry(44, 64),
           new THREE.MeshBasicMaterial({ map: grassTex, fog: false }));
-        grass.rotation.x = -Math.PI/2; grass.position.set(ORIGIN.x, -0.06, ORIGIN.z);
+        grass.rotation.x = -Math.PI/2; grass.position.set(ORIGIN.x, GROUND_Y, ORIGIN.z);
         outside.add(grass);
 
         // Vegetación tropical justo afuera. Copas de icosaedro achatado: con
@@ -1223,19 +1233,79 @@
         trees.forEach(({x, z, s}, i) => {
           const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.07*s, 0.11*s, 1.5*s, 6),
             new THREE.MeshBasicMaterial({ color: 0x6b5136, fog: false }));
-          trunk.position.set(x, 0.75*s - 0.05, z); outside.add(trunk);
+          trunk.position.set(x, 0.75*s + GROUND_Y, z); outside.add(trunk);
           for (let b = 0; b < 3; b++) {
             const crown = new THREE.Mesh(new THREE.IcosahedronGeometry(0.62*s, 0),
               new THREE.MeshBasicMaterial({ color: foliage[(i+b) % foliage.length], fog: false, flatShading: true }));
-            crown.position.set(x + (b-1)*0.42*s, 1.5*s - 0.05 + b*0.30*s, z + ((b%2)-0.5)*0.5*s);
+            crown.position.set(x + (b-1)*0.42*s, 1.5*s + GROUND_Y + b*0.30*s, z + ((b%2)-0.5)*0.5*s);
             crown.scale.set(1, 0.78, 1);
             crown.rotation.set(b*0.7, b*1.3, 0);
             outside.add(crown);
           }
         });
 
+        // Matas al pie del muro. Un edificio que sale del pasto con una línea
+        // limpia se ve recortado; en la vida real siempre hay algo creciendo
+        // contra la base, y eso es lo que amarra el volumen con el suelo.
+        const bushCol = [0x3f6b33, 0x4d7d3b, 0x37602e, 0x598a43];
+        [[-0.75,0.6,0.42],[-0.85,1.9,0.34],[-0.70,3.4,0.46],[-0.90,4.9,0.30],
+         [-0.78,6.1,0.40],[-0.82,7.4,0.36],[-0.60,-0.5,0.32],[-0.95,8.6,0.38]
+        ].forEach(([bx, bz, bs], i) => {
+          const bush = new THREE.Mesh(new THREE.IcosahedronGeometry(bs, 0),
+            new THREE.MeshBasicMaterial({ color: bushCol[i % bushCol.length], fog: false, flatShading: true }));
+          bush.position.set(bx, GROUND_Y + bs*0.62, bz);
+          bush.scale.set(1.25, 0.8, 1.1);
+          bush.rotation.set(i*0.6, i*1.1, i*0.3);
+          outside.add(bush);
+        });
+
+        // El sol, visible en el cielo. Es lo que remata la hora del día: no
+        // basta con que la luz cambie de color, hay que VER dónde está el sol
+        // para creerse que son las 6 y no las 12. Va suelto en la escena y no
+        // en `outside` porque su color lo pone la paleta del día, no el tinte
+        // general del exterior.
+        const sunCv = document.createElement('canvas'); sunCv.width = sunCv.height = 128;
+        const sxc = sunCv.getContext('2d');
+        const sgrd = sxc.createRadialGradient(64, 64, 2, 64, 64, 64);
+        sgrd.addColorStop(0.00, 'rgba(255,255,250,1)');
+        sgrd.addColorStop(0.11, 'rgba(255,252,232,0.92)');
+        sgrd.addColorStop(0.20, 'rgba(255,238,186,0.38)');
+        sgrd.addColorStop(0.50, 'rgba(255,216,150,0.11)');
+        sgrd.addColorStop(1.00, 'rgba(255,205,140,0)');
+        sxc.fillStyle = sgrd; sxc.fillRect(0, 0, 128, 128);
+        const sunTex = new THREE.CanvasTexture(sunCv);
+        const sunDisc = new THREE.Sprite(new THREE.SpriteMaterial({
+          map: sunTex, transparent: true, blending: THREE.AdditiveBlending,
+          depthWrite: false, fog: false,
+        }));
+        sunDisc.scale.set(11, 11, 1);
+        scene.add(sunDisc); sunDiscRef.current = sunDisc;
+
         scene.add(outside);
         outsideRef.current = outside;
+
+        // ── El edificio se apoya en el suelo ──────────────────────────────
+        // Un zócalo de concreto bajo el piso y un remate arriba de los muros.
+        // Los muros son planos de espesor cero: sin estas dos piezas el salón
+        // se ve como una maqueta de cartulina recortada.
+        const plinth = new THREE.Mesh(RBox(10.8, 0.52, 8.8),
+          stdMat({ color: 0xc3bcae, roughness: 0.94 }));
+        plinth.position.set(5, -0.26, 4);
+        plinth.receiveShadow = true; scene.add(plinth);
+
+        // El remate va en concreto, no en el amarillo del colegio: probado en
+        // amarillo, el salón quedaba dentro de un marco de cuadro que se
+        // comía la escena. Gris claro se lee como el canto de la losa y no
+        // compite con nada.
+        const corniceMat = stdMat({ color: 0xcdc6b8, roughness: 0.92 });
+        [[5, 3.45, -0.06, 10.5, 0.13, 0.22],
+         [5, 3.45,  8.06, 10.5, 0.13, 0.22],
+         [10.06, 3.45, 4, 0.22, 0.13, 8.5],
+         [-0.11, 3.45, 4, 0.26, 0.13, 8.5],
+        ].forEach(([cx, cy, cz, cw, ch, cd]) => {
+          const c = new THREE.Mesh(RBox(cw, ch, cd), corniceMat);
+          c.position.set(cx, cy, cz); c.castShadow = true; scene.add(c);
+        });
 
         // ── Teacher's desk + monitor ──────────────────────────────────────
         const tDeskMat = stdMat({ color: 0x7c5228 });
@@ -1824,7 +1894,7 @@
         if (skyRef.current) {
           const sky = day.sky.map((c, k) =>
             '#' + c.clone().lerp(new THREE.Color(cfg.grey[k]), cfg.mix)
-                    .multiplyScalar(0.35 + 0.65 * cfg.dim).getHexString());
+                    .multiplyScalar(dimmer(0.35 + 0.65 * cfg.dim)).getHexString());
           skyRef.current.draw(...sky);
           skyRef.current.tex.needsUpdate = true;
         }
@@ -1833,7 +1903,7 @@
         // seguir verde brillante. El cielo lo pinta su propio canvas, así
         // que se salta el tinte para no oscurecerlo dos veces.
         if (outsideRef.current) {
-          const k  = cfg.dim * day.out;
+          const k  = dimmer(cfg.dim * day.out);
           const hz = day.sky[2].clone().multiplyScalar(k);
           outsideRef.current.traverse(o => {
             const m = o.material;
@@ -1854,6 +1924,19 @@
         }
         if (hemiRef.current)
           hemiRef.current.intensity = day.hi * (0.45 + 0.55 * cfg.dim);
+
+        // El disco del sol, a la altura y el lado que le toque. Se esconde
+        // bajo el horizonte y lo tapan las nubes: con cielo cerrado no se ve
+        // el sol, se ve el resplandor, y eso lo hace `mix`.
+        if (sunDiscRef.current) {
+          const s = sunDiscRef.current;
+          const dir = sunPos.clone().sub(new THREE.Vector3(5, 1, 4)).normalize();
+          s.position.set(5, 0, 4).addScaledVector(dir, 42);   // ORIGIN de la cúpula
+          s.material.color.copy(day.sun);
+          s.material.opacity = Math.max(0, 1 - cfg.mix * 1.15) * Math.min(1, 0.35 + up * 2);
+          s.scale.setScalar(11 + 7 * (1 - up));   // más grande cerca del horizonte
+          s.visible = dir.y > -0.02 && s.material.opacity > 0.02;
+        }
 
         // Haces y manchas de piso: solo con cielo despejado y con el sol lo
         // bastante alto. Rasante no entrarían — se los comería la cordillera.
