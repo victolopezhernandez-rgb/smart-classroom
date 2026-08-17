@@ -123,7 +123,10 @@ ingeniería, no como "una animación bonita".*
 
 > - El **Vision Agent** cuenta cuántas personas hay y en qué zona están.
 > - El **Light Sensor Agent** calcula cuánta luz natural entra, según la hora y el clima.
-> - El **Voice Agent** escucha órdenes por voz.
+> - El **Voice Agent** escucha. Y no solo órdenes de luces: entiende también lo
+>   que la clase va a hacer — «vamos a ver una película», «hay examen», «nos
+>   vamos a descanso» — y avisos de emergencia dichos como los dice una persona
+>   de verdad: «hay un incendio», «está temblando».
 > - El **Digital Twin Agent** mide la energía y la traduce a pesos y a CO₂.
 > - El **Agente de Emergencias** convierte una alerta de sismo o incendio en un
 >   patrón de luces de evacuación, y **manda sobre todos los demás, incluida la
@@ -164,9 +167,37 @@ ingeniería, no como "una animación bonita".*
 
 **[Las luces se prenden.]**
 
-> Regla número cuatro del sistema: **la voz humana anula a la IA.** Si el profesor
-> va a proyectar un video y quiere el salón oscuro, la IA no discute. La tecnología
+> Regla número cuatro del sistema: **la voz humana anula a la IA.** La tecnología
 > asiste, no manda.
+
+**[Segundo comando de voz — este es el que sorprende. No lo saltes si hay tiempo.]**
+
+> Pero hay algo más. Un profesor no dice "apaga las zonas A y B y atenúa C y D".
+> Dice: **"vamos a ver una película."**
+
+**[Adelante se apagan, atrás quedan a media luz.]**
+
+> Miren lo que hizo. **No apagó todo.** Apagó las de adelante, que son las que
+> lavan la pantalla, y dejó las de atrás atenuadas para que se puedan tomar
+> apuntes sin quedar a oscuras. Nadie le dijo eso: **le dijimos qué íbamos a
+> hacer, y él decidió qué luces tocar.**
+>
+> Eso es lo que separa una señal de un interruptor. El interruptor de verdad, en
+> un colegio, no está etiquetado "zona A": está etiquetado "proyección".
+
+**[Y el que de verdad importa — grítalo, no lo leas.]**
+
+> Y si alguien grita: **"¡hay un incendio!"**
+
+**[Se activa el modo emergencia, la ruta de evacuación se enciende.]**
+
+> Nadie grita "activar protocolo de evacuación tipo incendio". Grita **fuego**.
+> El sistema entiende eso, y no espera al siguiente ciclo de cinco segundos:
+> se dispara de inmediato.
+>
+> Y fíjense en lo que **no** pasa: si ahora yo digo "apagar todo", **la emergencia
+> no se cae.** Solo la apaga decirlo explícitamente: "ya pasó, todo despejado".
+> Eso es a propósito. **La voz manda sobre la comodidad, no sobre la seguridad.**
 
 **[Cierre del acto — pasa a las métricas.]**
 

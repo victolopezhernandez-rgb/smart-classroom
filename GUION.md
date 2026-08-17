@@ -1,6 +1,9 @@
 # Guion de presentación — Smart Classroom AI
 
-**Duración: 7:31** · 978 palabras habladas
+**Duración: 8:40 completo · 7:30 sin la DEMO 3** · 1124 palabras habladas
+
+Si el tiempo es de 7 minutos, la DEMO 3 (voz) sale entera y quedas en 7:30.
+Si tienes 9, déjala: es la parte que más sorprende.
 
 Lo que está **[entre corchetes]** no se dice: es lo que haces.
 Todo lo demás se dice tal cual.
@@ -57,7 +60,7 @@ la pregunta.
 
 ---
 
-## ACTO 3 · La solución · `1:48 – 4:45`
+## ACTO 3 · La solución · `1:48 – 5:55`
 
 Dejamos de preguntar *"¿cómo apagamos las luces?"* y empezamos a preguntar
 **"¿cómo probamos que apagarlas sirve, sin instalar nada?"**
@@ -78,11 +81,11 @@ Y adentro corre el sistema de Inteligencia Artificial completo: **seis agentes**
 **[Señala cada uno al nombrarlo.]**
 
 El **Vision Agent** cuenta personas y en qué zona están. El **Light Sensor**
-calcula la luz natural según hora y clima. El **Voice Agent** escucha órdenes por
-voz. El **Digital Twin** mide la energía y la traduce a pesos y a CO₂. El
-**Agente de Emergencias** convierte una alerta de sismo o incendio en luces de
-evacuación. Y el **Orquestador** es el cerebro: **cada cinco segundos** decide
-qué hace cada zona.
+calcula la luz natural según hora y clima. El **Voice Agent** escucha — órdenes,
+pero también lo que la clase va a hacer. El **Digital Twin** mide la energía y la
+traduce a pesos y a CO₂. El **Agente de Emergencias** convierte una alerta de
+sismo o incendio en luces de evacuación. Y el **Orquestador** es el cerebro:
+**cada cinco segundos** decide qué hace cada zona.
 
 Los separamos así a propósito: **hoy el Vision Agent simula personas; mañana se
 le conecta una cámara real y el resto del sistema no se entera.** Esa
@@ -111,7 +114,7 @@ Un sensor de movimiento no puede hacer esa distinción. **Este sistema decide zo
 por zona, y cada zona tiene su propia razón.** Y hay un tercer estado: atenuado a
 media potencia, cuando hay algo de luz pero no suficiente.
 
-**[DEMO 3 — voz. Si el wifi está inestable, sáltala.]**
+**[DEMO 3 — voz. Si el wifi está inestable, sáltala entera.]**
 
 Y el profesor siempre manda: **"Enciende todas las luces."**
 
@@ -120,9 +123,29 @@ Y el profesor siempre manda: **"Enciende todas las luces."**
 Regla número cuatro: **la voz humana anula a la IA.** La tecnología asiste; no
 manda.
 
+Pero un profesor no dice "apaga las zonas A y B y atenúa C y D". Dice:
+**"vamos a ver una película."**
+
+**[Adelante se apagan. Atrás quedan a media luz. Deja que lo vean.]**
+
+No apagó todo. Apagó las de adelante, que son las que lavan la pantalla, y dejó
+las de atrás atenuadas para poder tomar apuntes. **Le dijimos qué íbamos a
+hacer, y él decidió qué luces tocar.** El interruptor de verdad, en un colegio,
+no está etiquetado "zona A": está etiquetado "proyección".
+
+**[Y ahora grita esto. No lo leas.]**
+
+**"¡Hay un incendio!"**
+
+**[Se enciende la ruta de evacuación.]**
+
+Nadie grita "activar protocolo de evacuación". Grita **fuego**. Y si ahora digo
+"apagar todo", **la emergencia no se cae**: solo la apaga decir "ya pasó". La
+voz manda sobre la comodidad, **no sobre la seguridad**.
+
 ---
 
-## Los números · `4:45 – 5:25`
+## Los números · `5:55 – 6:35`
 
 ¿Cuánto da? El Gemelo mide las dos versiones del mismo día: con Inteligencia
 Artificial, **entre cuarenta y sesenta por ciento menos consumo.**
@@ -137,7 +160,7 @@ nadie. Y en un colegio de cien salones, **cuatro toneladas cada año**.
 
 ---
 
-## La debilidad · `5:25 – 6:53`
+## La debilidad · `6:35 – 8:02`
 
 **[Cambia el tono: más bajo, más lento. Mira a los jueces.]**
 
@@ -168,7 +191,7 @@ nada.** Instrumentas uno, modelas todos.
 
 ---
 
-## Cierre · `6:53 – 7:31`
+## Cierre · `8:02 – 8:40`
 
 **[Levanta la mirada. Baja el ritmo.]**
 
@@ -190,25 +213,28 @@ Muchas gracias.
 
 # 📋 Recordatorios
 
-**Sobre el tiempo.** Los `7:31` de arriba están medidos: 978 palabras a 150
-palabras por minuto, más ~55 segundos de pausas y demostraciones. Es un ritmo
+**Sobre el tiempo.** Los `8:40` de arriba están medidos: 1124 palabras a 150
+palabras por minuto, más ~70 segundos de pausas y demostraciones. Es un ritmo
 normal de presentación, no acelerado. **Cronométrate leyéndolo en voz alta una
-vez** — si te da más de 7:30, aplica los recortes de abajo y quedas en 6:40.
+vez** — si te da más de 8:40, aplica los recortes de abajo.
 
 **Si te pasas de tiempo, recorta en este orden:**
 
-1. La demostración de voz — desde *"Y el profesor siempre manda"* hasta
-   *"no manda"* (`−25 s`)
-2. El párrafo que empieza *"Lo decimos en árboles…"* (`−15 s`)
-3. El párrafo que empieza *"Los separamos así a propósito…"* (`−25 s`)
+1. El incendio — desde *"Y ahora grita esto"* hasta *"no sobre la seguridad"*
+   (`−35 s`). Duele, pero la película sola ya demuestra el punto.
+2. La película — desde *"Pero un profesor no dice"* hasta *"proyección"*
+   (`−35 s`). Con esto y lo anterior vuelves a los `7:30`.
+3. El párrafo que empieza *"Lo decimos en árboles…"* (`−15 s`)
+4. El párrafo que empieza *"Los separamos así a propósito…"* (`−25 s`)
+5. La DEMO 3 entera, incluido *"Y el profesor siempre manda"* (`−25 s` más)
 
 **Los tres momentos que deciden el pitch:**
 
 1. `0:15` — El salón vacío con las luces prendidas. Si se ven ahí, ya los tienes.
 2. `3:45` — "Zona A apagada, zona B prendida, mismo salón." Ahí entienden que
    esto no es un sensor de movimiento.
-3. `5:30` — "Nunca ha controlado una lámpara real." Ahí se ganan el respeto,
-   no lo pierden.
+3. `6:35` — "Nunca ha controlado una lámpara real." Ahí se ganan el respeto,
+   no lo pierden. (Con la DEMO 3 recortada, cae otra vez cerca de `5:30`.)
 
 **Nunca recortes:** el círculo vicioso del Acto 2, la demostración de zona A
 contra zona B, ni la sección de la debilidad.

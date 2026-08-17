@@ -15,7 +15,7 @@ ahorra. Todo el salón existe como **gemelo digital 3D**: no hay hardware.
 | **Orchestrator** | `backend/agents/orchestrator.py` | Cada 5 s pregunta a todos, decide y transmite |
 | **Vision** | `backend/agents/vision.py` | Cuántas personas hay y en qué zona |
 | **LightSensor** | `backend/agents/light_sensor.py` | Cuánta luz natural entra por zona |
-| **Voice** | `backend/agents/voice.py` | Órdenes habladas del profesor |
+| **Voice** | `backend/agents/voice.py` | Órdenes, escenas de clase y avisos de emergencia hablados |
 | **DigitalTwin** | `backend/agents/digital_twin.py` | Estado del salón y contabilidad de energía |
 | **Emergency** | `backend/agents/emergency.py` | Ruta de evacuación iluminada (añadido después del plan original) |
 
@@ -240,8 +240,10 @@ Escenarios de ocupación: `empty` (0) · `few` (6) · `half_class` (12) ·
 
 ## 9 · Voz
 
-`backend/skills/command_parser.py` entiende español e inglés y saca *acción* +
-*zona* de una frase suelta:
+`backend/skills/command_parser.py` entiende español e inglés. Reconoce tres
+cosas, y las busca **en este orden**: emergencia, escena, orden literal.
+
+### Órdenes literales
 
 | Dices | Pasa |
 |---|---|
@@ -250,8 +252,56 @@ Escenarios de ocupación: `empty` (0) · `few` (6) · `half_class` (12) ·
 | «media luz en zona B» | B en DIM |
 | «modo automático» | suelta el control y vuelve a AUTO |
 
+### Escenas: se dice lo que se va a hacer, no qué luz tocar
+
+Nadie dice «apaga las zonas A y B y atenúa C y D». Dice «vamos a ver una
+película». Una escena traduce una intención de clase a un patrón de luces —
+que es lo que hace una instalación real: el interruptor de verdad no está
+etiquetado «zona A», está etiquetado «proyección».
+
+| Dices | Escena | Luces |
+|---|---|---|
+| «vamos a ver una película», «pon el proyector», «diapositivas» | Proyección | A y B **OFF**, C y D **DIM** |
+| «hora de leer», «hay examen», «taller escrito» | Lectura o examen | las cuatro **ON** |
+| «nos vamos», «recreo», «se acabó la clase» | Salida | las cuatro **OFF** |
+| «trabajo en grupo», «por equipos» | Trabajo en grupo | devuelve el mando a la IA |
+
+Fíjate en la primera: una escena puede tratar cada zona distinto. Para proyectar
+se apagan las de adelante, que son las que lavan la pantalla, y las de atrás
+quedan atenuadas para poder tomar apuntes sin quedar a oscuras. **Eso es lo que
+separa una señal de un interruptor.**
+
+Lectura y examen encienden todo a propósito: ahí no se ahorra a costa de la
+vista.
+
+### Emergencias dichas de viva voz
+
+Nadie grita «activar protocolo de evacuación tipo incendio». Grita «¡fuego!».
+
+| Dices | Pasa |
+|---|---|
+| «hay un incendio», «fuego», «hay humo» | modo emergencia — incendio |
+| «está temblando», «sismo», «terremoto» | modo emergencia — sismo |
+| «esto es un simulacro» | modo simulacro |
+| «ya pasó», «falsa alarma», «todo despejado» | termina la emergencia |
+
+Dos detalles de diseño:
+
+- La emergencia **no pasa por la cola de voz**. Se despacha en el mismo
+  `POST /api/voice/command` (`backend/routes/voice_routes.py`), sin esperar al
+  siguiente ciclo del Orquestador: entre gritar «¡fuego!» y ver la ruta
+  iluminada no puede haber cinco segundos de nada.
+- **Ninguna orden de luces la cancela.** Solo la apaga una frase explícita de
+  «todo despejado». La voz manda sobre la comodidad, no sobre la seguridad.
+- Por eso «clear» se revisa **antes** que los tipos de emergencia: «terminó el
+  simulacro» contiene la palabra «simulacro», y al revés la volvería a encender.
+
 La orden de voz **se queda puesta** hasta que se diga «modo automático»: no es
 un pulso, es un override. Solo funciona en **Chrome**.
+
+> Las frases de ejemplo que muestra el tablero están en `VOICE_EXAMPLES`
+> (`backend/static/index.html`) y tienen que coincidir con las palabras clave de
+> `command_parser.py`. Si se cambia una, se cambian las dos.
 
 ---
 

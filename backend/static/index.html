@@ -2093,6 +2093,8 @@
         'view3d':'Vista 3D del Aula','updating':'Actualizando escena…','hint':'Arrastra para rotar · Pellizca o scroll para zoom',
         'voice':'Control por Voz (Chrome)','voice.examples':'Comandos de ejemplo',
         'voice.listening':'Escuchando…','voice.idle':'Presiona para hablar','voice.processing':'Procesando comando…','voice.applying':'Aplicando comando…',
+        'voice.g.scene':'Di lo que van a hacer','voice.g.emg':'Emergencias','voice.g.direct':'Órdenes directas',
+        'voice.heardEmergency':'Emergencia','voice.heardClear':'Emergencia terminada',
         'demo':'Controles Demo','occ':'OCUPACIÓN','weather':'CLIMA','time':'HORA DEL DÍA',
         'cam.label':'Cámara real','cam.on':'ON','cam.off':'OFF',
         'sc.empty':'Vacío','sc.few':'Pocos','sc.half':'Mitad','sc.full':'Lleno','sc.back':'Atrás','sc.real':'Real',
@@ -2134,6 +2136,8 @@
         'view3d':'3D Classroom View','updating':'Updating scene…','hint':'Drag to rotate · Pinch or scroll to zoom',
         'voice':'Voice Control (Chrome)','voice.examples':'Example commands',
         'voice.listening':'Listening…','voice.idle':'Press to speak','voice.processing':'Processing command…','voice.applying':'Applying command…',
+        'voice.g.scene':'Say what you are about to do','voice.g.emg':'Emergencies','voice.g.direct':'Direct orders',
+        'voice.heardEmergency':'Emergency','voice.heardClear':'Emergency cleared',
         'demo':'Demo Controls','occ':'OCCUPANCY','weather':'WEATHER','time':'TIME OF DAY',
         'cam.label':'Real camera','cam.on':'ON','cam.off':'OFF',
         'sc.empty':'Empty','sc.few':'Few','sc.half':'Half','sc.full':'Full','sc.back':'Back','sc.real':'Live',
@@ -2173,12 +2177,55 @@
     };
     const t = (key) => TR[window._lang || 'es'][key] || key;
 
+    // ── Lo que se le puede decir al salón ──────────────────────────────────────
+    // Cada fila es [frase en español, frase en inglés, efecto en español, efecto
+    // en inglés]. Las frases tienen que coincidir con las palabras clave de
+    // backend/skills/command_parser.py — si allá se cambia una, aquí también.
+    const VOICE_EXAMPLES = [
+      { key: 'voice.g.scene', items: [
+        ["vamos a ver una película", "let's watch a movie",
+         "adelante OFF, atrás DIM",  "front OFF, back DIM"],
+        ["hora de leer",             "reading time",
+         "todas encendidas",         "all lights on"],
+        ["hay examen",               "we have an exam",
+         "todas encendidas",         "all lights on"],
+        ["trabajo en grupo",         "group work",
+         "la IA reparte",            "AI takes over"],
+        ["nos vamos a descanso",     "we're going to recess",
+         "todas apagadas",           "all lights off"],
+        ["se acabó la clase",        "class is over",
+         "todas apagadas",           "all lights off"],
+      ]},
+      { key: 'voice.g.emg', items: [
+        ["hay un incendio",          "there's a fire",
+         "modo emergencia",          "emergency mode"],
+        ["está temblando",           "it's an earthquake",
+         "modo emergencia",          "emergency mode"],
+        ["esto es un simulacro",     "this is a drill",
+         "modo simulacro",           "drill mode"],
+        ["ya pasó, todo despejado",  "all clear",
+         "termina la emergencia",    "ends the emergency"],
+      ]},
+      { key: 'voice.g.direct', items: [
+        ["apagar todo",              "turn off all",       "—", "—"],
+        ["encender zona a",          "turn on zone a",     "—", "—"],
+        ["atenuar zona c",           "dim zone c",         "—", "—"],
+        ["modo auto",                "auto mode",
+         "devuelve el mando a la IA", "hands control back to the AI"],
+      ]},
+    ];
+
     // ── Voice controller ──────────────────────────────────────────────────────
     function VoiceBtn({ lang, onProcessing }) {
       const [listening,   setListening]   = useState(false);
       const [processing,  setProcessing]  = useState(false);
       const [last,        setLast]        = useState(null);
       const [cmdOk,       setCmdOk]       = useState(null); // true=✓ false=✗
+      // Cómo interpretó el backend la frase: escena reconocida o emergencia.
+      // Se muestra al lado de lo que se oyó, porque la gracia de decir "vamos a
+      // ver una película" es ver que el sistema entendió *proyección*, no que
+      // entendió "apaga la zona A".
+      const [interp,      setInterp]      = useState(null);
       const recRef          = useRef(null);
       const onProcessingRef = useRef(onProcessing);
       // Keep ref always current so the closure inside useEffect never goes stale
@@ -2195,6 +2242,7 @@
           const text = e.results[0][0].transcript.toLowerCase();
           setLast(text);
           setCmdOk(null);
+          setInterp(null);
           setProcessing(true);
           onProcessingRef.current?.(true);
           // yield one macrotask so React renders the loading state
@@ -2209,6 +2257,10 @@
               body: JSON.stringify({ command: text })
             });
             setCmdOk(res.ok);
+            if (res.ok) {
+              const body = await res.json();
+              setInterp(body?.parsed ?? null);
+            }
           } catch {
             setCmdOk(false);
           } finally {
@@ -2251,10 +2303,28 @@
                 : <span style={{color:"#64748b"}}>{t('voice.idle')}</span>
             }
             {last && !processing && (
-              <div style={{color:"#94a3b8",marginTop:"0.15rem",display:"flex",alignItems:"center",gap:"0.3rem"}}>
+              <div style={{color:"#94a3b8",marginTop:"0.15rem",display:"flex",alignItems:"center",gap:"0.3rem",flexWrap:"wrap"}}>
                 {cmdOk === true  && <span style={{color:"#4ade80",fontWeight:700}}>✓</span>}
                 {cmdOk === false && <span style={{color:"#f87171",fontWeight:700}}>✗</span>}
                 "{last}"
+                {interp?.emergency && interp.emergency !== 'clear' && (
+                  <span style={{background:"#7f1d1d",color:"#fecaca",borderRadius:"0.25rem",
+                                padding:"0.05rem 0.35rem",fontWeight:700,fontSize:"0.68rem"}}>
+                    ⚠ {t('voice.heardEmergency')}
+                  </span>
+                )}
+                {interp?.emergency === 'clear' && (
+                  <span style={{background:"#14532d",color:"#bbf7d0",borderRadius:"0.25rem",
+                                padding:"0.05rem 0.35rem",fontWeight:700,fontSize:"0.68rem"}}>
+                    ✓ {t('voice.heardClear')}
+                  </span>
+                )}
+                {interp?.scene && (
+                  <span style={{background:"#312e81",color:"#c7d2fe",borderRadius:"0.25rem",
+                                padding:"0.05rem 0.35rem",fontWeight:700,fontSize:"0.68rem"}}>
+                    → {lang === 'en' ? interp.scene_en : interp.scene_es}
+                  </span>
+                )}
               </div>
             )}
           </div>
@@ -2783,12 +2853,32 @@
                 <VoiceBtn lang={lang} onProcessing={setVoiceLoading} />
                 <details style={{marginTop:"0.6rem",fontSize:"0.68rem"}}>
                   <summary style={{color:"#475569",cursor:"pointer"}}>{t('voice.examples')}</summary>
-                  <div style={{marginTop:"0.4rem",display:"flex",flexDirection:"column",gap:"0.2rem"}}>
-                    {(lang === 'en'
-                      ? ["turn off all","turn on all","dim all","turn on zone a","turn off zone b","dim zone c","auto mode"]
-                      : ["apagar todo","encender todo","atenuar todo","encender zona a","apagar zona b","atenuar zona c","modo auto"]
-                    ).map(c => (
-                      <code key={c} style={{background:"#141820",padding:"0.15rem 0.4rem",borderRadius:"0.2rem",color:"#94a3b8"}}>"{c}"</code>
+                  {/* No es una lista de órdenes: es una lista de frases normales.
+                      Por eso van agrupadas por lo que uno quiere, no por lo que
+                      hace la luz. La columna de la derecha dice en qué se traduce. */}
+                  <div style={{marginTop:"0.4rem",display:"flex",flexDirection:"column",gap:"0.55rem"}}>
+                    {VOICE_EXAMPLES.map(group => (
+                      <div key={group.key}>
+                        <div style={{color:"#64748b",fontWeight:700,letterSpacing:"0.03em",
+                                     textTransform:"uppercase",fontSize:"0.6rem",marginBottom:"0.25rem"}}>
+                          {t(group.key)}
+                        </div>
+                        <div style={{display:"flex",flexDirection:"column",gap:"0.2rem"}}>
+                          {group.items.map(([es, en, fxEs, fxEn], i) => (
+                            <div key={i} style={{display:"flex",alignItems:"baseline",gap:"0.35rem",flexWrap:"wrap"}}>
+                              <code style={{background:"#141820",padding:"0.15rem 0.4rem",
+                                            borderRadius:"0.2rem",color:"#94a3b8"}}>
+                                "{lang === 'en' ? en : es}"
+                              </code>
+                              {(lang === 'en' ? fxEn : fxEs) !== "—" && (
+                                <span style={{color:"#475569",fontSize:"0.62rem"}}>
+                                  → {lang === 'en' ? fxEn : fxEs}
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </details>

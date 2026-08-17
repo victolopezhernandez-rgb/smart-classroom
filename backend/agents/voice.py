@@ -29,7 +29,11 @@ class VoiceAgent:
         """
         parsed = parse_command(raw_text)
         if parsed.is_valid():
-            self._pending = parsed
+            # Una emergencia se registra en el historial, pero NO se encola como
+            # orden de luces: no es un override de comodidad, y quien la atiende
+            # es el EmergencyAgent (ver routes/voice_routes.py).
+            if parsed.emergency is None:
+                self._pending = parsed
             entry = {
                 **parsed.to_dict(),
                 "timestamp": clock.now().isoformat(),
@@ -38,7 +42,12 @@ class VoiceAgent:
             # Keep only last 20 commands
             if len(self._history) > 20:
                 self._history = self._history[-20:]
-            logger.info(f"Command received: '{raw_text}' → action={parsed.action}, target={parsed.target}")
+            if parsed.emergency:
+                logger.warning(f"Voz → EMERGENCIA '{raw_text}' → {parsed.emergency}")
+            elif parsed.scene:
+                logger.info(f"Voz → escena '{raw_text}' → {parsed.scene} {parsed.zones}")
+            else:
+                logger.info(f"Command received: '{raw_text}' → action={parsed.action}, target={parsed.target}")
         else:
             logger.info(f"Unrecognized speech: '{raw_text}'")
         return parsed.to_dict()

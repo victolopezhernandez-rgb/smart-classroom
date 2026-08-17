@@ -2,6 +2,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from agents.voice import voice_agent
+from agents.emergency import emergency_agent
 from shared.broadcaster import broadcast
 
 router = APIRouter(prefix="/api/voice", tags=["voice"])
@@ -19,6 +20,20 @@ async def receive_command(body: VoiceCommandRequest):
     """
     parsed = voice_agent.receive(body.command)
 
+    # Si lo que se oyó fue una emergencia, el que manda es el EmergencyAgent y
+    # no la cola de voz. Se despacha aquí mismo, sin esperar al siguiente ciclo
+    # del Orchestrator: entre gritar "¡fuego!" y ver la ruta iluminada no puede
+    # haber cinco segundos de nada.
+    #
+    # Apagarla también exige decirlo explícitamente ("ya pasó", "falsa alarma").
+    # Ninguna orden de luces la cancela, por diseño: la voz manda sobre la
+    # comodidad, no sobre la seguridad.
+    kind = parsed.get("emergency")
+    if kind == "clear":
+        emergency_agent.clear()
+    elif kind:
+        emergency_agent.trigger(kind)
+
     # Broadcast immediately so the UI can show what was heard
     await broadcast("VOICE_RECEIVED", {
         "raw":    body.command,
@@ -28,7 +43,7 @@ async def receive_command(body: VoiceCommandRequest):
     return {
         "received": body.command,
         "parsed":   parsed,
-        "status":   "queued" if parsed.get("action") else "ignored",
+        "status":   "queued" if (parsed.get("action") or kind) else "ignored",
     }
 
 
