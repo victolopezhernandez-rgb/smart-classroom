@@ -161,6 +161,29 @@ ingeniería, no como "una animación bonita".*
 > de potencia**, para cuando hay algo de luz natural pero no suficiente.
 > Cuarenta vatios en vez de ochenta.
 
+**[La cámara — prende el interruptor "Cámara real" y gira el portátil hacia el
+público. Esta es la demostración que más peso tiene ante un jurado técnico.]**
+
+> Y hasta aquí todo ha sido simulado. Miren esto.
+>
+> Esta es la cámara de este computador, y **está contando a ustedes**. Ese
+> contador de rostros no lo puse yo con un slider.
+>
+> La cámara va al frente del salón, junto al tablero: una cara grande está
+> cerca — filas de adelante, zonas A y B; una cara pequeña está lejos, al fondo,
+> zonas C y D. **Así no solo cuenta: ubica.**
+>
+> Dos cosas. **Ninguna imagen sale de este computador**, ni siquiera al servidor:
+> el modelo corre en el navegador y solo viaja un par de números por persona. Y
+> si tapo la cámara, **a los ocho segundos el sistema vuelve solo a simulación**
+> y sigue funcionando.
+>
+> Acabo de **cambiar el sensor en vivo sin tocar una línea del sistema.** Eso es
+> lo que significa que esté por capas, y es la razón por la que este Gemelo se
+> puede conectar a un salón de verdad.
+
+**[Apaga la cámara antes de seguir.]**
+
 **[Comando de voz, si el wifi está bien.]**
 
 > Y el profesor siempre manda. **"Enciende todas las luces."**
@@ -303,9 +326,10 @@ pregunta más probable:
 >
 > 1. **Cada agente tiene una sola responsabilidad.** El de visión no sabe nada de
 >    energía. Si se daña la detección de personas, sé exactamente dónde buscar.
-> 2. **Se puede reemplazar por partes.** Hoy el Vision Agent simula. Mañana se le
->    conecta una cámara real con detección de personas. **El resto del sistema no
->    se entera** — sigue recibiendo el mismo tipo de dato.
+> 2. **Se puede reemplazar por partes.** Y esto no es teoría: el Vision Agent ya
+>    tiene las dos versiones. Puede simular personas o **verlas con la cámara del
+>    computador**, y se cambia con un interruptor en pantalla, en vivo. **El resto
+>    del sistema no se entera** — sigue recibiendo el mismo tipo de dato.
 > 3. **Es como funciona la industria de verdad.** Los sistemas de automatización
 >    reales son módulos que se hablan por mensajes, no un programa monolítico.
 
@@ -418,10 +442,11 @@ directo.
 > Antes de terminar quiero ser muy clara con algo, porque es la pregunta que yo
 > haría en su lugar.
 >
-> **Este sistema no ha controlado nunca una lámpara real.** Nuestro Vision Agent
-> no ve con una cámara: simula personas. Nuestro sensor de luz no mide el sol:
-> lo modela con la hora, la orientación de la ventana y el clima. Los porcentajes
-> de ahorro que les mostré son **proyecciones de un modelo, no mediciones de un
+> **Este sistema no ha controlado nunca una lámpara real.** La cámara que les
+> mostré sí es real, pero es la única pieza que lo es: nuestro sensor de luz no
+> mide el sol, lo modela con la hora, la orientación de la ventana y el clima; y
+> al otro lado no hay ninguna lámpara, hay un modelo 3D. Los porcentajes de
+> ahorro que les mostré son **proyecciones de un modelo, no mediciones de un
 > salón**.
 >
 > Eso es una limitación real y no la voy a maquillar.
@@ -492,11 +517,21 @@ directo.
 > nunca lo reemplaza. Es el mismo principio de la regla 4: el humano siempre manda.
 
 **3. ¿Una cámara en el salón no viola la privacidad de los estudiantes?**
-> Muy buena pregunta y la pensamos. Nuestro agente de visión **no necesita
-> identificar a nadie** — solo cuenta cuerpos y su posición aproximada. En una
-> implementación real usaríamos sensores infrarrojos de presencia, que detectan
-> calor corporal y **no captan imagen**. Cero video, cero rostros, cero datos
-> personales.
+> Muy buena pregunta, y es la que más trabajamos. Sí detectamos rostros —
+> acabo de mostrarlo. Pero **ninguna imagen sale de este computador**: el modelo
+> corre dentro del navegador, y lo único que viaja al servidor son dos números
+> por persona, la posición en el salón. **No se guarda video, no se guarda
+> ninguna foto, y el sistema no identifica a nadie**: no sabe quién es usted,
+> solo que hay alguien y en qué zona está.
+>
+> Que sea un rostro es un detalle técnico, no el objetivo: usamos el tamaño de
+> la cara para calcular a qué distancia está la persona, porque una cámara sola
+> no mide profundidad.
+>
+> Y si un colegio aun así no quiere cámaras, **no las necesita**: se cambia esa
+> capa por sensores infrarrojos de presencia, que detectan calor y no captan
+> imagen, y el resto del sistema no se entera. Esa es exactamente la ventaja de
+> tenerlo separado en agentes.
 
 **4. ¿Por qué no usaron ChatGPT o una API de IA?**
 > Por diseño. Un sistema que controla infraestructura tiene que responder en
