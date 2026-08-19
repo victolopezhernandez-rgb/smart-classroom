@@ -738,22 +738,22 @@
 
       <div class="project-grid">
         <div class="project-text reveal reveal-delay-1">
-          <p>
+          <p data-i18n-html="proj.p1">
             <strong>Smart Classroom AI</strong> es un sistema multi-agente que observa el aula
             en tiempo real —personas presentes, luz natural disponible, hora del día y clima—
             y decide de forma autónoma qué luces encender, atenuar o apagar en cada zona.
           </p>
-          <p>
+          <p data-i18n-html="proj.p2">
             Para validar el impacto sin necesidad de hardware físico, construimos un
             <strong>Gemelo Digital</strong>: una réplica virtual 3D del aula que ejecuta
             el sistema de IA y registra el consumo energético antes y después de la optimización.
           </p>
-          <p>
+          <p data-i18n="proj.p3">
             El resultado: una propuesta replicable en cualquier institución educativa, con
             evidencia cuantificable de ahorro económico y reducción de huella de carbono.
           </p>
           <div class="connect-row">
-            <span class="connect-label">Tecnologías</span>
+            <span class="connect-label" data-i18n="proj.tech">Tecnologías</span>
             <span class="connect-pill" style="color:#93c5fd;border-color:#3b82f640;background:rgba(59,130,246,0.08)">Python · FastAPI</span>
             <span class="connect-pill" style="color:#67e8f9;border-color:#06b6d440;background:rgba(6,182,212,0.08)">Three.js</span>
             <span class="connect-pill" style="color:#a5b4fc;border-color:#818cf840;background:rgba(129,140,248,0.08)">WebSocket</span>
@@ -803,7 +803,7 @@
           <div class="section-eyebrow" style="color:var(--green)" data-i18n="carbon.eyebrow">Área 1 · Sostenibilidad</div>
           <h2 class="section-title" data-i18n-html="carbon.title">Huella de<br>Carbono</h2>
           <div class="divider" style="background:linear-gradient(90deg,var(--green),#34d399)"></div>
-          <p class="section-sub" style="font-size:0.95rem">
+          <p class="section-sub" style="font-size:0.95rem" data-i18n-html="carbon.body">
             Cada kilovatio-hora de electricidad consumida en Colombia genera
             <strong style="color:var(--green)">0.126 kg de CO₂</strong> (UPME, 2023).
             Nuestro sistema reduce el consumo energético del aula en un 40–60%, lo que
@@ -811,7 +811,7 @@
           </p>
           <div style="margin-top:1.5rem">
             <div class="area-card" style="margin-bottom:0.75rem">
-              <p style="font-size:0.82rem;color:var(--muted)">
+              <p style="font-size:0.82rem;color:var(--muted)" data-i18n-html="carbon.body2">
                 El sistema compara en tiempo real las emisiones con y sin IA, calcula el
                 CO₂ evitado por hora, día y año, y lo convierte en equivalencias comprensibles:
                 <strong style="color:var(--text)">árboles plantados</strong>,
@@ -821,25 +821,25 @@
             </div>
           </div>
           <div class="connect-row" style="margin-top:1rem">
-            <span class="connect-label">Vincula con</span>
-            <span class="connect-pill" style="color:#6ee7b7;border-color:#10b98135;background:rgba(16,185,129,0.08)">ODS 13 Acción Climática</span>
-            <span class="connect-pill" style="color:#6ee7b7;border-color:#10b98135;background:rgba(16,185,129,0.08)">ODS 7 Energía Limpia</span>
+            <span class="connect-label" data-i18n="carbon.link">Vincula con</span>
+            <span class="connect-pill" style="color:#6ee7b7;border-color:#10b98135;background:rgba(16,185,129,0.08)" data-i18n="carbon.sdg13">ODS 13 Acción Climática</span>
+            <span class="connect-pill" style="color:#6ee7b7;border-color:#10b98135;background:rgba(16,185,129,0.08)" data-i18n="carbon.sdg7">ODS 7 Energía Limpia</span>
           </div>
         </div>
 
         <div class="area-visual reveal reveal-delay-1">
           <div class="co2-visual">
-            <div style="font-size:0.68rem;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:1.25rem">Emisiones CO₂ anuales — 1 salón</div>
+            <div style="font-size:0.68rem;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:1.25rem" data-i18n="carbon.chart">Emisiones CO₂ anuales — 1 salón</div>
             <div class="co2-bar-group">
-              <div class="co2-bar-label"><span>Sin IA</span><strong>64.5 kg CO₂/año</strong></div>
+              <div class="co2-bar-label"><span data-i18n="carbon.noai">Sin IA</span><strong data-i18n="carbon.noai.v">64.5 kg CO₂/año</strong></div>
               <div class="co2-track"><div class="co2-fill" style="width:100%;background:linear-gradient(90deg,#ef4444,#f87171)"></div></div>
             </div>
             <div class="co2-bar-group" style="margin-top:0.85rem">
-              <div class="co2-bar-label"><span>Con IA</span><strong>~26 kg CO₂/año</strong></div>
+              <div class="co2-bar-label"><span data-i18n="carbon.ai">Con IA</span><strong data-i18n="carbon.ai.v">~26 kg CO₂/año</strong></div>
               <div class="co2-track"><div class="co2-fill" style="width:40%;background:linear-gradient(90deg,#10b981,#34d399)"></div></div>
             </div>
             <div class="co2-bar-group" style="margin-top:0.85rem">
-              <div class="co2-bar-label"><span style="color:var(--green)">Ahorro</span><strong style="color:var(--green)">~38 kg CO₂/año</strong></div>
+              <div class="co2-bar-label"><span style="color:var(--green)" data-i18n="carbon.save">Ahorro</span><strong style="color:var(--green)" data-i18n="carbon.save.v">~38 kg CO₂/año</strong></div>
               <div class="co2-track"><div class="co2-fill" style="width:60%;background:linear-gradient(90deg,var(--blue),var(--cyan))"></div></div>
             </div>
             <div class="co2-eq">
@@ -870,7 +870,7 @@
           <div class="section-eyebrow" style="color:var(--purple)" data-i18n="ai.eyebrow">Área 2 · Computación e IA</div>
           <h2 class="section-title" data-i18n-html="ai.title">Inteligencia Artificial<br>& Gemelos Digitales</h2>
           <div class="divider" style="background:linear-gradient(90deg,var(--blue),var(--purple))"></div>
-          <p class="section-sub" style="font-size:0.95rem">
+          <p class="section-sub" style="font-size:0.95rem" data-i18n-html="ai.body">
             El sistema está construido sobre una arquitectura <strong style="color:var(--text)">multi-agente</strong>:
             seis módulos especializados que se comunican entre sí para tomar decisiones de iluminación
             en tiempo real. El <strong style="color:var(--text)">Gemelo Digital</strong> replica el
@@ -915,7 +915,7 @@
           <div class="agent-diagram">
             <div class="agent-center">🧠</div>
             <div class="agent-center-label" style="font-family:'Space Grotesk',sans-serif;font-size:0.78rem;font-weight:700">OrchestratorAgent</div>
-            <div style="font-size:0.62rem;color:var(--dim);text-align:center;margin-bottom:1rem;letter-spacing:0.04em">COORDINA · DECIDE · TRANSMITE</div>
+            <div style="font-size:0.62rem;color:var(--dim);text-align:center;margin-bottom:1rem;letter-spacing:0.04em" data-i18n="ai.orch">COORDINA · DECIDE · TRANSMITE</div>
             <div class="agent-nodes">
               <div class="agent-node"><span>👁</span>Vision Agent</div>
               <div class="agent-node"><span>☀️</span>Light Sensor</div>
@@ -941,19 +941,19 @@
           <div class="section-eyebrow" style="color:var(--cyan)" data-i18n="iot.eyebrow">Área 3 · Tecnología & STEAM</div>
           <h2 class="section-title" data-i18n-html="iot.title">IoT, Automatización<br>& Metodología STEAM</h2>
           <div class="divider" style="background:linear-gradient(90deg,var(--cyan),#67e8f9)"></div>
-          <p class="section-sub" style="font-size:0.95rem">
+          <p class="section-sub" style="font-size:0.95rem" data-i18n-html="iot.body">
             El proyecto integra conceptos de <strong style="color:var(--text)">Internet de las Cosas</strong>
             —sensores virtuales de luz, movimiento y voz— con principios de automatización industrial
             y el método científico propio del enfoque <strong style="color:var(--text)">STEAM</strong>.
             Todo sin hardware: los sensores son módulos de software que simulan el mundo real.
           </p>
           <div class="connect-row" style="margin-top:1.5rem">
-            <span class="connect-label">Áreas STEAM</span>
-            <span class="connect-pill" style="color:#67e8f9;border-color:#06b6d435;background:rgba(6,182,212,0.08)">🔬 Ciencia</span>
-            <span class="connect-pill" style="color:#67e8f9;border-color:#06b6d435;background:rgba(6,182,212,0.08)">⚙️ Tecnología</span>
-            <span class="connect-pill" style="color:#67e8f9;border-color:#06b6d435;background:rgba(6,182,212,0.08)">🔧 Ingeniería</span>
-            <span class="connect-pill" style="color:#67e8f9;border-color:#06b6d435;background:rgba(6,182,212,0.08)">🎨 Arte</span>
-            <span class="connect-pill" style="color:#67e8f9;border-color:#06b6d435;background:rgba(6,182,212,0.08)">📐 Matemáticas</span>
+            <span class="connect-label" data-i18n="iot.areas">Áreas STEAM</span>
+            <span class="connect-pill" style="color:#67e8f9;border-color:#06b6d435;background:rgba(6,182,212,0.08)" data-i18n="iot.sci">🔬 Ciencia</span>
+            <span class="connect-pill" style="color:#67e8f9;border-color:#06b6d435;background:rgba(6,182,212,0.08)" data-i18n="iot.tech">⚙️ Tecnología</span>
+            <span class="connect-pill" style="color:#67e8f9;border-color:#06b6d435;background:rgba(6,182,212,0.08)" data-i18n="iot.eng">🔧 Ingeniería</span>
+            <span class="connect-pill" style="color:#67e8f9;border-color:#06b6d435;background:rgba(6,182,212,0.08)" data-i18n="iot.art">🎨 Arte</span>
+            <span class="connect-pill" style="color:#67e8f9;border-color:#06b6d435;background:rgba(6,182,212,0.08)" data-i18n="iot.math">📐 Matemáticas</span>
           </div>
         </div>
 
@@ -961,23 +961,23 @@
           <div class="iot-layers" style="width:100%">
             <div style="font-size:0.65rem;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:0.5rem" data-i18n="iot.stack">Stack tecnológico</div>
             <div class="iot-layer" style="border-color:rgba(6,182,212,0.3);background:rgba(6,182,212,0.07);color:#67e8f9">
-              <span>🖥</span> Capa de presentación — React + Three.js
+              <span>🖥</span> <span data-i18n="iot.l1">Capa de presentación — React + Three.js</span>
             </div>
             <div style="text-align:center;color:var(--dim);font-size:0.85rem">↕</div>
             <div class="iot-layer" style="border-color:rgba(129,140,248,0.3);background:rgba(129,140,248,0.07);color:#a5b4fc">
-              <span>🧠</span> Capa de decisión — Agentes IA (Python)
+              <span>🧠</span> <span data-i18n="iot.l2">Capa de decisión — Agentes IA (Python)</span>
             </div>
             <div style="text-align:center;color:var(--dim);font-size:0.85rem">↕</div>
             <div class="iot-layer" style="border-color:rgba(37,99,235,0.3);background:rgba(37,99,235,0.07);color:#93c5fd">
-              <span>📡</span> Capa de comunicación — FastAPI + WebSocket
+              <span>📡</span> <span data-i18n="iot.l3">Capa de comunicación — FastAPI + WebSocket</span>
             </div>
             <div style="text-align:center;color:var(--dim);font-size:0.85rem">↕</div>
             <div class="iot-layer" style="border-color:rgba(16,185,129,0.3);background:rgba(16,185,129,0.07);color:#6ee7b7">
-              <span>📟</span> Capa de sensores — IoT Virtual (simulado)
+              <span>📟</span> <span data-i18n="iot.l4">Capa de sensores — IoT Virtual (simulado)</span>
             </div>
             <div style="text-align:center;color:var(--dim);font-size:0.85rem">↕</div>
             <div class="iot-layer" style="border-color:rgba(251,191,36,0.3);background:rgba(251,191,36,0.07);color:#fde68a">
-              <span>🌍</span> Capa de impacto — Huella CO₂ + Energía
+              <span>🌍</span> <span data-i18n="iot.l5">Capa de impacto — Huella CO₂ + Energía</span>
             </div>
           </div>
         </div>
@@ -1193,6 +1193,40 @@
       'iot.eyebrow': 'Área 3 · Tecnología & STEAM',
       'iot.title':   'IoT, Automatización<br>& Metodología STEAM',
       'iot.stack':   'Stack tecnológico',
+      // Proyecto — cuerpo
+      'proj.p1':     '<strong>Smart Classroom AI</strong> es un sistema multi-agente que observa el aula en tiempo real —personas presentes, luz natural disponible, hora del día y clima— y decide de forma autónoma qué luces encender, atenuar o apagar en cada zona.',
+      'proj.p2':     'Para validar el impacto sin necesidad de hardware físico, construimos un <strong>Gemelo Digital</strong>: una réplica virtual 3D del aula que ejecuta el sistema de IA y registra el consumo energético antes y después de la optimización.',
+      'proj.p3':     'El resultado: una propuesta replicable en cualquier institución educativa, con evidencia cuantificable de ahorro económico y reducción de huella de carbono.',
+      'proj.tech':   'Tecnologías',
+      // Huella de carbono — cuerpo
+      'carbon.body':   'Cada kilovatio-hora de electricidad consumida en Colombia genera <strong style="color:var(--green)">0.126 kg de CO₂</strong> (UPME, 2023). Nuestro sistema reduce el consumo energético del aula en un 40–60%, lo que se traduce directamente en menos emisiones, medidas con precisión en el Gemelo Digital.',
+      'carbon.body2':  'El sistema compara en tiempo real las emisiones con y sin IA, calcula el CO₂ evitado por hora, día y año, y lo convierte en equivalencias comprensibles: <strong style="color:var(--text)">árboles plantados</strong>, <strong style="color:var(--text)">kilómetros en auto evitados</strong> y <strong style="color:var(--text)">cargas de celular equivalentes</strong>.',
+      'carbon.link':   'Vincula con',
+      'carbon.sdg13':  'ODS 13 Acción Climática',
+      'carbon.sdg7':   'ODS 7 Energía Limpia',
+      'carbon.chart':  'Emisiones CO₂ anuales — 1 salón',
+      'carbon.noai':   'Sin IA',
+      'carbon.noai.v': '64.5 kg CO₂/año',
+      'carbon.ai':     'Con IA',
+      'carbon.ai.v':   '~26 kg CO₂/año',
+      'carbon.save':   'Ahorro',
+      'carbon.save.v': '~38 kg CO₂/año',
+      // IA — cuerpo
+      'ai.body':  'El sistema está construido sobre una arquitectura <strong style="color:var(--text)">multi-agente</strong>: seis módulos especializados que se comunican entre sí para tomar decisiones de iluminación en tiempo real. El <strong style="color:var(--text)">Gemelo Digital</strong> replica el comportamiento físico del aula en un entorno virtual 3D, permitiendo medir el impacto sin necesidad de instalar hardware.',
+      'ai.orch':  'COORDINA · DECIDE · TRANSMITE',
+      // IoT / STEAM — cuerpo
+      'iot.body':  'El proyecto integra conceptos de <strong style="color:var(--text)">Internet de las Cosas</strong> —sensores virtuales de luz, movimiento y voz— con principios de automatización industrial y el método científico propio del enfoque <strong style="color:var(--text)">STEAM</strong>. Todo sin hardware: los sensores son módulos de software que simulan el mundo real.',
+      'iot.areas': 'Áreas STEAM',
+      'iot.sci':   '🔬 Ciencia',
+      'iot.tech':  '⚙️ Tecnología',
+      'iot.eng':   '🔧 Ingeniería',
+      'iot.art':   '🎨 Arte',
+      'iot.math':  '📐 Matemáticas',
+      'iot.l1':    'Capa de presentación — React + Three.js',
+      'iot.l2':    'Capa de decisión — Agentes IA (Python)',
+      'iot.l3':    'Capa de comunicación — FastAPI + WebSocket',
+      'iot.l4':    'Capa de sensores — IoT Virtual (simulado)',
+      'iot.l5':    'Capa de impacto — Huella CO₂ + Energía',
       // Team
       'team.eyebrow':   'Las personas detrás',
       'team.title':     'El Equipo',
@@ -1281,6 +1315,40 @@
       'iot.eyebrow': 'Area 3 · Technology & STEAM',
       'iot.title':   'IoT, Automation<br>& STEAM Methodology',
       'iot.stack':   'Tech stack',
+      // Proyecto — cuerpo
+      'proj.p1':     '<strong>Smart Classroom AI</strong> is a multi-agent system that watches the classroom in real time —people present, available daylight, time of day and weather— and autonomously decides which lights to switch on, dim or turn off in each zone.',
+      'proj.p2':     'To prove the impact without any physical hardware, we built a <strong>Digital Twin</strong>: a virtual 3D replica of the classroom that runs the AI system and logs energy use before and after optimization.',
+      'proj.p3':     'The result: a proposal any school can replicate, with measurable evidence of cost savings and a smaller carbon footprint.',
+      'proj.tech':   'Technologies',
+      // Huella de carbono — cuerpo
+      'carbon.body':   'Every kilowatt-hour of electricity consumed in Colombia produces <strong style="color:var(--green)">0.126 kg of CO₂</strong> (UPME, 2023). Our system cuts the classroom\u2019s energy use by 40–60%, which translates directly into fewer emissions, measured precisely in the Digital Twin.',
+      'carbon.body2':  'The system compares emissions with and without AI in real time, computes the CO₂ avoided per hour, day and year, and turns it into equivalences anyone can picture: <strong style="color:var(--text)">trees planted</strong>, <strong style="color:var(--text)">car kilometers avoided</strong> and <strong style="color:var(--text)">phone charges</strong>.',
+      'carbon.link':   'Linked to',
+      'carbon.sdg13':  'SDG 13 Climate Action',
+      'carbon.sdg7':   'SDG 7 Clean Energy',
+      'carbon.chart':  'Annual CO₂ emissions — 1 classroom',
+      'carbon.noai':   'Without AI',
+      'carbon.noai.v': '64.5 kg CO₂/yr',
+      'carbon.ai':     'With AI',
+      'carbon.ai.v':   '~26 kg CO₂/yr',
+      'carbon.save':   'Saved',
+      'carbon.save.v': '~38 kg CO₂/yr',
+      // IA — cuerpo
+      'ai.body':  'The system is built on a <strong style="color:var(--text)">multi-agent</strong> architecture: six specialized modules that talk to each other to make lighting decisions in real time. The <strong style="color:var(--text)">Digital Twin</strong> replicates the physical behavior of the classroom in a virtual 3D environment, so the impact can be measured without installing any hardware.',
+      'ai.orch':  'COORDINATES · DECIDES · BROADCASTS',
+      // IoT / STEAM — cuerpo
+      'iot.body':  'The project brings together <strong style="color:var(--text)">Internet of Things</strong> concepts —virtual light, motion and voice sensors— with industrial automation principles and the scientific method behind the <strong style="color:var(--text)">STEAM</strong> approach. All without hardware: the sensors are software modules that simulate the real world.',
+      'iot.areas': 'STEAM areas',
+      'iot.sci':   '🔬 Science',
+      'iot.tech':  '⚙️ Technology',
+      'iot.eng':   '🔧 Engineering',
+      'iot.art':   '🎨 Art',
+      'iot.math':  '📐 Mathematics',
+      'iot.l1':    'Presentation layer — React + Three.js',
+      'iot.l2':    'Decision layer — AI agents (Python)',
+      'iot.l3':    'Communication layer — FastAPI + WebSocket',
+      'iot.l4':    'Sensor layer — Virtual IoT (simulated)',
+      'iot.l5':    'Impact layer — CO₂ footprint + energy',
       // Team
       'team.eyebrow':   'The people behind it',
       'team.title':     'The Team',
