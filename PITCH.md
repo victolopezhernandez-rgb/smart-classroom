@@ -622,7 +622,7 @@ Para el juez que pasa rápido o el que se para a mitad de tu pitch.
 
 # ANTES DE PRESENTAR
 
-## ✅ Números ya corregidos (5 ago 2026)
+## ✅ Números ya corregidos (5 ago 2026 · revisados 19 ago 2026)
 
 **1. "100 salones → 6,400 kg de CO₂ evitados"** — estaba mal, ya se arregló.
 
@@ -638,12 +638,60 @@ ahorro real, no la emisión total.
 **2. El umbral de luz natural** — el landing y el journey map decían 70%, el
 código usa **0.75**. Ya están alineados en **75%**. Di 75%.
 
+**3. El hero del landing decía "64 kg CO₂ evitado/año"** — el mismo error del
+punto 1, que se había corregido en la tarjeta de impacto pero no arriba. 64.5 kg
+es lo que el salón **emite** sin IA; lo evitado va de **26 kg** (40% de ahorro) a
+**39 kg** (60%). El hero ahora dice el rango.
+
+**4. El hero decía "60% de ahorro"** a secas, cuando el resto del proyecto dice
+40–60% y el gemelo en vivo suele dar cerca de 38%. Ahora dice **40–60%**, y la
+gráfica de CO₂ del landing avisa que muestra el **mejor caso**.
+
+**5. Dos filas de la tabla del gemelo tenían el título cambiado.** La fila de
+costos anuales se llamaba "Ahorro anual", así que bajo la columna *Sin IA*
+mostraba $409,600 — que es el costo, no el ahorro. Y "Horas luz innecesaria
+evitadas" ponía 8 h bajo *Sin IA*, cuando un salón sin IA no evita esas horas:
+las gasta. Ahora dicen **"Costo anual"** y **"Horas equivalentes de luz"**.
+
 ## ⚠️ Lo que falta verificar
+
+**El factor de emisión — sabemos que la cita está mal**
+
+El proyecto usa **0.126 kg CO₂/kWh** y lo atribuye a la UPME. El valor oficial
+de la UPME para inventarios GEI es:
+
+| Año | Factor oficial | Resolución |
+|---|---|---|
+| 2023 | **0.177** tonCO₂eq/MWh | 1198 de 2024 |
+| 2024 | **0.220** tonCO₂eq/MWh | 0085 de 2026 |
+
+El 0.126 es de años anteriores, más húmedos; el factor subió con el Niño de
+2023–2024. **Se decidió no cambiar el número antes de la feria**, porque mover
+el factor mueve todas las cifras de CO₂ y también la constante de cargas de
+celular (que se calcula a partir de él).
+
+Lo importante para el pitch: **el error va a tu favor en honestidad**, porque
+subestima el CO₂ que evitas. Si alguien lo nota, esa es la respuesta:
+
+> *"Usamos un factor conservador. Con el valor oficial de 2023, que es 0.177,
+> el CO₂ evitado sería más alto, no más bajo."*
 
 **La cifra en pesos**
 
 Verifica la tarifa real de tu estrato/ciudad antes de dar un número en COP.
 Si no la tienes confirmada, di el kWh y el porcentaje, no inventes el peso.
+
+El gemelo usa **800 COP/kWh** y no está respaldado por ninguna factura. Para
+dimensionar, tarifario de Enel Colombia de enero 2026, nivel 1:
+
+| Sector | $/kWh |
+|---|---|
+| Oficial (colegio público) | 688 – 740 |
+| Industrial y comercial (colegio privado) | 826 – 888 |
+
+O sea que 800 cae en el hueco entre los dos y no representa a ninguno. Cambia
+por operador y ciudad. **El dato que vale es el $/kWh de una factura del
+colegio** — con ese, la cifra es indiscutible.
 
 ## Checklist del día
 
