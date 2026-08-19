@@ -1,4 +1,4 @@
-# Guion de presentación — Smart Classroom AI
+# Guion de presentación — TwinLight
 
 **Duración: 11:15 completo** · 1459 palabras habladas
 

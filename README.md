@@ -1,4 +1,4 @@
-# ⚡ Smart Classroom AI — Gemelo Digital
+# ⚡ TwinLight — Gemelo Digital
 
 Un salón de clase que apaga, atenúa o enciende sus luces solo: según cuánta
 gente hay, en qué parte del salón está, y cuánta luz entra por la ventana.
@@ -166,16 +166,6 @@ predice los otros cuarenta sin instalar nada.
 | [DEPLOY.md](DEPLOY.md) | Cómo se publica y cómo se actualiza |
 | [GUION.md](GUION.md) | El guion de la presentación, cronometrado |
 | [PITCH.md](PITCH.md) | Las preguntas del jurado y sus respuestas |
-
----
-
-## El equipo
-
-Estudiantes de 10mo grado · Feria STEAM 2026
-
-- **Victoria López** — Líder de Proyecto & Desarrollo
-- **Manuela Granada** — Contexto Social & Problemática
-- **Maria Fernanda Valencia** — Solución & Articulación del Proyecto
 
 ---
 

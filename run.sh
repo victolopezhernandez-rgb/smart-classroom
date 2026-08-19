@@ -2,7 +2,7 @@
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 
-echo "=== Smart Classroom AI ==="
+echo "=== TwinLight ==="
 
 # ── Liberar puertos si quedaron ocupados ─────────────────────────────────────
 echo "[0/3] Liberando puertos 8000 y 5173 si están en uso..."

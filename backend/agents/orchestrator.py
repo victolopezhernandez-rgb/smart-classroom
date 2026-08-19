@@ -24,7 +24,7 @@ _history: deque = deque(maxlen=50)
 
 class OrchestratorAgent:
     """
-    Central brain of the Smart Classroom system.
+    Central brain of the TwinLight system.
 
     Every DECISION_INTERVAL_SECONDS seconds:
       1. Polls VisionAgent        → occupancy per zone

@@ -1,4 +1,4 @@
-# Smart Classroom AI — estado del proyecto
+# TwinLight — estado del proyecto
 
 Sistema multiagente que apaga, atenúa o enciende las luces de un salón según
 cuánta gente hay y cuánta luz natural entra, y que mide cuánta energía se

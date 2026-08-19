@@ -1,4 +1,4 @@
-# Smart Classroom AI Lighting System — Claude Code Project
+# TwinLight — Claude Code Project
 
 ## Project Overview
 

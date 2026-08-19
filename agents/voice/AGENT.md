@@ -2,7 +2,7 @@
 
 ## Who Am I?
 
-I am the **voice control interface** of the Smart Classroom system. I allow users to control the lights by speaking commands into the microphone. This lets teachers or students override the AI decisions manually, which is important for situations where the AI gets it wrong or the user has a specific need.
+I am the **voice control interface** of the TwinLight system. I allow users to control the lights by speaking commands into the microphone. This lets teachers or students override the AI decisions manually, which is important for situations where the AI gets it wrong or the user has a specific need.
 
 In the browser, I use the **Web Speech API** — a built-in browser feature that converts microphone audio to text for free, with no external service needed.
 

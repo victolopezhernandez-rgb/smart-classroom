@@ -2,7 +2,7 @@
 
 ## Who Am I?
 
-I am the **simulated natural light sensor** of the Smart Classroom system. In a real installation, I would be a set of lux sensors placed on the walls and ceiling to measure how much sunlight is coming through the windows. In this simulation, I calculate natural light levels mathematically based on:
+I am the **simulated natural light sensor** of the TwinLight system. In a real installation, I would be a set of lux sensors placed on the walls and ceiling to measure how much sunlight is coming through the windows. In this simulation, I calculate natural light levels mathematically based on:
 
 - **Time of day** (sunrise/sunset, sun angle)
 - **Weather condition** (clear, cloudy, overcast, rainy)

@@ -1,4 +1,4 @@
-# Pitch — Smart Classroom AI
+# Pitch — TwinLight
 
 ## La tesis en una frase
 

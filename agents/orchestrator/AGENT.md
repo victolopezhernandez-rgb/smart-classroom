@@ -2,7 +2,7 @@
 
 ## Who Am I?
 
-I am the **central brain** of the Smart Classroom Lighting System. I receive information from all other agents and make the final decision about which lights to turn on or off. Think of me as the manager of a team: I don't do the sensing or the visualization myself — I listen to my team and make the call.
+I am the **central brain** of TwinLight. I receive information from all other agents and make the final decision about which lights to turn on or off. Think of me as the manager of a team: I don't do the sensing or the visualization myself — I listen to my team and make the call.
 
 ## My Responsibilities
 

@@ -1,4 +1,4 @@
-# PLAN DE BOOST — Smart Classroom AI para la feria
+# PLAN DE BOOST — TwinLight para la feria
 
 **Objetivo:** convertir la demo de un sistema *simulado* en una experiencia donde
 el público es el sensor, y respaldar las proyecciones con estadística dura.

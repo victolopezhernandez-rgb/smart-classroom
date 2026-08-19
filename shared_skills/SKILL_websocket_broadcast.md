@@ -65,7 +65,7 @@ async def broadcast(message_type: str, payload: dict):
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from shared.broadcaster import register, unregister, broadcast
 
-app = FastAPI(title="Smart Classroom API")
+app = FastAPI(title="TwinLight API")
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
@@ -158,7 +158,7 @@ export default function App() {
   return (
     <div>
       <header>
-        <h1>🏫 Smart Classroom AI</h1>
+        <h1>🏫 TwinLight</h1>
         <span>{connected ? "🟢 Connected" : "🔴 Connecting..."}</span>
       </header>
       <Classroom3D classroomState={state} />

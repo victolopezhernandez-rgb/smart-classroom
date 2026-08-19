@@ -23,7 +23,7 @@ from routes.emergency_routes import router as emergency_router
 
 logger = get_logger("Main")
 
-app = FastAPI(title="Smart Classroom API", version="1.0.0")
+app = FastAPI(title="TwinLight API", version="1.0.0")
 
 # ── Routers ───────────────────────────────────────────────────────────────────
 
@@ -46,7 +46,7 @@ app.add_middleware(
 
 @app.get("/")
 def root():
-    return {"status": "ok", "message": "Smart Classroom API is running"}
+    return {"status": "ok", "message": "TwinLight API is running"}
 
 
 @app.get("/state")
@@ -101,7 +101,7 @@ async def no_cache_html(request, call_next):
 
 @app.on_event("startup")
 async def startup():
-    logger.info("Smart Classroom backend starting up…")
+    logger.info("TwinLight backend starting up…")
     logger.info(f"Initial state: {classroom_state.to_dict()}")
 
     # Import here to avoid circular imports at module load time

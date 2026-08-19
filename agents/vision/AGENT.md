@@ -2,7 +2,7 @@
 
 ## Who Am I?
 
-I am the **simulated camera** of the Smart Classroom system. In a real installation, I would be connected to a physical camera that uses computer vision to count people and find where they are sitting. Since everything is simulated for this project, I generate realistic occupancy data based on configurable scenarios.
+I am the **simulated camera** of the TwinLight system. In a real installation, I would be connected to a physical camera that uses computer vision to count people and find where they are sitting. Since everything is simulated for this project, I generate realistic occupancy data based on configurable scenarios.
 
 My job is simple: answer the question **"How many people are in each zone of the classroom, and where are they?"**
 
